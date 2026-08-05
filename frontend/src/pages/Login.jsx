@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Moon, Sun, UserRound } from "lucide-react";
 import { auth } from "../api.js";
+import LoginBarrier from "../components/LoginBarrier";
+
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 export default function Login({ setToken, theme, onThemeToggle }) {
   const [username, setUsername] = useState("");
@@ -8,20 +11,31 @@ export default function Login({ setToken, theme, onThemeToggle }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [authState, setAuthState] = useState("idle");
+
+  useEffect(() => {
+    if (authState !== "error") return undefined;
+    const timeout = window.setTimeout(() => setAuthState("idle"), 900);
+    return () => window.clearTimeout(timeout);
+  }, [authState]);
 
   const login = async () => {
     if (!username.trim() || !password.trim()) {
       setMessage("Wpisz login i hasło.");
+      setAuthState("error");
       return;
     }
 
     try {
       setLoading(true);
+      setAuthState("loading");
       setMessage("");
       const res = await auth.login(username, password);
       if (res.data?.token) {
+        setAuthState("success");
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
+        await wait(650);
         setToken(res.data.token);
       } else {
         throw new Error("Odpowiedź serwera nie zawiera tokenu.");
@@ -30,6 +44,7 @@ export default function Login({ setToken, theme, onThemeToggle }) {
       const apiMessage = err.response?.data?.error;
       const code = err.response ? `ERR_HTTP_${err.response.status}` : "ERR_NETWORK";
       setMessage(apiMessage || `Wystąpił błąd. Skontaktuj się z administratorem. (Kod: ${code})`);
+      setAuthState("error");
     } finally {
       setLoading(false);
     }
@@ -46,7 +61,9 @@ export default function Login({ setToken, theme, onThemeToggle }) {
       >
         {theme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
       </button>
-      <main className="login-card">
+      <main className={`login-card ${authState === "error" ? "is-shaking" : ""}`}>
+        <LoginBarrier state={authState} />
+
         <div className="login-heading">
           <span>Panel klienta i administratora</span>
           <h1>Witaj ponownie</h1>
@@ -95,8 +112,10 @@ export default function Login({ setToken, theme, onThemeToggle }) {
 
           {message && <div className="login-message" role="alert">{message}</div>}
 
-          <button className="login-submit" type="submit" disabled={loading}>
-            <span>{loading ? "Logowanie..." : "Zaloguj się"}</span>
+          <button className={`login-submit login-submit--${authState}`} type="submit" disabled={loading}>
+            <span>
+              {authState === "success" ? "Zalogowano!" : loading ? "Logowanie..." : "Zaloguj się"}
+            </span>
             {loading ? <i className="login-spinner" aria-hidden="true" /> : <ArrowRight size={19} aria-hidden="true" />}
           </button>
         </form>
