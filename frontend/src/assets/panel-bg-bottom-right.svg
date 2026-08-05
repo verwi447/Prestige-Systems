@@ -1,0 +1,24 @@
+<svg width="480" height="420" viewBox="0 0 480 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="triFill1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1aa34a" stop-opacity="0.27"/>
+      <stop offset="1" stop-color="#0b2342" stop-opacity="0.14"/>
+    </linearGradient>
+    <linearGradient id="triFill2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1aa34a" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#1aa34a" stop-opacity="0.11"/>
+    </linearGradient>
+  </defs>
+  <polygon points="480,240 480,420 300,420" fill="url(#triFill1)"/>
+  <polygon points="480,240 380,340 480,360" fill="url(#triFill2)"/>
+  <polygon points="380,340 480,360 480,420 340,420 300,420" fill="url(#triFill1)" opacity="0.75"/>
+  <polygon points="340,420 380,340 480,420" fill="url(#triFill2)" opacity="0.85"/>
+  <polygon points="180,420 300,420 350,360" fill="url(#triFill1)" opacity="0.55"/>
+  <g stroke="#0b2342" stroke-opacity="0.30" stroke-width="1">
+    <line x1="480" y1="240" x2="380" y2="340"/>
+    <line x1="380" y1="340" x2="340" y2="420"/>
+    <line x1="380" y1="340" x2="480" y2="360"/>
+    <line x1="350" y1="360" x2="300" y2="420"/>
+    <line x1="350" y1="360" x2="380" y2="340"/>
+  </g>
+</svg>

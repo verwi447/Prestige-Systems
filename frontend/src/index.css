@@ -1777,7 +1777,11 @@ select:focus-visible {
 }
 
 .main-content {
-  background: var(--ui-canvas);
+  background:
+    url("./assets/panel-bg-top-right.svg") top right no-repeat,
+    url("./assets/panel-bg-bottom-left.svg") bottom left no-repeat,
+    url("./assets/panel-bg-bottom-right.svg") bottom right no-repeat,
+    var(--ui-canvas);
 }
 
 .main-content :is(h1, h2, h3) {
