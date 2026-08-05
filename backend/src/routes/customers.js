@@ -144,7 +144,7 @@ router.post("/", auth, requireAdmin, async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
       const userResult = await client.query(
-        "INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING id",
+        "INSERT INTO users (username, password, password_hash, role) VALUES ($1, $2, $2, $3) RETURNING id",
         [trimmedEmail, hashedPassword, "USER"]
       );
       userId = userResult.rows[0].id;
