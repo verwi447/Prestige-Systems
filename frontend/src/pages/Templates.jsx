@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { templates as templatesAPI } from '../api';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { showFeedback } from '../lib/feedback';
 import './Templates.css';
 
 const initialItem = { title: '', description: '', unit_price: 0, quantity: 1 };
@@ -14,6 +16,7 @@ export default function Templates() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     useEffect(() => {
         fetchTemplates();
@@ -86,15 +89,17 @@ export default function Templates() {
         }
     };
 
-    const handleDelete = async (templateId) => {
-        if (window.confirm('Czy na pewno chcesz usunąć ten szablon?')) {
-            try {
-                await templatesAPI.delete(templateId);
-                fetchTemplates();
-            } catch (err) {
-                alert(err.response?.data?.error || 'Nie udało się usunąć szablonu.');
-                console.error(err);
-            }
+    const handleDelete = async () => {
+        const template = deleteTarget;
+        setDeleteTarget(null);
+        if (!template) return;
+        try {
+            await templatesAPI.delete(template.id);
+            fetchTemplates();
+            showFeedback({ message: 'Szablon zostal usuniety.', type: 'success' });
+        } catch (err) {
+            showFeedback({ message: err.response?.data?.error || 'Nie udało się usunąć szablonu.', type: 'error' });
+            console.error(err);
         }
     };
 
@@ -166,7 +171,7 @@ export default function Templates() {
                                     <td>{template.description}</td>
                                     <td>{new Date(template.created_at).toLocaleDateString('pl-PL')}</td>
                                     <td className="actions">
-                                        <button onClick={() => handleDelete(template.id)} className="btn-delete btn-sm">Usuń</button>
+                                        <button onClick={() => setDeleteTarget(template)} className="btn-delete btn-sm">Usuń</button>
                                     </td>
                                 </tr>
                             ))
@@ -174,6 +179,16 @@ export default function Templates() {
                     </tbody>
                 </table>
             </div>
+
+            <ConfirmationModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDelete}
+                title="Usuń szablon"
+                confirmText="Usuń"
+            >
+                <p>Czy na pewno chcesz usunąć szablon <strong>{deleteTarget?.name}</strong>?</p>
+            </ConfirmationModal>
         </div>
     );
 }

@@ -9,6 +9,7 @@ import {
   templates as templatesAPI,
   admins as adminsAPI
 } from "../api";
+import ConfirmationModal from "../components/ConfirmationModal";
 import OfferPreview from "./offers/OfferPreview";
 import OfferSummary from "./offers/OfferSummary";
 import PdfExporter from "./offers/PdfExporter";
@@ -627,6 +628,7 @@ export default function NewOffer() {
   const [previewVersion, setPreviewVersion] = useState(0);
   const lastSavedSnapshotRef = useRef("");
   const allowNavigationRef = useRef(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
 
   const summary = useMemo(() => calculateSummary(offer.items), [offer.items]);
   const currentSnapshot = useMemo(() => offerDraftSnapshot(offer), [offer]);
@@ -762,22 +764,26 @@ export default function NewOffer() {
       const currentUrl = new URL(window.location.href);
       if (nextUrl.href === currentUrl.href) return;
 
-      const shouldLeave = window.confirm(UNSAVED_OFFER_MESSAGE);
-      if (!shouldLeave) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation?.();
-      } else {
-        allowNavigationRef.current = true;
-        window.setTimeout(() => {
-          allowNavigationRef.current = false;
-        }, 0);
-      }
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+      setPendingNavigation(nextUrl.pathname + nextUrl.search + nextUrl.hash);
     };
 
     document.addEventListener("click", handleNavigationClick, true);
     return () => document.removeEventListener("click", handleNavigationClick, true);
   }, [hasUnsavedChanges]);
+
+  const confirmPendingNavigation = () => {
+    const destination = pendingNavigation;
+    setPendingNavigation(null);
+    if (!destination) return;
+    allowNavigationRef.current = true;
+    navigate(destination);
+    window.setTimeout(() => {
+      allowNavigationRef.current = false;
+    }, 0);
+  };
 
   const validateStep = (stepId = activeStep) => {
     const nextErrors = {};
@@ -1060,6 +1066,17 @@ export default function NewOffer() {
           />
         </aside>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!pendingNavigation}
+        onClose={() => setPendingNavigation(null)}
+        onConfirm={confirmPendingNavigation}
+        title="Niezapisane zmiany"
+        confirmText="Opuść stronę"
+        confirmVariant="delete"
+      >
+        <p>{UNSAVED_OFFER_MESSAGE}</p>
+      </ConfirmationModal>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { offers as offersAPI } from "../api.js";
 import AppState from "../components/AppState";
+import ConfirmationModal from "../components/ConfirmationModal";
 import { getRequestErrorMessage, showSuccess } from "../lib/feedback";
 import "./AdminOffers.css";
 
@@ -83,6 +84,7 @@ export default function AdminOffers() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const loadOffers = async () => {
     setLoading(true);
@@ -174,11 +176,16 @@ export default function AdminOffers() {
   };
 
   const deleteOffer = async (offer) => {
-    if (!window.confirm(`Usunąć ofertę ${offer.offer_number || offer.id}?`)) return;
     await offersAPI.delete(offer.id);
     setOffers((current) => current.filter((item) => item.id !== offer.id));
     setOpenMenuId(null);
     showSuccess("Oferta zostala usunieta.");
+  };
+
+  const confirmDeleteOffer = async () => {
+    const offer = deleteTarget;
+    setDeleteTarget(null);
+    if (offer) await deleteOffer(offer);
   };
 
   if (loading) return <div className="page admin-offers-page"><div className="admin-offers-card"><AppState variant="loading" title="Ladowanie ofert" description="Pobieramy aktualne dane handlowe." /></div></div>;
@@ -256,7 +263,7 @@ export default function AdminOffers() {
                           <button type="button" onClick={() => navigate(`/offers/edit/${offer.id}`)}><Edit3 size={15} /> Edytuj</button>
                           <button type="button" onClick={() => downloadPdf(offer)}><Download size={15} /> Pobierz PDF</button>
                           <button type="button" onClick={() => duplicateOffer(offer)}><Copy size={15} /> Duplikuj</button>
-                          <button type="button" className="danger" onClick={() => deleteOffer(offer)}><Trash2 size={15} /> Usuń</button>
+                          <button type="button" className="danger" onClick={() => { setDeleteTarget(offer); setOpenMenuId(null); }}><Trash2 size={15} /> Usuń</button>
                         </div>
                       )}
                     </div>
@@ -281,6 +288,16 @@ export default function AdminOffers() {
           </div>
         </footer>
       </section>
+
+      <ConfirmationModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteOffer}
+        title="Usuń ofertę"
+        confirmText="Usuń"
+      >
+        <p>Usunąć ofertę <strong>{deleteTarget?.offer_number || deleteTarget?.id}</strong>? Tej operacji nie można cofnąć.</p>
+      </ConfirmationModal>
     </div>
   );
 }
