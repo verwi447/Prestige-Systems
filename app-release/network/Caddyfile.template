@@ -1,0 +1,23 @@
+{
+  email {{ACME_EMAIL}}
+  admin 127.0.0.1:2019
+}
+
+{{DOMAIN}} {
+  encode zstd gzip
+
+  header {
+    -Server
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=()"
+  }
+
+  reverse_proxy 127.0.0.1:5000 {
+    health_uri /healthz
+    health_interval 15s
+    health_timeout 5s
+  }
+}

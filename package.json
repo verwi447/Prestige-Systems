@@ -1,0 +1,12 @@
+{
+  "name": "prestige-systems-hub",
+  "private": true,
+  "scripts": {
+    "lint": "npm --prefix backend run lint && npm --prefix frontend run lint",
+    "test": "npm --prefix backend test",
+    "build": "npm --prefix frontend run build",
+    "check": "npm --prefix backend run check && npm --prefix frontend run check",
+    "release:prepare": "npm run build && node scripts/prepareRelease.mjs",
+    "release:test": "node scripts/testStagingRelease.mjs"
+  }
+}

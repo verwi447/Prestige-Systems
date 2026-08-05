@@ -1,0 +1,32 @@
+<service>
+	<id>prestigesystemshub.exe</id>
+	<name>Prestige Systems HUB</name>
+	<description>Prestige Systems HUB backend and web application service.</description>
+	<executable>C:\Program Files\nodejs\node.exe</executable>
+	<argument>--enable-source-maps</argument>
+	<argument>C:\Users\PC\OneDrive\Pulpit\aplikacja ps\backend\node_modules\node-windows\lib\wrapper.js</argument>
+	<argument>--file</argument>
+	<argument>C:\Users\PC\OneDrive\Pulpit\aplikacja ps\backend\src\index.js</argument>
+	<argument>--scriptoptions=</argument>
+	<argument>--log</argument>
+	<argument>Prestige Systems HUB wrapper</argument>
+	<argument>--grow</argument>
+	<argument>0.25</argument>
+	<argument>--wait</argument>
+	<argument>1</argument>
+	<argument>--maxrestarts</argument>
+	<argument>3</argument>
+	<argument>--abortonerror</argument>
+	<argument>n</argument>
+	<argument>--stopparentfirst</argument>
+	<argument>undefined</argument>
+	<logmode>rotate</logmode>
+	<stoptimeout>30sec</stoptimeout>
+	<env name="NODE_ENV" value="production"/>
+	<serviceaccount>
+		<domain>DESKTOP-NPKS6S2</domain>
+		<user>LocalSystem</user>
+		<password></password>
+	</serviceaccount>
+	<workingdirectory>C:\Users\PC\OneDrive\Pulpit\aplikacja ps\backend</workingdirectory>
+</service>
