@@ -3,6 +3,7 @@ import { Copy, Grid2X2, Image as ImageIcon, List, Pencil, Settings2, Tag, Trash2
 import { products as productsAPI } from "../api.js";
 import AppState from "../components/AppState.jsx";
 import ConfirmationModal from "../components/ConfirmationModal.jsx";
+import BarrierCheckbox from "../components/BarrierCheckbox.jsx";
 import { getRequestErrorMessage, showSuccess } from "../lib/feedback";
 import { apiOrigin } from "../lib/runtimeConfig";
 import "./Products.css";
@@ -200,24 +201,27 @@ function ProductFormModal({
 
             <section className="product-edit-section visibility-section">
               <h3>Widoczność produktu</h3>
-              <label className="product-switch">
-                <input type="checkbox" checked={formData.active} onChange={(event) => update("active", event.target.checked)} />
-                <span />
-                <strong>Aktywny</strong>
-                <small>Produkt jest dostępny w systemie.</small>
-              </label>
-              <label className="product-switch">
-                <input type="checkbox" checked={formData.visible_for_clients} onChange={(event) => update("visible_for_clients", event.target.checked)} />
-                <span />
-                <strong>Widoczny dla klientów</strong>
-                <small>Produkt będzie widoczny w katalogu klienta.</small>
-              </label>
-              <label className="product-switch">
-                <input type="checkbox" checked={formData.show_price_to_client} onChange={(event) => update("show_price_to_client", event.target.checked)} />
-                <span />
-                <strong>Pokaż cenę klientowi</strong>
-                <small>Klient zobaczy cenę produktu w katalogu.</small>
-              </label>
+              <BarrierCheckbox
+                className="product-switch"
+                checked={formData.active}
+                onChange={(value) => update("active", value)}
+                label={<strong>Aktywny</strong>}
+                description="Produkt jest dostępny w systemie."
+              />
+              <BarrierCheckbox
+                className="product-switch"
+                checked={formData.visible_for_clients}
+                onChange={(value) => update("visible_for_clients", value)}
+                label={<strong>Widoczny dla klientów</strong>}
+                description="Produkt będzie widoczny w katalogu klienta."
+              />
+              <BarrierCheckbox
+                className="product-switch"
+                checked={formData.show_price_to_client}
+                onChange={(value) => update("show_price_to_client", value)}
+                label={<strong>Pokaż cenę klientowi</strong>}
+                description="Klient zobaczy cenę produktu w katalogu."
+              />
               <div className="product-visibility-note">
                 Zmiany dotyczące widoczności mogą być widoczne dla klientów z kilkuminutowym opóźnieniem.
               </div>

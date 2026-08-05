@@ -30,6 +30,8 @@ import {
   X
 } from "lucide-react";
 import { client as clientAPI, protectedFiles, tickets as ticketsAPI } from "../api";
+import BarrierIcon from "../components/BarrierIcon";
+import BarrierCheckbox from "../components/BarrierCheckbox";
 import "./TicketDetail.css";
 
 const statusOptions = [
@@ -438,14 +440,20 @@ export default function TicketDetail() {
                   <div className="ticket-admin-composer-row">
                     <div className="ticket-admin-composer-tools">
                       {isAdmin && (
-                        <label className={`ticket-admin-internal-note ${internalNote ? "active" : ""}`}>
-                          <input type="checkbox" checked={internalNote} onChange={(event) => setInternalNote(event.target.checked)} />
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={internalNote}
+                          className={`ticket-admin-internal-note ${internalNote ? "active" : ""}`}
+                          onClick={() => setInternalNote(!internalNote)}
+                        >
+                          <BarrierIcon checked={internalNote} />
                           <LockKeyhole size={17} aria-hidden="true" />
                           <span>
                             <strong>Notatka wewnetrzna</strong>
                             <small>Widoczna tylko dla administratorow</small>
                           </span>
-                        </label>
+                        </button>
                       )}
                       <button type="button" className="ticket-admin-attach-button" onClick={openCommentAttachmentPicker} title="Dodaj zalacznik">
                         <Paperclip size={17} /> <span>Dodaj zalacznik</span>
@@ -595,8 +603,8 @@ export default function TicketDetail() {
             <DetailField label="Aktualny status" value={statusLabels[status]} />
             <label>Nowy status<select value={statusForm.status} onChange={(event) => setStatusForm((prev) => ({ ...prev, status: event.target.value }))}>{statusOptions.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
             <label>Komentarz opcjonalny<textarea value={statusForm.comment} onChange={(event) => setStatusForm((prev) => ({ ...prev, comment: event.target.value }))} rows={3} /></label>
-            <label className="check"><input type="checkbox" checked={statusForm.publicComment} onChange={(event) => setStatusForm((prev) => ({ ...prev, publicComment: event.target.checked }))} /> Dodaj komentarz publiczny dla klienta</label>
-            <label className="check"><input type="checkbox" checked={statusForm.notifyClient} onChange={(event) => setStatusForm((prev) => ({ ...prev, notifyClient: event.target.checked }))} /> Wyslij powiadomienie do klienta</label>
+            <BarrierCheckbox className="check" checked={statusForm.publicComment} onChange={(value) => setStatusForm((prev) => ({ ...prev, publicComment: value }))} label="Dodaj komentarz publiczny dla klienta" />
+            <BarrierCheckbox className="check" checked={statusForm.notifyClient} onChange={(value) => setStatusForm((prev) => ({ ...prev, notifyClient: value }))} label="Wyslij powiadomienie do klienta" />
             <footer><button type="button" onClick={() => setModal(null)}>Anuluj</button><button type="button" onClick={() => runAction(() => ticketsAPI.changeStatus(id, statusForm), "Zmieniono status.")} disabled={saving}>Zmien status</button></footer>
           </div>
         </Modal>
@@ -634,8 +642,8 @@ export default function TicketDetail() {
         <Modal title="Zamknij zgloszenie" onClose={() => setModal(null)}>
           <div className="ticket-admin-form">
             <label>Podsumowanie rozwiazania<textarea value={closeForm.summary} onChange={(event) => setCloseForm((prev) => ({ ...prev, summary: event.target.value }))} rows={4} /></label>
-            <label className="check"><input type="checkbox" checked={closeForm.notifyClient} onChange={(event) => setCloseForm((prev) => ({ ...prev, notifyClient: event.target.checked }))} /> Wyslij informacje do klienta</label>
-            <label className="check"><input type="checkbox" checked={closeForm.addHistory} onChange={(event) => setCloseForm((prev) => ({ ...prev, addHistory: event.target.checked }))} /> Dodaj wpis do historii</label>
+            <BarrierCheckbox className="check" checked={closeForm.notifyClient} onChange={(value) => setCloseForm((prev) => ({ ...prev, notifyClient: value }))} label="Wyslij informacje do klienta" />
+            <BarrierCheckbox className="check" checked={closeForm.addHistory} onChange={(value) => setCloseForm((prev) => ({ ...prev, addHistory: value }))} label="Dodaj wpis do historii" />
             <footer><button type="button" onClick={() => setModal(null)}>Anuluj</button><button type="button" onClick={() => runAction(() => ticketsAPI.close(id, closeForm), "Zgloszenie zamkniete.")} disabled={saving}>Zamknij zgloszenie</button></footer>
           </div>
         </Modal>

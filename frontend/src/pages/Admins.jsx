@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { admins as adminsAPI } from "../api";
 import ConfirmationModal from "../components/ConfirmationModal";
+import BarrierCheckbox from "../components/BarrierCheckbox";
 import "./Settings.css";
 
 const emptyAdmin = {
@@ -315,7 +316,7 @@ export default function Admins() {
             <label className="admin-form-wide">E-mail<input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} placeholder="Wpisz adres e-mail" /></label>
             <label>Telefon <span>(opcjonalnie)</span><input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} placeholder="Wpisz numer telefonu" /></label>
             <label>{editing ? "Nowe hasło" : "Hasło"}<input type="password" value={form.password} onChange={(event) => updateField("password", event.target.value)} placeholder="Minimum 8 znaków" /></label>
-            <label className="admin-check-line"><input type="checkbox" checked={form.isActive} onChange={(event) => updateField("isActive", event.target.checked)} />Aktywny</label>
+            <BarrierCheckbox className="admin-check-line" checked={form.isActive} onChange={(value) => updateField("isActive", value)} label="Aktywny" />
           </div>
 
           <div className="admin-form-actions">

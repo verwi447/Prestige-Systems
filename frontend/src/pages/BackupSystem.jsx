@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { backups } from "../api";
 import AppState from "../components/AppState";
 import ConfirmationModal from "../components/ConfirmationModal";
+import BarrierCheckbox from "../components/BarrierCheckbox";
 import "./BackupSystem.css";
 
 const tabs = [
@@ -420,7 +421,7 @@ export default function BackupSystem() {
                   ["include_pdf", "Wygenerowane PDF"],
                   ["include_config", "Konfiguracja systemu"]
                 ].map(([key, label]) => (
-                  <label key={key} className="backup-check-item"><input type="checkbox" checked={settings[key] !== false} onChange={(event) => setSettings((current) => ({ ...current, [key]: event.target.checked }))} /><span>{label}</span></label>
+                  <BarrierCheckbox key={key} className="backup-check-item" checked={settings[key] !== false} onChange={(value) => setSettings((current) => ({ ...current, [key]: value }))} label={label} />
                 ))}
               </div>
               <button className="backup-primary small" onClick={saveSettings} disabled={saving === "settings"}>Zapisz ustawienia</button>
@@ -446,7 +447,7 @@ export default function BackupSystem() {
                 <input placeholder="Nazwa lokalizacji" value={locationForm.name} onChange={(event) => setLocationForm((current) => ({ ...current, name: event.target.value }))} />
                 <select value={locationForm.type} onChange={(event) => setLocationForm((current) => ({ ...current, type: event.target.value }))}><option value="LOCAL_FOLDER">Folder lokalny</option><option value="NETWORK_FOLDER">Folder sieciowy</option></select>
                 <div className="backup-path-picker"><input placeholder="D:\\Prestige Backups" value={locationForm.path} onChange={(event) => setLocationForm((current) => ({ ...current, path: event.target.value }))} /><button type="button" className="backup-folder-picker" title="Wybierz folder" aria-label="Wybierz folder" onClick={chooseLocationPath} disabled={saving === "folder-picker"}><BackupIcon type="folder" /></button></div>
-                <label className="backup-location-default"><input type="checkbox" checked={locationForm.isDefault} onChange={(event) => setLocationForm((current) => ({ ...current, isDefault: event.target.checked }))} />Domyślna</label>
+                <BarrierCheckbox className="backup-location-default" checked={locationForm.isDefault} onChange={(value) => setLocationForm((current) => ({ ...current, isDefault: value }))} label="Domyślna" />
                 <button className="backup-secondary backup-location-save" onClick={saveLocation} disabled={saving === "location"}>{editingLocation ? "Zapisz" : "Dodaj lokalizację"}</button>
               </div>}
               <div className="backup-table-shell">
@@ -602,8 +603,8 @@ export default function BackupSystem() {
                   </div>
                   {selectedImportFile && <div className="backup-selected-file"><BackupIcon type="folder" /><span>{selectedImportFile.name}</span><small>{bytes(selectedImportFile.size)}</small></div>}
                   <button className="backup-primary backup-import-confirm" onClick={() => uploadBackup()} disabled={!selectedImportFile || saving === "import"}>Importuj backup</button>
-                  <label><input type="checkbox" checked={importOptions.integrity} onChange={(event) => setImportOptions((current) => ({ ...current, integrity: event.target.checked }))} />Wykonaj Integrity Check</label>
-                  <label><input type="checkbox" checked={importOptions.testRestore} onChange={(event) => setImportOptions((current) => ({ ...current, testRestore: event.target.checked }))} />Wykonaj Test Restore po imporcie</label>
+                  <BarrierCheckbox checked={importOptions.integrity} onChange={(value) => setImportOptions((current) => ({ ...current, integrity: value }))} label="Wykonaj Integrity Check" />
+                  <BarrierCheckbox checked={importOptions.testRestore} onChange={(value) => setImportOptions((current) => ({ ...current, testRestore: value }))} label="Wykonaj Test Restore po imporcie" />
                 </article>
                 <article>
                   <h3>Informacje</h3>
@@ -710,8 +711,8 @@ export default function BackupSystem() {
             </div>
             {selectedImportFile && <div className="backup-selected-file"><BackupIcon type="folder" /><span>{selectedImportFile.name}</span><small>{bytes(selectedImportFile.size)}</small></div>}
             <button className="backup-primary backup-import-confirm" onClick={() => uploadBackup()} disabled={!selectedImportFile || saving === "import"}>Importuj backup</button>
-            <label><input type="checkbox" checked={importOptions.integrity} onChange={(event) => setImportOptions((current) => ({ ...current, integrity: event.target.checked }))} />Wykonaj Integrity Check</label>
-            <label><input type="checkbox" checked={importOptions.testRestore} onChange={(event) => setImportOptions((current) => ({ ...current, testRestore: event.target.checked }))} />Wykonaj Test Restore po imporcie</label>
+            <BarrierCheckbox checked={importOptions.integrity} onChange={(value) => setImportOptions((current) => ({ ...current, integrity: value }))} label="Wykonaj Integrity Check" />
+            <BarrierCheckbox checked={importOptions.testRestore} onChange={(value) => setImportOptions((current) => ({ ...current, testRestore: value }))} label="Wykonaj Test Restore po imporcie" />
           </article>
           <article>
             <h3>Informacje</h3>
@@ -734,7 +735,7 @@ export default function BackupSystem() {
           <p>{forceRestore ? "Ten backup ma błąd integralności. Wymuszone przywrócenie jest ryzykowne." : "Ta operacja wymaga ponownego hasła administratora."}</p>
           <label>Fraza potwierdzająca<input value={restoreForm.confirmation} onChange={(event) => setRestoreForm((current) => ({ ...current, confirmation: event.target.value }))} placeholder={forceRestore ? "WYMUSZ PRZYWRÓCENIE" : "PRZYWRÓĆ BACKUP"} /></label>
           <label>Hasło administratora<input type="password" value={restoreForm.password} onChange={(event) => setRestoreForm((current) => ({ ...current, password: event.target.value }))} /></label>
-          {forceRestore && <label className="risk"><input type="checkbox" checked={restoreForm.riskAccepted} onChange={(event) => setRestoreForm((current) => ({ ...current, riskAccepted: event.target.checked }))} />Rozumiem ryzyko przywrócenia uszkodzonego backupu.</label>}
+          {forceRestore && <BarrierCheckbox className="risk" checked={restoreForm.riskAccepted} onChange={(value) => setRestoreForm((current) => ({ ...current, riskAccepted: value }))} label="Rozumiem ryzyko przywrócenia uszkodzonego backupu." />}
         </div>
       </ConfirmationModal>
     </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { companies, users as usersAPI } from "../../api";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import BarrierCheckbox from "../../components/BarrierCheckbox";
 
 const PERMISSION_DEFS = [
   {
@@ -457,13 +458,13 @@ export default function CompanyEmployeesTab({ companyId }) {
                   </label>
                   <label><span>{editing ? "Nowe hasło" : "Hasło"} {!editing && <b>*</b>}</span><input type="password" value={form.password} onChange={(event) => updateField("password", event.target.value)} placeholder={editing ? "Zostaw puste bez zmian" : "Wprowadź hasło"} /></label>
                 </div>
-                <label className="company-checkbox employee-active-check">
-                  <input type="checkbox" checked={form.isActive} onChange={(event) => updateField("isActive", event.target.checked)} />
-                  <span>
-                    Aktywny
-                    <small>Pracownik będzie mógł logować się do systemu.</small>
-                  </span>
-                </label>
+                <BarrierCheckbox
+                  className="employee-active-check"
+                  checked={form.isActive}
+                  onChange={(value) => updateField("isActive", value)}
+                  label="Aktywny"
+                  description="Pracownik będzie mógł logować się do systemu."
+                />
               </section>
 
               <section className="employee-modal-section employee-permissions-section">

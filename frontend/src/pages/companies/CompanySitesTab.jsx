@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { companies } from "../../api";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import BarrierCheckbox from "../../components/BarrierCheckbox";
 import { apiOrigin } from "../../lib/runtimeConfig";
 
 const API_ORIGIN = apiOrigin;
@@ -550,13 +551,13 @@ export default function CompanySitesTab({ companyId }) {
               <label><span>Miasto</span><input value={form.city} onChange={(event) => updateField("city", event.target.value)} placeholder="Wprowadź miasto" /></label>
               <label><span>Kraj</span><input value={form.country} onChange={(event) => updateField("country", event.target.value)} placeholder="Polska" /></label>
               <label className="full"><span>Opis</span><textarea rows="3" value={form.description} onChange={(event) => updateField("description", event.target.value)} placeholder="Wprowadź opis obiektu" /></label>
-              <label className="company-checkbox full">
-                <input type="checkbox" checked={form.isActive} onChange={(event) => updateField("isActive", event.target.checked)} />
-                <span>
-                  Aktywny
-                  <small>Obiekt będzie widoczny i dostępny w systemie.</small>
-                </span>
-              </label>
+              <BarrierCheckbox
+                className="full"
+                checked={form.isActive}
+                onChange={(value) => updateField("isActive", value)}
+                label="Aktywny"
+                description="Obiekt będzie widoczny i dostępny w systemie."
+              />
             </div>
             <div className="company-modal-actions">
               <button className="btn btn-cancel" type="button" onClick={() => setShowForm(false)} disabled={savingSite}>Anuluj</button>

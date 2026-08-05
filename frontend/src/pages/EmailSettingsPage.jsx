@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Braces, CheckCircle2, Code2, Edit3, Eye, FileImage, FileText, History, LockKeyhole, Mail, Save, Send, Settings, ShieldCheck, Type } from "lucide-react";
 import { email as emailAPI } from "../api";
+import BarrierCheckbox from "../components/BarrierCheckbox";
 import { apiOrigin } from "../lib/runtimeConfig";
 import "./EmailSettingsPage.css";
 
@@ -351,8 +352,8 @@ export default function EmailSettingsPage() {
           <div className="email-form-grid smtp-form-grid">
             <label>Host SMTP<input value={settings.smtpHost} onChange={(event) => update("smtpHost", event.target.value)} placeholder="smtp.example.com" /></label>
             <label>Port<input type="number" value={settings.smtpPort} onChange={(event) => update("smtpPort", event.target.value)} /></label>
-            <label className="email-check"><input type="checkbox" checked={settings.smtpSecure} onChange={(event) => update("smtpSecure", event.target.checked)} />Połączenie SSL/TLS</label>
-            <label className="email-check"><input type="checkbox" checked={settings.isActive} onChange={(event) => update("isActive", event.target.checked)} />Konfiguracja aktywna</label>
+            <BarrierCheckbox className="email-check" checked={settings.smtpSecure} onChange={(value) => update("smtpSecure", value)} label="Połączenie SSL/TLS" />
+            <BarrierCheckbox className="email-check" checked={settings.isActive} onChange={(value) => update("isActive", value)} label="Konfiguracja aktywna" />
             <label>Użytkownik SMTP<input value={settings.smtpUser} onChange={(event) => update("smtpUser", event.target.value)} placeholder="konto SMTP" /></label>
             <label>Hasło SMTP<input type="password" value={settings.smtpPassword} onChange={(event) => update("smtpPassword", event.target.value)} placeholder={hasPassword ? "Pozostaw puste, aby nie zmieniać" : "Wprowadź hasło SMTP"} /></label>
             <label>E-mail nadawcy<input type="email" value={settings.fromEmail} onChange={(event) => update("fromEmail", event.target.value)} placeholder="biuro@prestigesystems.pl" /></label>
@@ -466,7 +467,7 @@ export default function EmailSettingsPage() {
                   </aside>
                 </div>
                 <div className="template-editor-actions">
-                  <label className="email-check"><input type="checkbox" checked={templateForm.isActive} onChange={(event) => updateTemplate("isActive", event.target.checked)} />Szablon aktywny</label>
+                  <BarrierCheckbox className="email-check" checked={templateForm.isActive} onChange={(value) => updateTemplate("isActive", value)} label="Szablon aktywny" />
                   <button type="button" className="email-primary" disabled={loading} onClick={saveTemplate}><Save size={16} />Zapisz szablon</button>
                 </div>
               </div>
@@ -484,11 +485,12 @@ export default function EmailSettingsPage() {
           <div className="footer-editor-layout">
             <div className="footer-editor">
               <div className="footer-control-row">
-                <label className="footer-toggle">
-                  <input type="checkbox" checked={settings.footerEnabled} onChange={(event) => update("footerEnabled", event.target.checked)} />
-                  <span aria-hidden="true" />
-                  <strong>Dodawaj stopkę do wiadomości</strong>
-                </label>
+                <BarrierCheckbox
+                  className="footer-toggle"
+                  checked={settings.footerEnabled}
+                  onChange={(value) => update("footerEnabled", value)}
+                  label={<strong>Dodawaj stopkę do wiadomości</strong>}
+                />
                 <label className="footer-upload">
                   <span>Logo stopki</span>
                   <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" onChange={(event) => uploadFooterLogo(event.target.files?.[0])} />

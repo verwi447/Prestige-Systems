@@ -407,10 +407,6 @@
 }
 
 .backup-check-grid .backup-check-item {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  align-items: center;
-  column-gap: 0.52rem;
   min-height: 28px;
 }
 

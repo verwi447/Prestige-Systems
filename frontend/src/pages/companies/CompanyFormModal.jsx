@@ -1,3 +1,5 @@
+import BarrierCheckbox from "../../components/BarrierCheckbox";
+
 export default function CompanyFormModal({ formData, editingCompany, onChange, onClose, onSubmit }) {
   const update = (field, value) => onChange({ ...formData, [field]: value });
   const title = editingCompany ? "Edytuj firmę" : "Dodaj firmę";
@@ -56,13 +58,13 @@ export default function CompanyFormModal({ formData, editingCompany, onChange, o
             <span>Miasto <b>*</b></span>
             <input placeholder="Wprowadź miasto" value={formData.city || ""} onChange={(event) => update("city", event.target.value)} />
           </label>
-          <label className="company-checkbox full">
-            <input type="checkbox" checked={formData.is_active !== false} onChange={(event) => update("is_active", event.target.checked)} />
-            <span>
-              Firma aktywna
-              <small>Nieaktywne firmy nie będą widoczne na liście wyboru.</small>
-            </span>
-          </label>
+          <BarrierCheckbox
+            className="full"
+            checked={formData.is_active !== false}
+            onChange={(value) => update("is_active", value)}
+            label="Firma aktywna"
+            description="Nieaktywne firmy nie będą widoczne na liście wyboru."
+          />
         </div>
 
         <footer className="company-modal-actions">

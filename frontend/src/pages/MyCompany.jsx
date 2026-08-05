@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { client as clientAPI } from "../api";
 import AppState from "../components/AppState";
+import BarrierCheckbox from "../components/BarrierCheckbox";
 import { getRequestErrorMessage, showSuccess } from "../lib/feedback";
 import { getStoredUser, hasClientPermission, isClientOwner } from "../lib/permissions";
 import { apiOrigin } from "../lib/runtimeConfig";
@@ -972,7 +973,7 @@ export default function MyCompany() {
             <CompanyInput label="E-mail" value={employeeForm.email} onChange={(email) => setEmployeeForm({ ...employeeForm, email })} />
             <CompanyInput label="Telefon" value={employeeForm.phone} onChange={(phone) => setEmployeeForm({ ...employeeForm, phone })} />
             {!employeeForm.id && <CompanyInput label="Hasło" type="password" value={employeeForm.password} onChange={(password) => setEmployeeForm({ ...employeeForm, password })} />}
-            <label className="site-active-toggle"><input type="checkbox" checked={employeeForm.isActive} onChange={(event) => setEmployeeForm({ ...employeeForm, isActive: event.target.checked })} /> Aktywny</label>
+            <BarrierCheckbox className="site-active-toggle" checked={employeeForm.isActive} onChange={(value) => setEmployeeForm({ ...employeeForm, isActive: value })} label="Aktywny" />
           </div>
           <div className="employee-modal-column">
             <h3>Uprawnienia</h3>
@@ -1042,7 +1043,7 @@ export default function MyCompany() {
           <CompanyInput label="Miasto" value={siteForm.city} onChange={(city) => setSiteForm({ ...siteForm, city })} />
           <CompanyInput label="Kraj" value={siteForm.country} onChange={(country) => setSiteForm({ ...siteForm, country })} />
           <label className="company-form-field full"><span>Opis</span><textarea value={siteForm.description} onChange={(event) => setSiteForm({ ...siteForm, description: event.target.value })} rows="3" /></label>
-          <label className="site-active-toggle"><input type="checkbox" checked={siteForm.isActive} onChange={(event) => setSiteForm({ ...siteForm, isActive: event.target.checked })} /> Aktywny</label>
+          <BarrierCheckbox className="site-active-toggle" checked={siteForm.isActive} onChange={(value) => setSiteForm({ ...siteForm, isActive: value })} label="Aktywny" />
         </CompanyModal>
       )}
 

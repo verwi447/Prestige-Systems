@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileText, Loader2, Mail, Send, X } from "lucide-react";
 import { email as emailAPI } from "../../api";
+import BarrierCheckbox from "../../components/BarrierCheckbox";
 
 const stripHtml = (value = "") => String(value).replace(/<[^>]*>?/gm, "");
 
@@ -117,15 +118,12 @@ export default function SendOfferEmailModal({ isOpen, offer, onClose, onSent }) 
           <textarea value={form.html} onChange={(event) => update("html", event.target.value)} />
         </label>
 
-        <label className="email-modal-check">
-          <input
-            type="checkbox"
-            checked={form.attachPdf}
-            onChange={(event) => update("attachPdf", event.target.checked)}
-          />
-          <FileText size={17} />
-          <span>Dołącz aktualny PDF oferty</span>
-        </label>
+        <BarrierCheckbox
+          className="email-modal-check"
+          checked={form.attachPdf}
+          onChange={(value) => update("attachPdf", value)}
+          label={<span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FileText size={16} /> Dołącz aktualny PDF oferty</span>}
+        />
 
         {error && (
           <div className="email-modal-error">
