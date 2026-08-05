@@ -18,13 +18,7 @@
     "db:setup": "node scripts/setupDatabase.js",
     "db:migrate": "node scripts/migrateDatabase.js",
     "db:status": "node scripts/migrationStatus.js",
-    "admin:create": "node scripts/createAdmin.js",
-    "fix-db": "node fix_customer_user_id.js",
-    "db:init": "node src/db_init.js",
-    "db:fix-offers": "node fix_offers_table.js",
-    "db:fix-customer-id": "node fix_customer_id_columns.js",
-    "db:fix-users": "node fix_users_table.js",
-    "db:fix-companies": "node fix_companies_table.js"
+    "admin:create": "node scripts/createAdmin.js"
   },
   "keywords": [],
   "author": "",
