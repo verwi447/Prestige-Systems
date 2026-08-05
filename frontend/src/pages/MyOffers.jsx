@@ -19,15 +19,14 @@ import "./MyOffers.css";
 const statusOptions = [
   { value: "ALL", label: "Wszystkie" },
   { value: "DO AKCEPTACJI", label: "Do akceptacji" },
-  { value: "WYSĹANA", label: "Wysłana" },
+  { value: "WYSŁANA", label: "Wysłana" },
   { value: "ZAAKCEPTOWANA", label: "Zaakceptowane" },
   { value: "ODRZUCONA", label: "Odrzucone" },
   { value: "W REALIZACJI", label: "W realizacji" },
-  { value: "ZAKOĹCZONA", label: "Zakończone" }
+  { value: "ZAKOŃCZONA", label: "Zakończone" }
 ];
 
 const statusMeta = {
-  "WYSĹANA": { label: "Wysłana", className: "sent" },
   "WYSŁANA": { label: "Wysłana", className: "sent" },
   SENT: { label: "Wysłana", className: "sent" },
   "DO AKCEPTACJI": { label: "Do akceptacji", className: "approval" },
@@ -38,12 +37,11 @@ const statusMeta = {
   REJECTED: { label: "Odrzucona", className: "rejected" },
   "W REALIZACJI": { label: "W realizacji", className: "progress" },
   IN_PROGRESS: { label: "W realizacji", className: "progress" },
-  "ZAKOĹCZONA": { label: "Zakończona", className: "closed" },
   "ZAKOŃCZONA": { label: "Zakończona", className: "closed" },
   COMPLETED: { label: "Zakończona", className: "closed" }
 };
 
-const decisionStatuses = new Set(["DO AKCEPTACJI", "WYSĹANA", "WYSŁANA", "TO_ACCEPTANCE", "SENT"]);
+const decisionStatuses = new Set(["DO AKCEPTACJI", "WYSŁANA", "TO_ACCEPTANCE", "SENT"]);
 
 const formatMoney = (value, currency = "PLN") => {
   const number = Number(value || 0);

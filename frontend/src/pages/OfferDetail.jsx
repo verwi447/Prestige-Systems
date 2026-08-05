@@ -21,7 +21,6 @@ import AppState from "../components/AppState";
 import "./OfferDetail.css";
 
 const statusMeta = {
-  "WYSĹANA": { label: "Wysłana", className: "sent" },
   "WYSŁANA": { label: "Wysłana", className: "sent" },
   SENT: { label: "Wysłana", className: "sent" },
   "DO AKCEPTACJI": { label: "Do akceptacji", className: "approval" },
@@ -32,12 +31,11 @@ const statusMeta = {
   REJECTED: { label: "Odrzucona", className: "rejected" },
   "W REALIZACJI": { label: "W realizacji", className: "progress" },
   IN_PROGRESS: { label: "W realizacji", className: "progress" },
-  "ZAKOĹCZONA": { label: "Zakończona", className: "closed" },
   "ZAKOŃCZONA": { label: "Zakończona", className: "closed" },
   COMPLETED: { label: "Zakończona", className: "closed" }
 };
 
-const decisionStatuses = new Set(["DO AKCEPTACJI", "WYSĹANA", "WYSŁANA", "TO_ACCEPTANCE", "SENT"]);
+const decisionStatuses = new Set(["DO AKCEPTACJI", "WYSŁANA", "TO_ACCEPTANCE", "SENT"]);
 
 const formatMoney = (value, currency = "PLN") =>
   `${Number(value || 0).toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency === "PLN" ? "zł" : currency}`;

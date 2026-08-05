@@ -20,22 +20,22 @@ import "./AdminOffers.css";
 const statusOptions = [
   { value: "ALL", label: "Wszystkie" },
   { value: "SZKIC", label: "Szkic" },
-  { value: "WYSĹANA", label: "Wysłana" },
+  { value: "WYSŁANA", label: "Wysłana" },
   { value: "DO AKCEPTACJI", label: "Do akceptacji" },
   { value: "ZAAKCEPTOWANA", label: "Zaakceptowana" },
   { value: "ODRZUCONA", label: "Odrzucona" },
   { value: "W REALIZACJI", label: "W realizacji" },
-  { value: "ZAKOĹCZONA", label: "Zakończona" }
+  { value: "ZAKOŃCZONA", label: "Zakończona" }
 ];
 
 const statusMeta = {
   SZKIC: { label: "Szkic", className: "draft" },
-  "WYSĹANA": { label: "Wysłana", className: "sent" },
+  "WYSŁANA": { label: "Wysłana", className: "sent" },
   "DO AKCEPTACJI": { label: "Do akceptacji", className: "approval" },
   ZAAKCEPTOWANA: { label: "Zaakceptowana", className: "accepted" },
   ODRZUCONA: { label: "Odrzucona", className: "rejected" },
   "W REALIZACJI": { label: "W realizacji", className: "progress" },
-  "ZAKOĹCZONA": { label: "Zakończona", className: "closed" }
+  "ZAKOŃCZONA": { label: "Zakończona", className: "closed" }
 };
 
 const money = (value, currency = "PLN") =>
@@ -112,7 +112,7 @@ export default function AdminOffers() {
     return {
       all: offers.length,
       drafts: count(["SZKIC"]),
-      sent: count(["WYSĹANA", "DO AKCEPTACJI"]),
+      sent: count(["WYSŁANA", "DO AKCEPTACJI"]),
       accepted: count(["ZAAKCEPTOWANA"]),
       rejected: count(["ODRZUCONA"])
     };
