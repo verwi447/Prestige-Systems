@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Building2, CalendarDays, CheckCircle2, CircleUserRound, ClipboardList,
-  FileText, History, Link2, MapPin, MessageSquare, MoreHorizontal, PackageCheck,
+  FileText, History, Link2, MapPin, MessageSquare, PackageCheck,
   Plus, RefreshCcw, Send, ShoppingCart, UserRound, Users, X
 } from "lucide-react";
 import { adminOrders as ordersAPI } from "../api";
@@ -111,7 +111,6 @@ export default function AdminOrderDetail() {
         <p>{order.subject}</p>
       </div>
       <div className="admin-order-header-actions">
-        <button type="button"><MoreHorizontal size={18} /> Więcej</button>
         <button type="button" onClick={() => setAssignOpen(true)}><Users size={18} /> Przypisz</button>
         <button type="button" className="primary" onClick={openPrimaryOffer}>{primaryOffer ? <FileText size={18} /> : <Plus size={18} />} {primaryOffer ? primaryOfferLabel : "Utwórz ofertę"}</button>
       </div>

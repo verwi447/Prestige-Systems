@@ -238,6 +238,7 @@ export const objects = {
 export const tickets = {
   getAll: () => api.get("/tickets"),
   getById: (id) => api.get(`/tickets/${id}`),
+  update: (id, data) => api.put(`/tickets/${id}`, data),
   getAssignableAdmins: () => api.get("/tickets/assignees/admins"),
   assignAdmin: (id, adminId) => api.post(`/tickets/${id}/assign`, { adminId }),
   changeStatus: (id, payload) => api.post(`/tickets/${id}/change-status`, typeof payload === "string" ? { status: payload } : payload),

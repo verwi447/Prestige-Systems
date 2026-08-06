@@ -7,7 +7,6 @@ import {
   Clock3,
   FileText,
   MessageSquare,
-  MoreVertical,
   Package,
   Paperclip,
   Send,
@@ -269,9 +268,6 @@ export default function ClientTicketDetail() {
           {canUploadAttachments && <button type="button" className="client-detail-action-button" onClick={() => fileInputRef.current?.click()}>
             <Paperclip size={18} /> Dodaj zalacznik
           </button>}
-          <button type="button" className="client-detail-icon-button" aria-label="Wiecej akcji">
-            <MoreVertical size={18} />
-          </button>
         </div>
       </header>
 

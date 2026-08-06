@@ -142,6 +142,7 @@ export default function TicketDetail() {
   const navigate = useNavigate();
   const commentRef = useRef(null);
   const fileInputRef = useRef(null);
+  const menuRef = useRef(null);
   const [ticket, setTicket] = useState(null);
   const [admins, setAdmins] = useState([]);
   const [availableOffers, setAvailableOffers] = useState([]);
@@ -159,6 +160,8 @@ export default function TicketDetail() {
   const [assignForm, setAssignForm] = useState({ adminId: "" });
   const [closeForm, setCloseForm] = useState({ summary: "", notifyClient: true, addHistory: true });
   const [selectedOfferId, setSelectedOfferId] = useState("");
+  const [editForm, setEditForm] = useState({ title: "", description: "", category: "", source: "" });
+  const [adminSearch, setAdminSearch] = useState("");
 
   const user = useMemo(() => {
     try {
@@ -199,6 +202,15 @@ export default function TicketDetail() {
       mounted = false;
     };
   }, [isAdmin, loadTicket]);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const handleClick = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
 
   const runAction = async (fn, successMessage) => {
     setSaving(true);
@@ -258,6 +270,22 @@ export default function TicketDetail() {
     if (!isAdmin) return;
     await runAction(() => ticketsAPI.createOfferDraft(id), "Przygotowano szkic oferty.");
     navigate(`/offers/new?ticketId=${id}`);
+  };
+
+  const openAssignModal = () => {
+    setAdminSearch("");
+    setModal("assign");
+  };
+
+  const openEditModal = () => {
+    setEditForm({
+      title: ticket.title || ticket.subject || "",
+      description: ticket.description || "",
+      category: ticket.category || "",
+      source: ticket.source || ""
+    });
+    setMenuOpen(false);
+    setModal("edit");
   };
 
   const openExistingOfferModal = async () => {
@@ -336,7 +364,7 @@ export default function TicketDetail() {
               {!isCommentsTab && <button type="button" className="ticket-admin-button ghost" onClick={() => setModal("status")}>
                 <UserCog size={17} /> Zmien status <ChevronDown size={15} />
               </button>}
-              <button type="button" className="ticket-admin-button ghost" onClick={() => setModal("assign")}>
+              <button type="button" className="ticket-admin-button ghost" onClick={openAssignModal}>
                 <Users size={17} /> Przypisz osobe
               </button>
               <button type="button" className="ticket-admin-button primary" onClick={() => setModal("offer")}>
@@ -344,19 +372,16 @@ export default function TicketDetail() {
               </button>
             </>
           )}
-          <div className="ticket-admin-menu-wrap">
+          <div className="ticket-admin-menu-wrap" ref={menuRef}>
             <button type="button" className="ticket-admin-icon-button" onClick={() => setMenuOpen((value) => !value)} aria-label="Wiecej akcji">
               <MoreHorizontal size={19} />
             </button>
             {menuOpen && (
               <div className="ticket-admin-menu">
-                <button type="button">Edytuj zgloszenie</button>
+                <button type="button" onClick={openEditModal}>Edytuj zgloszenie</button>
                 <button type="button" onClick={() => setModal("priority")}>Zmien priorytet</button>
                 <button type="button" onClick={() => runAction(() => ticketsAPI.assignAdmin(id, user.id), "Zgloszenie przypisane do Ciebie.")}>Przypisz do mnie</button>
                 <button type="button" onClick={() => quickComment(true)}>Dodaj notatke wewnetrzna</button>
-                <button type="button">Eksportuj PDF</button>
-                <button type="button">Archiwizuj</button>
-                <button type="button" className="danger">Usun</button>
               </div>
             )}
           </div>
@@ -416,7 +441,7 @@ export default function TicketDetail() {
                     <DetailField label="Rola" value="Serwisant" />
                     {isAdmin && (
                       <div className="ticket-admin-inline-actions">
-                        <button type="button" onClick={() => setModal("assign")}>Zmien przypisanie</button>
+                        <button type="button" onClick={openAssignModal}>Zmien przypisanie</button>
                         <button type="button" onClick={() => runAction(() => ticketsAPI.assignAdmin(id, user.id), "Zgloszenie przypisane do Ciebie.")}>Przypisz do mnie</button>
                       </div>
                     )}
@@ -579,7 +604,7 @@ export default function TicketDetail() {
             <div className="ticket-admin-assignee">
               <Avatar name={assigneeName} online />
               <div><strong>{assigneeName}</strong><span>{ticket.assignedTo?.email || ticket.assignedToEmail || "brak e-mail"}</span></div>
-              {isAdmin && <button type="button" onClick={() => setModal("assign")}>Zmien</button>}
+              {isAdmin && <button type="button" onClick={openAssignModal}>Zmien</button>}
             </div>
 
             <SideInfo icon={Building2} label="KLIENT" title={companyName} />
@@ -610,6 +635,18 @@ export default function TicketDetail() {
         </Modal>
       )}
 
+      {modal === "edit" && (
+        <Modal title="Edytuj zgloszenie" onClose={() => setModal(null)}>
+          <div className="ticket-admin-form">
+            <label>Temat<input type="text" value={editForm.title} onChange={(event) => setEditForm((prev) => ({ ...prev, title: event.target.value }))} /></label>
+            <label>Opis<textarea value={editForm.description} onChange={(event) => setEditForm((prev) => ({ ...prev, description: event.target.value }))} rows={4} /></label>
+            <label>Kategoria<input type="text" value={editForm.category} onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))} /></label>
+            <label>Zrodlo<input type="text" value={editForm.source} onChange={(event) => setEditForm((prev) => ({ ...prev, source: event.target.value }))} /></label>
+            <footer><button type="button" onClick={() => setModal(null)}>Anuluj</button><button type="button" onClick={() => runAction(() => ticketsAPI.update(id, editForm), "Zaktualizowano zgloszenie.")} disabled={saving}>Zapisz zmiany</button></footer>
+          </div>
+        </Modal>
+      )}
+
       {modal === "priority" && (
         <Modal title="Zmien priorytet" onClose={() => setModal(null)}>
           <div className="ticket-admin-form">
@@ -621,9 +658,13 @@ export default function TicketDetail() {
       {modal === "assign" && (
         <Modal title="Przypisz osobe" onClose={() => setModal(null)}>
           <div className="ticket-admin-form">
-            <label>Wyszukaj administratora<div className="ticket-admin-search"><Search size={17} /><input placeholder="Szukaj serwisanta..." /></div></label>
+            <label>Wyszukaj administratora<div className="ticket-admin-search"><Search size={17} /><input value={adminSearch} onChange={(event) => setAdminSearch(event.target.value)} placeholder="Szukaj serwisanta..." /></div></label>
             <div className="ticket-admin-admin-list">
-              {admins.map((admin) => {
+              {admins.filter((admin) => {
+                const name = [admin.first_name, admin.last_name].filter(Boolean).join(" ") || admin.email;
+                const term = adminSearch.trim().toLowerCase();
+                return !term || name.toLowerCase().includes(term) || admin.email?.toLowerCase().includes(term);
+              }).map((admin) => {
                 const name = [admin.first_name, admin.last_name].filter(Boolean).join(" ") || admin.email;
                 return (
                   <button type="button" className={Number(assignForm.adminId) === Number(admin.id) ? "active" : ""} key={admin.id} onClick={() => setAssignForm({ adminId: admin.id })}>

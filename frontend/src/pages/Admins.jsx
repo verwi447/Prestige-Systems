@@ -24,6 +24,15 @@ const formatDateTime = (value) => {
   });
 };
 
+const formatDateOnly = (value) => {
+  if (!value) return "Brak danych";
+  return new Date(value).toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+};
+
 const initials = (admin) => {
   const parts = [admin.first_name, admin.last_name].filter(Boolean);
   const source = parts.length ? parts.join(" ") : admin.email || "Admin";
@@ -185,7 +194,7 @@ export default function Admins() {
     try {
       await adminsAPI.delete(adminToDelete.id);
       await loadAdmins();
-      setMessage("Administrator zosta? usuni?ty.");
+      setMessage("Administrator został usunięty.");
     } catch (error) {
       setMessage(error.response?.data?.error || "Nie udało się usunąć administratora.");
     } finally {
@@ -224,8 +233,8 @@ export default function Admins() {
         </div>
         <div className="admin-stat-tile amber">
           <span><AdminIcon type="clock" /></span>
-          <strong>{stats.latestLogin ? "1" : "0"}</strong>
-          <p>Ostatnie logowanie<br /><em>{formatDateTime(stats.latestLogin)}</em></p>
+          <strong>{formatDateOnly(stats.latestLogin)}</strong>
+          <p>Ostatnie logowanie</p>
         </div>
       </section>
 
