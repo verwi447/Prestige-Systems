@@ -15,6 +15,7 @@ const categoryOptions = [
 ];
 
 const actionLabels = {
+  TICKET_CREATED: "Utworzono zgłoszenie",
   TICKET_UPDATED: "Zaktualizowano zgłoszenie",
   TICKET_STATUS_CHANGED: "Zmieniono status zgłoszenia",
   TICKET_PRIORITY_CHANGED: "Zmieniono priorytet zgłoszenia",
@@ -29,6 +30,9 @@ const actionLabels = {
   ORDER_ASSIGNED: "Przypisano opiekuna zamówienia",
   ORDER_COMMENT_ADDED: "Dodano komentarz do zamówienia",
   ORDER_PRIORITY_CHANGED: "Zmieniono priorytet zamówienia",
+  ORDER_OFFER_SENT: "Wysłano ofertę do zamówienia",
+  ORDER_OFFER_ACCEPTED: "Zaakceptowano ofertę zamówienia",
+  ORDER_OFFER_REJECTED: "Odrzucono ofertę zamówienia",
   OFFER_CREATED: "Utworzono ofertę",
   OFFER_UPDATED: "Zaktualizowano ofertę",
   OFFER_DRAFT_SAVED: "Zapisano szkic oferty",
@@ -40,14 +44,18 @@ const actionLabels = {
   OFFER_COMMENT_ADDED_BY_CLIENT: "Klient dodał komentarz do oferty",
   USER_PERMISSIONS_UPDATED: "Zmieniono uprawnienia pracownika",
   COMPANY_CREATED: "Dodano firmę",
-  COMPANY_UPDATED: "Zaktualizowano firmę"
+  COMPANY_UPDATED: "Zaktualizowano firmę",
+  NETWORK_SETTINGS_UPDATED: "Zaktualizowano ustawienia sieciowe"
 };
 
 const categoryLabels = Object.fromEntries(categoryOptions.filter(([value]) => value));
 const emptyFilters = { query: "", category: "", userId: "", dateFrom: "", dateTo: "" };
 const formatDate = (value) => value ? new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "-";
 const authorName = (item) => [item.first_name, item.last_name].filter(Boolean).join(" ") || item.email || item.username || "System";
-const actionLabel = (item) => actionLabels[item.action] || item.action.replace(/^BACKUP_/, "Backup: ").replaceAll("_", " ");
+const actionLabel = (item) => {
+  if (item.action === "TICKET_CREATED" && item.category === "ORDER") return "Utworzono zamówienie";
+  return actionLabels[item.action] || item.action.replace(/^BACKUP_/, "Backup: ").replaceAll("_", " ");
+};
 
 function CategoryBadge({ category }) {
   return <span className={`audit-category audit-category-${String(category || "system").toLowerCase()}`}>{categoryLabels[category] || category || "System"}</span>;
