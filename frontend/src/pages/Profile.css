@@ -255,21 +255,8 @@
   color: #0a8d51;
 }
 
-.account-form-error,
-.account-message.error,
-.account-error {
+.account-form-error {
   color: #d92d20;
-  font-weight: 900;
-}
-
-.account-message {
-  border-radius: 8px;
-  padding: 0.75rem 0.9rem;
-}
-
-.account-message.success {
-  background: #dcfce7;
-  color: #087342;
   font-weight: 900;
 }
 

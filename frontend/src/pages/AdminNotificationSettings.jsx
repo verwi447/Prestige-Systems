@@ -11,6 +11,7 @@ import {
 import { notifications } from "../api";
 import AppState from "../components/AppState";
 import BarrierIcon from "../components/BarrierIcon";
+import { getRequestErrorMessage, showFeedback } from "../lib/feedback";
 import "./AdminNotificationSettings.css";
 
 const categories = [
@@ -72,8 +73,6 @@ export default function AdminNotificationSettings() {
   const [preferences, setPreferences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -83,7 +82,7 @@ export default function AdminNotificationSettings() {
         if (active) setPreferences(response.data || []);
       })
       .catch((requestError) => {
-        if (active) setError(requestError.response?.data?.error || "Nie udalo sie pobrac ustawien powiadomien.");
+        if (active) showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie pobrac ustawien powiadomien."), type: "error" });
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -106,20 +105,17 @@ export default function AdminNotificationSettings() {
         ? current.map((preference) => preference.category === category ? next : preference)
         : [...current, next];
     });
-    setMessage("");
   };
 
   const savePreferences = async () => {
     setSaving(true);
-    setMessage("");
-    setError("");
     try {
       const response = await notifications.updatePreferences(preferences);
       setPreferences(response.data || []);
       window.dispatchEvent(new Event("notification-preferences-updated"));
-      setMessage("Ustawienia powiadomien zostaly zapisane.");
+      showFeedback({ message: "Ustawienia powiadomien zostaly zapisane.", type: "success" });
     } catch (requestError) {
-      setError(requestError.response?.data?.error || "Nie udalo sie zapisac ustawien powiadomien.");
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie zapisac ustawien powiadomien."), type: "error" });
     } finally {
       setSaving(false);
     }
@@ -142,9 +138,6 @@ export default function AdminNotificationSettings() {
           {saving ? "Zapisywanie..." : "Zapisz zmiany"}
         </button>
       </header>
-
-      {message && <div className="admin-notification-message success" role="status">{message}</div>}
-      {error && <div className="admin-notification-message error" role="alert">{error}</div>}
 
       <section className="admin-notification-panel">
         <header className="admin-notification-panel-header">

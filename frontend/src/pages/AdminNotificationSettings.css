@@ -50,25 +50,6 @@
   opacity: 0.72;
 }
 
-.admin-notification-message {
-  padding: 12px 14px;
-  border: 1px solid;
-  border-radius: 6px;
-  font-weight: 600;
-}
-
-.admin-notification-message.success {
-  border-color: #a9e5c2;
-  background: #effcf4;
-  color: #08783b;
-}
-
-.admin-notification-message.error {
-  border-color: #ffc2c7;
-  background: #fff4f4;
-  color: #c6283b;
-}
-
 .admin-notification-panel {
   overflow: hidden;
   border: 1px solid #d8e2ef;

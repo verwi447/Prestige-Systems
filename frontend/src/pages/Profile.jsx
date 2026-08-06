@@ -15,6 +15,7 @@ import {
 import { client as clientAPI } from "../api";
 import AppState from "../components/AppState";
 import BarrierIcon from "../components/BarrierIcon";
+import { getRequestErrorMessage, showFeedback } from "../lib/feedback";
 import "./Profile.css";
 
 const tabs = [
@@ -87,7 +88,6 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "", phone: "" });
@@ -147,14 +147,13 @@ export default function Profile() {
   const saveProfile = async (event) => {
     event.preventDefault();
     setSavingProfile(true);
-    setMessage("");
     try {
       const response = await clientAPI.updateAccount(profileForm);
       setAccount(response.data);
       setEditOpen(false);
-      setMessage("Dane profilu zostały zaktualizowane.");
+      showFeedback({ message: "Dane profilu zostały zaktualizowane.", type: "success" });
     } catch (err) {
-      setError(err.response?.data?.error || "Nie udało się zaktualizować profilu.");
+      showFeedback({ message: getRequestErrorMessage(err, "Nie udało się zaktualizować profilu."), type: "error" });
     } finally {
       setSavingProfile(false);
     }
@@ -163,7 +162,6 @@ export default function Profile() {
   const changePassword = async (event) => {
     event.preventDefault();
     setPasswordError("");
-    setMessage("");
 
     if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
       setPasswordError("Wszystkie pola są wymagane.");
@@ -186,7 +184,7 @@ export default function Profile() {
     try {
       await clientAPI.changeAccountPassword(passwordForm);
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      setMessage("Hasło zostało zmienione.");
+      showFeedback({ message: "Hasło zostało zmienione.", type: "success" });
       const response = await clientAPI.account();
       setAccount(response.data);
     } catch (err) {
@@ -199,7 +197,6 @@ export default function Profile() {
   const updatePreference = async (key, value) => {
     const next = { ...preferences, [key]: value };
     setPreferences(next);
-    setMessage("");
     try {
       const response = await clientAPI.updateAccountNotificationPreferences({
         inApp: next.in_app,
@@ -211,9 +208,9 @@ export default function Profile() {
       });
       setPreferences(response.data);
       window.dispatchEvent(new Event("notification-preferences-updated"));
-      setMessage("Preferencje powiadomień zostały zapisane.");
+      showFeedback({ message: "Preferencje powiadomień zostały zapisane.", type: "success" });
     } catch (err) {
-      setError(err.response?.data?.error || "Nie udało się zapisać preferencji.");
+      showFeedback({ message: getRequestErrorMessage(err, "Nie udało się zapisać preferencji."), type: "error" });
     }
   };
 
@@ -229,9 +226,6 @@ export default function Profile() {
           <p>Zarządzaj swoim profilem, hasłem, powiadomieniami i bezpieczeństwem konta.</p>
         </div>
       </header>
-
-      {message && <div className="account-message success">{message}</div>}
-      {error && <div className="account-message error">{error}</div>}
 
       <section className="account-hero-card">
         <span className="account-avatar">{initials(account)}</span>
