@@ -19,13 +19,14 @@ const normalizeAccount = (row) => ({
   isActive: row.is_active !== false,
   lastLoginAt: row.last_login_at,
   createdAt: row.created_at,
-  company: row.company_id ? { id: row.company_id, name: row.company_name } : null
+  company: row.company_id ? { id: row.company_id, name: row.company_name } : null,
+  passwordChangedAt: row.password_changed_at
 });
 
 router.get("/", async (req, res) => {
   const result = await db.query(
     `SELECT u.id, u.username, u.role, u.company_id, u.first_name, u.last_name, u.email, u.phone,
-            u.is_active, u.last_login_at, u.created_at, c.name AS company_name
+            u.is_active, u.last_login_at, u.created_at, u.password_changed_at, c.name AS company_name
      FROM users u
      LEFT JOIN companies c ON c.id=u.company_id
      WHERE u.id=$1`,
@@ -48,7 +49,7 @@ router.patch("/", async (req, res) => {
     `UPDATE users
      SET first_name=$1, last_name=$2, phone=$3, updated_at=CURRENT_TIMESTAMP
      WHERE id=$4
-     RETURNING id, username, role, company_id, first_name, last_name, email, phone, is_active, last_login_at, created_at,
+     RETURNING id, username, role, company_id, first_name, last_name, email, phone, is_active, last_login_at, created_at, password_changed_at,
        (SELECT name FROM companies WHERE id=users.company_id) AS company_name`,
     [firstName, lastName, phone, req.currentUser.id]
   );
@@ -92,7 +93,7 @@ router.post("/change-password", async (req, res) => {
   }
 
   const newHash = await bcrypt.hash(newPassword, 10);
-  await db.query("UPDATE users SET password=$1, password_hash=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [newHash, req.currentUser.id]);
+  await db.query("UPDATE users SET password=$1, password_hash=$1, password_changed_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [newHash, req.currentUser.id]);
   res.json({ message: "Haslo zostalo zmienione." });
 });
 

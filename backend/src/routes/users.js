@@ -37,7 +37,7 @@ router.put("/change-password", auth, async (req, res) => {
         const salt = await bcrypt.genSalt(12);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        await db.query("UPDATE users SET password = $1, password_hash = $1, updated_at=CURRENT_TIMESTAMP WHERE id = $2", [hashedPassword, userId]);
+        await db.query("UPDATE users SET password = $1, password_hash = $1, password_changed_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id = $2", [hashedPassword, userId]);
 
         res.json({ message: "Hasło zostało pomyślnie zmienione." });
 

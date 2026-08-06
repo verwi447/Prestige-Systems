@@ -187,6 +187,8 @@ export default function Profile() {
       await clientAPI.changeAccountPassword(passwordForm);
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setMessage("Hasło zostało zmienione.");
+      const response = await clientAPI.account();
+      setAccount(response.data);
     } catch (err) {
       setPasswordError(err.response?.data?.error || "Nie udało się zmienić hasła.");
     } finally {
@@ -291,7 +293,7 @@ export default function Profile() {
             <h2>Bezpieczeństwo konta</h2>
             <div className="account-fields-grid single">
               <Field label="Ostatnie logowanie" value={formatDate(account.lastLoginAt)} />
-              <Field label="Ostatnia zmiana hasła" value="Nie określono" />
+              <Field label="Ostatnia zmiana hasła" value={formatDate(account.passwordChangedAt)} />
               <Field label="Status 2FA" value="Nieaktywne" />
             </div>
             <div className="account-info-box">Uwierzytelnianie dwuskładnikowe będzie dostępne w przyszłości.</div>

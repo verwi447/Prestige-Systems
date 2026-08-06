@@ -157,7 +157,7 @@ router.put("/:id", async (req, res) => {
     if (password?.trim()) {
       const passwordHash = await bcrypt.hash(password, 10);
       values.push(passwordHash);
-      passwordSql = ", password=$7, password_hash=$7";
+      passwordSql = ", password=$7, password_hash=$7, password_changed_at=CURRENT_TIMESTAMP";
     }
 
     const result = await db.query(

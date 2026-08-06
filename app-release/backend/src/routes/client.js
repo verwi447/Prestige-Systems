@@ -1003,7 +1003,7 @@ router.post("/company/employees/:id/reset-password", requireClientOwner, async (
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await bcrypt.hash(temporaryPassword, 10);
   await db.query(
-    "UPDATE users SET password=$1, password_hash=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2 AND company_id=$3 AND role='CLIENT_EMPLOYEE'",
+    "UPDATE users SET password=$1, password_hash=$1, password_changed_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=$2 AND company_id=$3 AND role='CLIENT_EMPLOYEE'",
     [passwordHash, req.params.id, companyId]
   );
   res.json({ temporaryPassword });

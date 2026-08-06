@@ -360,7 +360,7 @@ router.put("/:companyId/users/:userId", requireCompanyAccess("companyId"), requi
   if (password?.trim()) {
     const passwordHash = await bcrypt.hash(password, 10);
     values.push(passwordHash);
-    passwordSql = ", password=$9, password_hash=$9";
+    passwordSql = ", password=$9, password_hash=$9, password_changed_at=CURRENT_TIMESTAMP";
   }
 
   const result = await db.query(

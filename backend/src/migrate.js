@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -959,8 +959,15 @@ export async function runLegacySchemaMigration() {
   }
 }
 
+async function addPasswordChangedAtColumn({ query }) {
+  await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP");
+}
+
 export function getMigrationDefinitions() {
-  return [{ ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration }];
+  return [
+    { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
+    { ...ADD_PASSWORD_CHANGED_AT_MIGRATION, up: addPasswordChangedAtColumn }
+  ];
 }
 
 export async function migrate() {
