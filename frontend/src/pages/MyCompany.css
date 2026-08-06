@@ -1646,3 +1646,185 @@
     width: 100%;
   }
 }
+
+html[data-theme="dark"] .my-company-page { color: #edf5ff; }
+html[data-theme="dark"] .company-page-header h1 { color: #edf5ff; }
+html[data-theme="dark"] .company-page-header p { color: #aabbd0; }
+
+html[data-theme="dark"] :is(
+  .company-secondary-button,
+  .company-small-button,
+  .company-row-actions button,
+  .site-card-actions button,
+  .site-card-actions a,
+  .sites-filter-card button,
+  .company-section-header button,
+  .employees-filter-card button,
+  .employee-info-card button,
+  .site-upload-controls label,
+  .site-upload-controls button
+) {
+  border-color: #304b66;
+  background: #14253a;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] :is(
+  .company-stat-card,
+  .company-panel-card,
+  .sites-filter-card,
+  .site-management-card,
+  .site-add-card,
+  .sites-empty-state,
+  .employees-filter-card,
+  .employees-table-card,
+  .employee-info-card,
+  .employee-action-menu,
+  .permission-card,
+  .company-modal,
+  .assign-employee-header,
+  .assign-sites-list label,
+  .site-image-upload
+) {
+  background: #101e2e;
+  border-color: #29435d;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme="dark"] :is(
+  .company-stat-card strong,
+  .company-stat-card h2,
+  .company-section-header h2,
+  .company-field strong,
+  .company-contact-card strong,
+  .site-card-title-row h3,
+  .site-card-metrics strong,
+  .site-add-card h3,
+  .company-employee-main strong,
+  .employee-person-cell strong,
+  .employee-empty-state h3,
+  .employee-info-card h3,
+  .employee-modal-column h3,
+  .permission-card strong,
+  .temporary-password-box strong,
+  .assign-sites-list strong,
+  .company-site-card h3,
+  .company-modal h2,
+  .site-upload-controls strong
+) {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] :is(
+  .company-stat-card p,
+  .company-field span,
+  .company-contact-card small,
+  .site-card-content p,
+  .site-card-metrics span,
+  .company-employee-main small,
+  .company-active-dot,
+  .company-inactive-dot,
+  .sites-filter-card label > span,
+  .employees-filter-card label > span,
+  .employee-person-cell small,
+  .employee-empty-state p,
+  .employee-info-card p,
+  .permission-card small,
+  .reset-password-content p,
+  .temporary-password-box small,
+  .assign-employee-header small,
+  .assign-sites-counter,
+  .assign-sites-list small,
+  .company-site-card p,
+  .company-site-card small,
+  .company-activity-list p,
+  .company-activity-list time,
+  .company-empty,
+  .site-upload-preview span,
+  .site-upload-controls p,
+  .company-form-field span,
+  .employees-table th,
+  .employees-pagination
+) {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .company-tabs { border-bottom-color: #29435d; }
+html[data-theme="dark"] .company-tabs button { color: #aabbd0; }
+html[data-theme="dark"] .company-tabs button.active { color: #39c878; border-bottom-color: #39c878; }
+
+html[data-theme="dark"] .company-status-badge,
+html[data-theme="dark"] .site-status.active,
+html[data-theme="dark"] .company-site-card span,
+html[data-theme="dark"] .assign-sites-list em {
+  background: #0f2e1e;
+  color: #5fd095;
+}
+
+html[data-theme="dark"] .site-status.inactive { background: #1c3550; color: #b7c8dc; }
+
+html[data-theme="dark"] .company-role-badge { background: #1c3550; color: #b7c8dc; }
+
+html[data-theme="dark"] .company-icon-button { color: #edf5ff; }
+
+html[data-theme="dark"] .company-employee-item,
+html[data-theme="dark"] .site-card-metrics,
+html[data-theme="dark"] .company-activity-list article,
+html[data-theme="dark"] .employees-table th,
+html[data-theme="dark"] .employees-table td,
+html[data-theme="dark"] .employees-pagination {
+  border-color: #29435d;
+}
+
+html[data-theme="dark"] .employees-table td { color: #d7e5f4; }
+
+html[data-theme="dark"] .employee-action-menu button { color: #edf5ff; }
+html[data-theme="dark"] .employee-action-menu button:disabled { color: #64748b; }
+
+html[data-theme="dark"] .employees-pagination button,
+html[data-theme="dark"] .employees-pagination select,
+html[data-theme="dark"] .sites-pagination button {
+  background: #14253a;
+  border-color: #304b66;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .employees-pagination strong,
+html[data-theme="dark"] .sites-pagination strong {
+  background: #0a8f52;
+  border-color: #0a8f52;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .sites-pagination { color: #aabbd0; }
+
+html[data-theme="dark"] .permission-card.checked { background: #0f2e1e; border-color: #2a9870; }
+
+html[data-theme="dark"] .reset-password-icon { background: #3a2a10; color: #e0ac5c; }
+
+html[data-theme="dark"] .temporary-password-box { background: #0f2e1e; border-color: #2a9870; }
+
+html[data-theme="dark"] .assign-sites-list label { border-color: #304b66; }
+
+html[data-theme="dark"] .company-modal header,
+html[data-theme="dark"] .company-modal footer {
+  border-color: #29435d;
+}
+
+html[data-theme="dark"] .site-upload-preview { background: #0c1827; border-color: #35516c; color: #68baff; }
+
+html[data-theme="dark"] .site-active-toggle,
+html[data-theme="dark"] .assign-users-list label {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .activity-dot { background: #10283a; color: #68baff; }
+html[data-theme="dark"] .activity-dot.offer { background: #3a2a10; color: #e0ac5c; }
+html[data-theme="dark"] .activity-dot.ticket { background: #3a1614; color: #ff8080; }
+html[data-theme="dark"] .activity-dot.employee,
+html[data-theme="dark"] .activity-dot.site { background: #0f2e1e; color: #5fd095; }
+
+html[data-theme="dark"] .employee-info-card > span { background: #10283a; color: #68baff; }
+
+html[data-theme="dark"] .site-add-card > span { background: #10283a; color: #68baff; }
+html[data-theme="dark"] .site-add-card > span svg:last-child { background: #68baff; color: #101e2e; }

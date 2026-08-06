@@ -424,3 +424,139 @@
     width: 100%;
   }
 }
+
+html[data-theme="dark"] .account-page {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .account-header p {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] :is(.account-card, .account-hero-card, .account-modal) {
+  background: #101e2e;
+  border-color: #29435d;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme="dark"] .account-hero-card p {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .account-hero-card small {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .account-hero-badges span,
+html[data-theme="dark"] .account-status {
+  background: #10283a;
+  color: #68baff;
+}
+
+html[data-theme="dark"] .account-hero-badges .active,
+html[data-theme="dark"] .account-status {
+  background: #0f2e1e;
+  color: #5fd095;
+}
+
+html[data-theme="dark"] :is(
+  .account-hero-card button,
+  .account-card-title button,
+  .account-password-form button,
+  .account-modal button,
+  .account-table-wrap button
+) {
+  background: #14253a;
+  border-color: #304b66;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .account-tabs {
+  border-bottom-color: #29435d;
+}
+
+html[data-theme="dark"] .account-tabs button {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .account-tabs button.active {
+  border-color: #39c878;
+  color: #39c878;
+}
+
+html[data-theme="dark"] .account-field {
+  border-bottom-color: #29435d;
+}
+
+html[data-theme="dark"] .account-field span {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .account-field strong {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .account-password-form label,
+html[data-theme="dark"] .account-modal label {
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .account-password-form input,
+html[data-theme="dark"] .account-modal input {
+  background: #14253a;
+  border-color: #304b66;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .account-password-form button,
+html[data-theme="dark"] .account-modal .primary {
+  background: #0a8f52;
+  border-color: #0a8f52;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .password-rules span {
+  background: #1c3550;
+  color: #b7c8dc;
+}
+
+html[data-theme="dark"] .password-rules span.valid {
+  background: #0f2e1e;
+  color: #5fd095;
+}
+
+html[data-theme="dark"] .account-info-box {
+  background: #10283a;
+  border-color: #1f4863;
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .account-toggle-row {
+  border-color: #29435d;
+}
+
+html[data-theme="dark"] .account-toggle-row span {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .account-table-wrap th,
+html[data-theme="dark"] .account-table-wrap td {
+  border-bottom-color: #29435d;
+}
+
+html[data-theme="dark"] .account-empty-state svg,
+html[data-theme="dark"] .account-activity-list svg {
+  color: #68baff;
+}
+
+html[data-theme="dark"] .account-empty-state h3 {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .account-activity-list article {
+  border-color: #29435d;
+}
+
+html[data-theme="dark"] .account-activity-list span {
+  color: #aabbd0;
+}

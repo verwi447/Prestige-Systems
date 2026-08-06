@@ -887,3 +887,153 @@
     min-width: 760px;
   }
 }
+
+html[data-theme="dark"] .ticket-wizard-page { color: #edf5ff; }
+
+html[data-theme="dark"] :is(
+  .ticket-wizard-header button,
+  .ticket-wizard-actions button,
+  .ticket-product-card button,
+  .ticket-selected-table button,
+  .ticket-help-card a
+) {
+  background: #14253a; border-color: #304b66; color: #edf5ff;
+}
+
+html[data-theme="dark"] .ticket-wizard-header p { color: #aabbd0; }
+
+html[data-theme="dark"] .ticket-wizard-steps span {
+  background: #101e2e; border-color: #29435d; color: #aabbd0;
+}
+html[data-theme="dark"] .ticket-wizard-steps b { background: #1c3550; color: #d7e5f4; }
+html[data-theme="dark"] .ticket-wizard-steps span.active { color: #edf5ff; }
+html[data-theme="dark"] .ticket-wizard-steps span.active b,
+html[data-theme="dark"] .ticket-wizard-steps span.done b { background: #0a8f52; color: #ffffff; }
+
+html[data-theme="dark"] :is(
+  .ticket-wizard-card,
+  .ticket-wizard-side article,
+  .ticket-wizard-error,
+  .ticket-wizard-loading,
+  .ticket-choice-card,
+  .ticket-type-banner,
+  .ticket-priority-card,
+  .ticket-block-card,
+  .ticket-files-list > div,
+  .ticket-product-card,
+  .ticket-selected-table > div,
+  .ticket-summary-note,
+  .ticket-summary-description,
+  .ticket-urgent-note
+) {
+  background: #101e2e; border-color: #29435d; box-shadow: none;
+}
+
+html[data-theme="dark"] .ticket-step-panel > p { color: #aabbd0; }
+
+html[data-theme="dark"] :is(.ticket-choice-card span, .ticket-type-banner > svg, .ticket-help-card > span, .ticket-type-hero > svg, .ticket-block-card > span, .ticket-upload-zone svg) {
+  color: #68baff; background: #10283a;
+}
+
+html[data-theme="dark"] .ticket-choice-card strong,
+html[data-theme="dark"] .ticket-type-hero h2,
+html[data-theme="dark"] .ticket-section-title,
+html[data-theme="dark"] .ticket-priority-card strong,
+html[data-theme="dark"] .ticket-block-card strong,
+html[data-theme="dark"] .ticket-upload-zone strong,
+html[data-theme="dark"] .ticket-product-card strong,
+html[data-theme="dark"] .ticket-files-list span {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .ticket-choice-card small,
+html[data-theme="dark"] .ticket-type-hero p,
+html[data-theme="dark"] .ticket-type-banner span,
+html[data-theme="dark"] .ticket-wizard-side span,
+html[data-theme="dark"] .ticket-type-banner small,
+html[data-theme="dark"] .ticket-field small,
+html[data-theme="dark"] .ticket-priority-card small,
+html[data-theme="dark"] .ticket-block-card small,
+html[data-theme="dark"] .ticket-section-note,
+html[data-theme="dark"] .ticket-files-list small,
+html[data-theme="dark"] .ticket-product-card small,
+html[data-theme="dark"] .ticket-product-card p,
+html[data-theme="dark"] .ticket-side-address {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .ticket-choice-card.selected {
+  border-color: #2a9870; background: #0f2e1e;
+}
+html[data-theme="dark"] .ticket-choice-card.selected span { background: #0f2e1e; color: #5fd095; }
+
+html[data-theme="dark"] .ticket-type-hero { background: linear-gradient(135deg, #101e2e, #0c1827); border-bottom-color: #29435d; }
+html[data-theme="dark"] .ticket-type-hero.order > svg { background: #0f2e1e; color: #5fd095; }
+html[data-theme="dark"] .ticket-type-hero span { background: #3a2a10; border-color: #6b4d16; color: #e0ac5c; }
+
+html[data-theme="dark"] .ticket-field span,
+html[data-theme="dark"] .ticket-checkbox {
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] :is(
+  .ticket-field input,
+  .ticket-field select,
+  .ticket-field textarea,
+  .ticket-catalog-toolbar input,
+  .ticket-catalog-toolbar select,
+  .ticket-quantity input
+) {
+  background: #14253a; border-color: #304b66; color: #edf5ff;
+}
+
+html[data-theme="dark"] .ticket-site-hint { background: #10283a; border-color: #1f4863; color: #d7e5f4; }
+
+html[data-theme="dark"] .ticket-priority-card.low.selected { border-color: #2a9870; background: #0f2e1e; }
+html[data-theme="dark"] .ticket-priority-card.normal.selected { border-color: #4f789b; background: #10283a; }
+html[data-theme="dark"] .ticket-priority-card.high.selected { border-color: #a66a2e; background: #3a2410; }
+html[data-theme="dark"] .ticket-priority-card.critical.selected { border-color: #a63a34; background: #3a1614; }
+
+html[data-theme="dark"] .ticket-block-card.active { border-color: #6b4d16; background: #3a2a10; }
+html[data-theme="dark"] .ticket-block-card em { background: #3a2a10; color: #e0ac5c; }
+
+html[data-theme="dark"] .ticket-switch { background: #304b66; }
+
+html[data-theme="dark"] .ticket-upload-zone { background: #111f30; border-color: #35516c; color: #aabbd0; }
+
+html[data-theme="dark"] .ticket-catalog-toolbar svg { color: #aabbd0; }
+
+html[data-theme="dark"] .ticket-product-card img,
+html[data-theme="dark"] .ticket-product-placeholder { background: #0c1827; }
+
+html[data-theme="dark"] .ticket-product-card b { color: #5fd095; }
+html[data-theme="dark"] .ticket-product-card button {
+  border-color: #0a8f52; background: #0a8f52; color: #ffffff;
+}
+
+html[data-theme="dark"] .ticket-selected-table > div { background: #14253a; }
+
+html[data-theme="dark"] .ticket-summary-list p,
+html[data-theme="dark"] .ticket-wizard-side p {
+  border-bottom-color: #29435d;
+}
+html[data-theme="dark"] .ticket-summary-list strong,
+html[data-theme="dark"] .ticket-wizard-side strong,
+html[data-theme="dark"] .ticket-wizard-side h3 {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .ticket-summary-note,
+html[data-theme="dark"] .ticket-summary-description {
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .ticket-wizard-actions { border-top-color: #29435d; }
+html[data-theme="dark"] .ticket-wizard-actions .primary {
+  border-color: #0a8f52; background: #0a8f52; color: #ffffff;
+}
+
+html[data-theme="dark"] .ticket-urgent-note { border-color: #6b4d16; background: #3a2a10; color: #e0ac5c; }
+
+html[data-theme="dark"] .ticket-help-card p { color: #aabbd0; }
+html[data-theme="dark"] .ticket-help-card > span { color: #5fd095; background: #0f2e1e; }

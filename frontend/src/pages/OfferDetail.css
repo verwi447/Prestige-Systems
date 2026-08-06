@@ -715,3 +715,228 @@
     grid-template-columns: 1fr;
   }
 }
+
+html[data-theme="dark"] .client-offer-detail-page {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] :is(
+  .client-offer-back,
+  .client-offer-header-actions button,
+  .client-offer-pdf-box button,
+  .client-offer-comment-composer button,
+  .client-offer-side-actions button,
+  .client-offer-modal button,
+  .client-offer-attachments a,
+  .client-offer-attachments button,
+  .client-offer-help-card a
+) {
+  background: #14253a;
+  border-color: #304b66;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] :is(
+  .client-offer-back:hover,
+  .client-offer-header-actions button:hover,
+  .client-offer-pdf-box button:hover,
+  .client-offer-comment-composer button:hover,
+  .client-offer-side-actions button:hover,
+  .client-offer-help-card a:hover
+) {
+  border-color: #4f789b;
+  background: #183049;
+}
+
+html[data-theme="dark"] .client-offer-back {
+  background: transparent;
+  border-color: transparent;
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-offer-back:hover {
+  background: #14253a;
+}
+
+html[data-theme="dark"] .client-offer-header-actions .primary {
+  background: #d9eaff;
+  border-color: #d9eaff;
+  color: #0f2138;
+}
+
+html[data-theme="dark"] .client-offer-header-actions .primary:hover {
+  background: #b9d5f5;
+  border-color: #b9d5f5;
+}
+
+html[data-theme="dark"] :is(.client-offer-header-actions .danger, .client-offer-side-actions .danger, .client-offer-modal .danger) {
+  background: #3a1614;
+  border-color: #6b2622;
+  color: #ff8080;
+}
+
+html[data-theme="dark"] :is(.client-offer-header-actions .danger:hover, .client-offer-side-actions .danger:hover) {
+  background: #4a1c19;
+  border-color: #8a332c;
+}
+
+html[data-theme="dark"] .client-offer-title h1 {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] :is(.client-offer-detail-header p, .client-offer-meta) {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] :is(.client-offer-detail-card, .client-offer-help-card, .client-offer-modal) {
+  background: #101e2e;
+  border-color: #29435d;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme="dark"] :is(.client-offer-detail-card h2, .client-offer-help-card h2, .client-offer-modal h2) {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-offer-detail-card h2 svg {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-offer-detail-status.sent,
+html[data-theme="dark"] .client-offer-detail-status.progress { background: #10283a; color: #68baff; }
+html[data-theme="dark"] .client-offer-detail-status.approval { background: #2a1f42; color: #b794f6; }
+html[data-theme="dark"] .client-offer-detail-status.accepted { background: #0f2e1e; color: #5fd095; }
+html[data-theme="dark"] .client-offer-detail-status.rejected { background: #3a1614; color: #ff8080; }
+html[data-theme="dark"] .client-offer-detail-status.closed,
+html[data-theme="dark"] .client-offer-detail-status.neutral { background: #1c3550; color: #b7c8dc; }
+
+html[data-theme="dark"] .client-offer-detail-row {
+  border-bottom-color: #29435d;
+}
+
+html[data-theme="dark"] .client-offer-detail-row span {
+  color: #7f95ad;
+}
+
+html[data-theme="dark"] .client-offer-detail-row strong {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-offer-items th,
+html[data-theme="dark"] .client-offer-items td {
+  border-bottom-color: #29435d;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-offer-items th {
+  background: #172b43;
+  color: #a9c7e7;
+}
+
+html[data-theme="dark"] .client-offer-items tbody tr:hover {
+  background: #14253a;
+}
+
+html[data-theme="dark"] .client-offer-pdf-box {
+  background: #111f30;
+  border-color: #35516c;
+}
+
+html[data-theme="dark"] .client-offer-pdf-box svg {
+  color: #68baff;
+}
+
+html[data-theme="dark"] :is(
+  .client-offer-pdf-box span,
+  .client-offer-attachments p,
+  .client-offer-comments p,
+  .client-offer-history p,
+  .client-offer-help-card p
+) {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-offer-comment-composer textarea,
+html[data-theme="dark"] .client-offer-modal textarea {
+  background: #14253a;
+  border-color: #304b66;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-offer-comment-composer button {
+  background: #d9eaff;
+  border-color: #d9eaff;
+  color: #0f2138;
+}
+
+html[data-theme="dark"] .client-offer-comment-composer button:hover {
+  background: #b9d5f5;
+  border-color: #b9d5f5;
+}
+
+html[data-theme="dark"] .client-offer-comments strong,
+html[data-theme="dark"] .client-offer-history strong {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-offer-comments small,
+html[data-theme="dark"] .client-offer-history time {
+  color: #7f95ad;
+}
+
+html[data-theme="dark"] .client-offer-comments p {
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .client-offer-history {
+  border-left-color: #35516c;
+}
+
+html[data-theme="dark"] .client-offer-history article::before {
+  background: #d9eaff;
+  border-color: #101e2e;
+  box-shadow: 0 0 0 1px #29435d;
+}
+
+html[data-theme="dark"] .client-offer-history span {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-offer-alert {
+  background: #10283a;
+  border-color: #1f4863;
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .client-offer-alert svg {
+  color: #68baff;
+}
+
+html[data-theme="dark"] .client-offer-totals-card .client-offer-detail-row span {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-offer-total-row span {
+  color: #edf5ff !important;
+}
+
+html[data-theme="dark"] .client-offer-total-row strong {
+  color: #5fd095 !important;
+}
+
+html[data-theme="dark"] .client-offer-help-card > span {
+  background: #0f2e1e;
+  color: #5fd095;
+}
+
+html[data-theme="dark"] .client-offer-help-card a {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-offer-help-card a:hover {
+  border-color: #0a8f52;
+}
+
+html[data-theme="dark"] .client-offer-modal p {
+  color: #aabbd0;
+}

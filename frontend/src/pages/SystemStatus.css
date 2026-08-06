@@ -188,3 +188,29 @@
   .system-detail:last-child { border-bottom: 0; }
   .system-panel-wide { grid-column: auto; }
 }
+
+html[data-theme="dark"] .system-status-page { color: #edf5ff; }
+html[data-theme="dark"] .system-status-breadcrumb,
+html[data-theme="dark"] .system-status-header p { color: #aabbd0; }
+html[data-theme="dark"] .system-refresh { background: #14253a; border-color: #304b66; color: #edf5ff; }
+html[data-theme="dark"] .system-refresh:hover { border-color: #4f789b; background: #183049; }
+html[data-theme="dark"] .system-status-message { background: #3a1614; border-color: #6b2622; color: #ff8080; }
+html[data-theme="dark"] :is(.system-summary-card, .system-panel) { background: #101e2e; border-color: #29435d; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18); }
+html[data-theme="dark"] .system-summary-card p { color: #aabbd0; }
+html[data-theme="dark"] .system-summary-card strong { color: #edf5ff; }
+html[data-theme="dark"] .system-summary-card small { color: #7f95ad; }
+html[data-theme="dark"] .system-summary-icon { background: #10283a; color: #68baff; }
+html[data-theme="dark"] .system-summary-icon.green { background: #0f2e1e; color: #5fd095; }
+html[data-theme="dark"] .system-summary-icon.amber { background: #3a2a10; color: #e0ac5c; }
+html[data-theme="dark"] .system-summary-icon.violet { background: #2a1f42; color: #b794f6; }
+html[data-theme="dark"] .system-state.good { color: #5fd095; }
+html[data-theme="dark"] .system-state.attention { color: #e0ac5c; }
+html[data-theme="dark"] .system-panel > header { border-bottom-color: #29435d; }
+html[data-theme="dark"] .system-panel-icon { background: #10283a; color: #68baff; }
+html[data-theme="dark"] .system-panel-icon.backup { background: #3a2a10; color: #e0ac5c; }
+html[data-theme="dark"] .system-panel-icon.mail { background: #2a1f42; color: #b794f6; }
+html[data-theme="dark"] .system-panel p { color: #aabbd0; }
+html[data-theme="dark"] .system-detail { border-bottom-color: #29435d; }
+html[data-theme="dark"] .system-detail dt { color: #aabbd0; }
+html[data-theme="dark"] .system-detail dd { color: #edf5ff; }
+html[data-theme="dark"] .system-status-footer { color: #aabbd0; }

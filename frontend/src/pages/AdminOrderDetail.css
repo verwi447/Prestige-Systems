@@ -77,3 +77,93 @@
 .admin-order-view-state { background: #fff; border: 1px solid #d8e3ef; border-radius: 8px; color: #52657d; font-weight: 850; padding: 2rem; text-align: center; } .admin-order-view-state.error { color: #b42318; }
 @media (max-width: 1100px) { .admin-order-detail-layout { grid-template-columns: 1fr; } .admin-order-side { grid-template-columns: repeat(3, 1fr); } .admin-order-side > section { border-bottom: 0; border-right: 1px solid #e1e9f2; } }
 @media (max-width: 800px) { .admin-order-detail-header { align-items: stretch; flex-direction: column; } .admin-order-header-actions { flex-wrap: wrap; } .admin-order-identity-bar, .admin-order-data-grid, .admin-order-total-band > div, .admin-order-side, .admin-order-offer-metrics, .admin-order-offer-flow { grid-template-columns: 1fr; } .admin-order-identity-bar > div, .admin-order-side > section { border-bottom: 1px solid #e1e9f2; border-right: 0; } .admin-order-offer-heading { align-items: start; grid-template-columns: 42px minmax(0, 1fr); } .admin-order-offer-heading em { grid-column: 2; justify-self: start; } .admin-order-offer-metrics .admin-order-info { border-bottom: 1px solid #e1e9f2; border-right: 0; padding: .45rem 0; } .admin-order-offer-flow > span { padding: .45rem 0; } }
+
+html[data-theme="dark"] .admin-order-detail { color: #edf5ff; }
+html[data-theme="dark"] .admin-order-detail-header > div:first-child > a { color: #aabbd0; }
+html[data-theme="dark"] .admin-order-detail-header p { color: #aabbd0; }
+html[data-theme="dark"] .order-badge.status { background: #10283a; color: #68baff; }
+html[data-theme="dark"] .order-badge.priority { background: #1c3550; color: #b7c8dc; }
+html[data-theme="dark"] .admin-order-header-actions button,
+html[data-theme="dark"] .admin-order-modal button,
+html[data-theme="dark"] .admin-order-owner button,
+html[data-theme="dark"] .admin-order-quick button {
+  background: #14253a; border-color: #304b66; color: #edf5ff;
+}
+html[data-theme="dark"] .admin-order-header-actions button:hover,
+html[data-theme="dark"] .admin-order-owner button:hover,
+html[data-theme="dark"] .admin-order-quick button:hover {
+  border-color: #4f789b; background: #183049;
+}
+html[data-theme="dark"] .admin-order-header-actions button.primary,
+html[data-theme="dark"] .admin-order-modal button.primary { background: #0a8f52; border-color: #0a8f52; color: #fff; }
+html[data-theme="dark"] :is(
+  .admin-order-identity-bar,
+  .admin-order-tabs,
+  .admin-order-data-grid section,
+  .admin-order-total-band,
+  .admin-order-side,
+  .admin-order-placeholder,
+  .admin-order-items-view,
+  .admin-order-comments,
+  .admin-order-offer-empty,
+  .admin-order-offer-list article,
+  .admin-order-view-state
+) { background: #101e2e; border-color: #29435d; }
+html[data-theme="dark"] .admin-order-identity-bar > div { border-right-color: #29435d; }
+html[data-theme="dark"] .admin-order-identity-bar small,
+html[data-theme="dark"] .admin-order-identity-bar em,
+html[data-theme="dark"] .admin-order-info span,
+html[data-theme="dark"] .admin-order-total-band span,
+html[data-theme="dark"] .admin-order-side label,
+html[data-theme="dark"] .admin-order-owner > span,
+html[data-theme="dark"] .admin-order-comment-form small,
+html[data-theme="dark"] .admin-order-no-comments,
+html[data-theme="dark"] .admin-order-offer-empty,
+html[data-theme="dark"] .admin-order-offers-view > header p,
+html[data-theme="dark"] .admin-order-offer-heading p,
+html[data-theme="dark"] .admin-order-comment-list time {
+  color: #aabbd0;
+}
+html[data-theme="dark"] .admin-order-identity-bar strong,
+html[data-theme="dark"] .admin-order-info strong,
+html[data-theme="dark"] .admin-order-total-band strong,
+html[data-theme="dark"] .admin-order-owner strong,
+html[data-theme="dark"] .admin-order-offer-empty h2,
+html[data-theme="dark"] .admin-order-offer-heading strong,
+html[data-theme="dark"] .admin-order-comment-list header strong {
+  color: #edf5ff;
+}
+html[data-theme="dark"] .admin-order-data-stack section > p,
+html[data-theme="dark"] .admin-order-placeholder p,
+html[data-theme="dark"] .admin-order-comment-list article p {
+  color: #d7e5f4;
+}
+html[data-theme="dark"] .admin-order-tabs button { color: #aabbd0; }
+html[data-theme="dark"] .admin-order-tabs button.active { color: #68baff; border-color: #57b0ed; }
+html[data-theme="dark"] .admin-order-tabs button span { background: #1c3550; color: #b7c8dc; }
+html[data-theme="dark"] .admin-order-side select,
+html[data-theme="dark"] .admin-order-modal select,
+html[data-theme="dark"] .admin-order-comment-form textarea {
+  background: #14253a; border-color: #304b66; color: #edf5ff;
+}
+html[data-theme="dark"] .admin-order-side > section { border-bottom-color: #29435d; }
+html[data-theme="dark"] .admin-order-owner i { background: #1c3550; }
+html[data-theme="dark"] .admin-order-items-view th { background: #172b43; color: #a9c7e7; border-top-color: #29435d; }
+html[data-theme="dark"] .admin-order-items-view td { border-top-color: #29435d; color: #d7e5f4; }
+html[data-theme="dark"] .admin-order-comment-form { border-bottom-color: #29435d; }
+html[data-theme="dark"] .admin-order-comment-list article > i { background: #1c3550; }
+html[data-theme="dark"] .admin-order-offer-heading > span { background: #10283a; color: #68baff; }
+html[data-theme="dark"] .admin-order-offer-heading em { background: #10283a; color: #68baff; }
+html[data-theme="dark"] .admin-order-offer-heading em.offer-szkic { background: #1c3550; color: #aabbd0; }
+html[data-theme="dark"] .admin-order-offer-heading em.offer-zaakceptowana { background: #0f2e1e; color: #5fd095; }
+html[data-theme="dark"] .admin-order-offer-heading em.offer-odrzucona { background: #3a1614; color: #ff8080; }
+html[data-theme="dark"] .admin-order-offer-metrics { border-top-color: #29435d; }
+html[data-theme="dark"] .admin-order-offer-metrics .admin-order-info { border-right-color: #29435d; }
+html[data-theme="dark"] .admin-order-offer-flow { background: #0c1827; border-top-color: #29435d; }
+html[data-theme="dark"] .admin-order-offer-flow b { color: #d7e5f4; }
+html[data-theme="dark"] .admin-order-offer-flow small { color: #aabbd0; }
+html[data-theme="dark"] .admin-order-offer-flow > span.done { color: #5fd095; }
+html[data-theme="dark"] .admin-order-offers-view article footer { border-top-color: #29435d; }
+html[data-theme="dark"] .admin-order-modal { background: #101e2e; }
+html[data-theme="dark"] .admin-order-modal label { color: #aabbd0; }
+html[data-theme="dark"] .admin-order-view-state.error { color: #ff8080; }

@@ -166,3 +166,20 @@
     justify-content: flex-start;
   }
 }
+
+html[data-theme="dark"] .admin-notification-settings-page { color: #edf5ff; }
+html[data-theme="dark"] .admin-notification-settings-header p { color: #aabbd0; }
+html[data-theme="dark"] .admin-notification-panel {
+  background: #101e2e;
+  border-color: #29435d;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+html[data-theme="dark"] .admin-notification-panel-header { border-bottom-color: #29435d; }
+html[data-theme="dark"] .admin-notification-panel-header > span,
+html[data-theme="dark"] .admin-notification-category > span {
+  background: #10283a;
+  color: #68baff;
+}
+html[data-theme="dark"] .admin-notification-panel p { color: #aabbd0; }
+html[data-theme="dark"] .admin-notification-row { border-bottom-color: #29435d; }
+html[data-theme="dark"] .admin-notification-switch { color: #d7e5f4; }
