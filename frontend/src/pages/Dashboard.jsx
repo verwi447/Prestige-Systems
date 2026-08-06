@@ -55,6 +55,34 @@ const statusClass = (status = "") =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+const offerStatusLabels = {
+  SZKIC: "Szkic",
+  "WYS\u0141ANA": "Wys\u0142ana",
+  "DO AKCEPTACJI": "Do akceptacji",
+  ZAAKCEPTOWANA: "Zaakceptowana",
+  ODRZUCONA: "Odrzucona",
+  "W REALIZACJI": "W realizacji",
+  "ZAKO\u0143CZONA": "Zako\u0144czona"
+};
+
+const ticketStatusLabels = {
+  NEW: "Nowe",
+  ACCEPTED: "Przyj\u0119te",
+  IN_PROGRESS: "W realizacji",
+  WAITING_FOR_CLIENT: "Oczekuje na klienta",
+  WAITING_FOR_PARTS: "Oczekuje na cz\u0119\u015bci",
+  REJECTED: "Odrzucone",
+  COMPLETED: "Zako\u0144czone",
+  CANCELLED: "Anulowane"
+};
+
+const ticketPriorityLabels = {
+  LOW: "Niski",
+  NORMAL: "Normalny",
+  HIGH: "Wysoki",
+  CRITICAL: "Krytyczny"
+};
+
 const statCards = [
   { key: "companies", label: "Firmy klientów", icon: "building", link: "/companies", linkText: "Zobacz wszystkie" },
   { key: "offersThisMonth", label: "Oferty w tym miesiącu", icon: "document", link: "/offers", linkText: "Zobacz wszystkie" },
@@ -113,8 +141,10 @@ function AdminIcon({ name }) {
   );
 }
 
-function StatusBadge({ value }) {
-  return <span className={`admin-status ${statusClass(value)}`}>{value || "-"}</span>;
+function StatusBadge({ value, type }) {
+  const labels = type === "ticket" ? ticketStatusLabels : offerStatusLabels;
+  const label = labels[value] || value || "-";
+  return <span className={`admin-status ${statusClass(value)}`}>{label}</span>;
 }
 
 function AdminTable({ title, link, columns, children, emptyText }) {
@@ -248,7 +278,7 @@ function AdminDashboard() {
               <td>{offer.company_name || "-"}</td>
               <td>{money.format(Number(offer.total_price || 0))}</td>
               <td>{formatDate(offer.created_at)}</td>
-              <td><StatusBadge value={offer.status} /></td>
+              <td><StatusBadge value={offer.status} type="offer" /></td>
             </tr>
           ))}
         </AdminTable>
@@ -275,7 +305,7 @@ function AdminDashboard() {
               <td>{ticket.ticket_number || "-"}</td>
               <td>{ticket.company_name || "-"}</td>
               <td>{ticket.object_name || "-"}</td>
-              <td><StatusBadge value={ticket.status} /></td>
+              <td><StatusBadge value={ticket.status} type="ticket" /></td>
             </tr>
           ))}
         </AdminTable>
@@ -408,8 +438,8 @@ function ClientDashboard({ user }) {
                     <td>{ticket.number || "-"}</td>
                     <td>{ticket.title || "-"}</td>
                     <td>{ticket.siteName || "-"}</td>
-                    <td><span className={`client-badge status-${statusClass(ticket.status || "nowe")}`}>{ticket.status || "Nowe"}</span></td>
-                    <td><span className={`client-badge priority-${statusClass(ticket.priority || "Normalny")}`}>{ticket.priority || "Normalny"}</span></td>
+                    <td><span className={`client-badge status-${statusClass(ticket.status || "NEW")}`}>{ticketStatusLabels[ticket.status] || ticket.status || "Nowe"}</span></td>
+                    <td><span className={`client-badge priority-${statusClass(ticket.priority || "NORMAL")}`}>{ticketPriorityLabels[ticket.priority] || ticket.priority || "Normalny"}</span></td>
                     <td>{formatDateTime(ticket.lastActivityAt)}</td>
                   </tr>
                 )) : (
