@@ -86,9 +86,9 @@ function DetailCard({ title, icon: Icon, children, className = "" }) {
   );
 }
 
-function DetailRow({ label, value, children }) {
+function DetailRow({ label, value, children, className = "" }) {
   return (
-    <div className="client-offer-detail-row">
+    <div className={`client-offer-detail-row ${className}`.trim()}>
       <span>{label}</span>
       <strong>{children || value || "Nie określono"}</strong>
     </div>
@@ -254,7 +254,7 @@ export default function OfferDetail() {
           </div>
         </div>
         <div className="client-offer-header-actions">
-          {isAdmin && <button type="button" onClick={() => navigate(`/offers/edit/${id}`)}><FileText size={18} /> Edytuj ofertę</button>}
+          {isAdmin && <button type="button" className="primary" onClick={() => navigate(`/offers/edit/${id}`)}><FileText size={18} /> Edytuj ofertę</button>}
           <button type="button" onClick={downloadPdf} disabled={downloading}><Download size={18} /> {downloading ? "Pobieranie..." : "Pobierz PDF"}</button>
           {canDecide && <button type="button" className="success" onClick={() => setModal("accept")}><CheckCircle2 size={18} /> Akceptuj ofertę</button>}
           {canDecide && <button type="button" className="danger" onClick={() => setModal("reject")}><XCircle size={18} /> Odrzuć ofertę</button>}
@@ -410,19 +410,21 @@ export default function OfferDetail() {
             <DetailRow label="Przygotował" value={preparedBy} />
           </DetailCard>
 
-          <DetailCard title="Podsumowanie wartości">
+          <DetailCard title="Podsumowanie wartości" className="client-offer-totals-card">
             <DetailRow label="Wartość netto" value={formatMoney(totalNet, offer.currency)} />
             <DetailRow label="VAT" value={formatMoney(vatTotal, offer.currency)} />
-            <DetailRow label="Wartość brutto" value={formatMoney(totalGross, offer.currency)} />
+            <DetailRow label="Wartość brutto" value={formatMoney(totalGross, offer.currency)} className="client-offer-total-row" />
           </DetailCard>
 
-          <section className="client-offer-help-card">
-            <span><Headphones size={24} /></span>
-            <h2>Pomoc</h2>
-            <p>W sprawach dotyczących oferty skontaktuj się z naszym zespołem.</p>
-            <a href="tel:+48221234567"><Phone size={18} /> +48 22 123 45 67</a>
-            <a href="mailto:serwis@prestige-systems.pl"><Mail size={18} /> serwis@prestige-systems.pl</a>
-          </section>
+          {!isAdmin && (
+            <section className="client-offer-help-card">
+              <span><Headphones size={24} /></span>
+              <h2>Pomoc</h2>
+              <p>W sprawach dotyczących oferty skontaktuj się z naszym zespołem.</p>
+              <a href="tel:+48221234567"><Phone size={18} /> +48 22 123 45 67</a>
+              <a href="mailto:serwis@prestige-systems.pl"><Mail size={18} /> serwis@prestige-systems.pl</a>
+            </section>
+          )}
         </aside>
       </div>
 
