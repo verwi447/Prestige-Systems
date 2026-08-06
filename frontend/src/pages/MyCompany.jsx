@@ -659,7 +659,6 @@ export default function MyCompany() {
           <div className="employee-info-card">
             <span><Info size={18} /></span>
             <div><h3>Role i uprawnienia</h3><p>Tylko właściciel konta może zarządzać pracownikami i uprawnieniami. Pracownicy mają dostęp tylko do przypisanych obiektów i funkcji zgodnie z nadanymi uprawnieniami.</p></div>
-            <button type="button">Dowiedz się więcej</button>
           </div>
         </section>
       )}
