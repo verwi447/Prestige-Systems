@@ -2,9 +2,7 @@ import jwt from "jsonwebtoken";
 import { db } from "../db.js";
 
 export async function auth(req, res, next) {
-  const authorization = String(req.headers.authorization || "");
-  const match = authorization.match(/^Bearer\s+([^\s]+)$/i);
-  const token = match?.[1];
+  const token = req.cookies?.token;
   if (!token) return res.status(401).json({ error: "Brak tokenu" });
 
   try {

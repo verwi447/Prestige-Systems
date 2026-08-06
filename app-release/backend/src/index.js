@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -71,9 +72,28 @@ const io = new Server(server, {
   cors: corsOptions
 });
 
+function parseCookieHeader(header) {
+  const result = {};
+  if (!header) return result;
+  header.split(";").forEach((pair) => {
+    const index = pair.indexOf("=");
+    if (index === -1) return;
+    const key = pair.slice(0, index).trim();
+    const value = pair.slice(index + 1).trim();
+    if (key) {
+      try {
+        result[key] = decodeURIComponent(value);
+      } catch {
+        result[key] = value;
+      }
+    }
+  });
+  return result;
+}
+
 io.use(async (socket, next) => {
   try {
-    const token = socket.handshake.auth?.token;
+    const token = parseCookieHeader(socket.handshake.headers.cookie).token;
     if (!token) return next(new Error("Brak tokenu"));
     const decoded = jwt.verify(token, process.env.JWT_SECRET, {
       algorithms: ["HS256"], issuer: "prestige-systems-hub", audience: "prestige-systems-hub-api"
@@ -116,6 +136,7 @@ app.use(helmet({
   }
 }));
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json({ limit: "2mb", strict: true }));
 app.use(express.urlencoded({ limit: "2mb", extended: false, parameterLimit: 500 }));
 app.use(requestGuard);

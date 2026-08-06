@@ -4,6 +4,7 @@ import process from "node:process";
 import { after, before, test } from "node:test";
 import dotenv from "dotenv";
 import express from "express";
+import cookieParser from "cookie-parser";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../src/db.js";
@@ -34,8 +35,14 @@ function createToken(userId) {
   });
 }
 
+function extractTokenCookie(response) {
+  const setCookie = response.headers.get("set-cookie") || "";
+  const match = setCookie.match(/(?:^|,\s*)token=([^;]+)/);
+  return match?.[1];
+}
+
 async function request(path, token, { method = "GET", body } = {}) {
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = token ? { Cookie: `token=${token}` } : {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const response = await globalThis.fetch(`${baseUrl}${path}`, {
     method,
@@ -66,6 +73,7 @@ before(async () => {
 
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
   app.use("/auth", authRoutes);
   app.use("/offers", offerRoutes);
   app.use("/tickets", ticketRoutes);
@@ -247,8 +255,8 @@ test("client owner can grant employee permissions and employee restrictions are 
   });
   assert.equal(ownerLogin.response.status, 200);
   assert.equal(employeeLogin.response.status, 200);
-  const ownerToken = ownerLogin.body.token;
-  const employeeToken = employeeLogin.body.token;
+  const ownerToken = extractTokenCookie(ownerLogin.response);
+  const employeeToken = extractTokenCookie(employeeLogin.response);
 
   const ownerEmployees = await request("/api/client/company/employees", ownerToken);
   assert.equal(ownerEmployees.response.status, 200);

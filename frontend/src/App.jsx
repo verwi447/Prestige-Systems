@@ -72,10 +72,9 @@ const ClientPermission = ({ user, permission, children }) => (
 );
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(getStoredUser);
   const [theme, setTheme] = useState(getInitialTheme);
-  const [identityReady, setIdentityReady] = useState(!token);
+  const [identityReady, setIdentityReady] = useState(false);
   const [sessionError, setSessionError] = useState("");
   const [sessionAttempt, setSessionAttempt] = useState(0);
 
@@ -93,20 +92,20 @@ function App() {
   const toggleTheme = () => setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark");
 
   const handleLogout = () => {
+    auth.logout().catch(() => {});
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    setToken(null);
+  };
+
+  const handleLoginSuccess = (loggedInUser) => {
+    setSessionError("");
+    setUser(loggedInUser);
+    setIdentityReady(true);
   };
 
   useEffect(() => {
     let mounted = true;
-    if (!token) {
-      setSessionError("");
-      setIdentityReady(true);
-      return () => { mounted = false; };
-    }
-
     setIdentityReady(false);
     setSessionError("");
     auth.me()
@@ -121,7 +120,6 @@ function App() {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           setUser(null);
-          setToken(null);
         } else if (!getStoredUser()) {
           setSessionError(getRequestErrorMessage(error, "Nie udalo sie potwierdzic sesji."));
         }
@@ -131,25 +129,24 @@ function App() {
       });
 
     return () => { mounted = false; };
-  }, [sessionAttempt, token]);
-
-  if (!token) {
-    return <><AppFeedback /><Login setToken={setToken} theme={theme} onThemeToggle={toggleTheme} /></>;
-  }
+  }, [sessionAttempt]);
 
   if (!identityReady) {
     return <><AppFeedback /><div className="session-state"><AppState title="Ladowanie sesji" description="Sprawdzamy dostep do panelu." /></div></>;
   }
 
   if (!user) {
-    return (
-      <>
-        <AppFeedback />
-        <div className="session-state">
-          <AppState variant="connection" title="Nie udalo sie otworzyc panelu" description={sessionError || "Nie udalo sie potwierdzic sesji."} actionLabel="Sprobuj ponownie" onAction={() => setSessionAttempt((value) => value + 1)} />
-        </div>
-      </>
-    );
+    if (sessionError) {
+      return (
+        <>
+          <AppFeedback />
+          <div className="session-state">
+            <AppState variant="connection" title="Nie udalo sie otworzyc panelu" description={sessionError} actionLabel="Sprobuj ponownie" onAction={() => setSessionAttempt((value) => value + 1)} />
+          </div>
+        </>
+      );
+    }
+    return <><AppFeedback /><Login onLoginSuccess={handleLoginSuccess} theme={theme} onThemeToggle={toggleTheme} /></>;
   }
 
   return (

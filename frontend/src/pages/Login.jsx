@@ -6,7 +6,7 @@ import LoginBarrier from "../components/LoginBarrier";
 
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-export default function Login({ setToken, theme, onThemeToggle }) {
+export default function Login({ onLoginSuccess, theme, onThemeToggle }) {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -33,15 +33,14 @@ export default function Login({ setToken, theme, onThemeToggle }) {
       setAuthState("loading");
       setMessage("");
       const res = await auth.login(username, password);
-      if (res.data?.token) {
+      if (res.data?.user) {
         setAuthState("success");
-        localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
         await wait(650);
         navigate("/", { replace: true });
-        setToken(res.data.token);
+        onLoginSuccess(res.data.user);
       } else {
-        throw new Error("Odpowiedź serwera nie zawiera tokenu.");
+        throw new Error("Odpowiedź serwera nie zawiera danych użytkownika.");
       }
     } catch (err) {
       const apiMessage = err.response?.data?.error;

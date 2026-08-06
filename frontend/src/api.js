@@ -5,6 +5,7 @@ export { api, protectedFiles };
 // Auth
 export const auth = {
   login: (username, password) => api.post("/auth/login", { username, password }),
+  logout: () => api.post("/auth/logout"),
   me: () => api.get("/auth/me"),
   seed: () => api.get("/auth/seed")
 };

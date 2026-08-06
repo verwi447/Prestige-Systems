@@ -9,15 +9,8 @@ const clearSession = () => {
 
 export const api = axios.create({
   baseURL: apiOrigin,
-  timeout: 20_000
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token && token !== "undefined") {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  timeout: 20_000,
+  withCredentials: true
 });
 
 api.interceptors.response.use(

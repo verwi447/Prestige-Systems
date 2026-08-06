@@ -201,9 +201,7 @@ export default function NotificationCenter() {
   }, [loadNotifications, open]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return undefined;
-    const socket = io(API_ORIGIN, { auth: { token } });
+    const socket = io(API_ORIGIN, { withCredentials: true });
 
     socket.on("notification:new", (notification) => {
       const normalized = normalizeNotification(notification);

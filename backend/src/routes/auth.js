@@ -2,10 +2,19 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../db.js";
+import { auth as authMiddleware } from "../middleware/auth.js";
 import { getEffectivePermissions, normalizeRole } from "../middleware/access.js";
 
 const router = express.Router();
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("invalid-login-placeholder", 12);
+const TOKEN_COOKIE_MAX_AGE_MS = 8 * 60 * 60 * 1000;
+const isHttpsPublicUrl = String(process.env.PUBLIC_BASE_URL || "").trim().toLowerCase().startsWith("https://");
+const tokenCookieOptions = {
+  httpOnly: true,
+  secure: isHttpsPublicUrl,
+  sameSite: "lax",
+  path: "/"
+};
 
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
@@ -57,8 +66,8 @@ router.post("/login", async (req, res) => {
       }
     );
 
+    res.cookie("token", token, { ...tokenCookieOptions, maxAge: TOKEN_COOKIE_MAX_AGE_MS });
     res.json({
-      token,
       user: {
         id: user.id,
         username: user.username,
@@ -77,37 +86,32 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/me", async (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Brak tokenu" });
+router.post("/logout", (_req, res) => {
+  res.clearCookie("token", tokenCookieOptions);
+  res.json({ message: "Wylogowano." });
+});
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
-      algorithms: ["HS256"], issuer: "prestige-systems-hub", audience: "prestige-systems-hub-api"
-    });
-    const result = await db.query(
-      `SELECT id, username, first_name, last_name, email, phone, role, company_id, is_active
-       FROM users
-       WHERE id=$1`,
-      [decoded.id]
-    );
-    const user = result.rows[0];
-    if (!user || user.is_active === false) return res.status(401).json({ error: "Konto nieaktywne." });
-    const permissions = [...await getEffectivePermissions(user)].sort();
-    res.json({
-      id: user.id,
-      username: user.username,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      email: user.email,
-      phone: user.phone,
-      role: normalizeRole(user.role),
-      companyId: user.company_id || null,
-      permissions
-    });
-  } catch {
-    res.status(401).json({ error: "Błędny token" });
-  }
+router.get("/me", authMiddleware, async (req, res) => {
+  const result = await db.query(
+    `SELECT id, username, first_name, last_name, email, phone, role, company_id, is_active
+     FROM users
+     WHERE id=$1`,
+    [req.user.id]
+  );
+  const user = result.rows[0];
+  if (!user || user.is_active === false) return res.status(401).json({ error: "Konto nieaktywne." });
+  const permissions = [...await getEffectivePermissions(user)].sort();
+  res.json({
+    id: user.id,
+    username: user.username,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    email: user.email,
+    phone: user.phone,
+    role: normalizeRole(user.role),
+    companyId: user.company_id || null,
+    permissions
+  });
 });
 
 export default router;
