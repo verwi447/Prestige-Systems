@@ -9,7 +9,7 @@
     "dev": "nodemon src/index.js",
     "lint": "eslint src scripts test integration e2e playwright.config.js",
     "test": "node --test",
-    "test:api": "node --test --test-concurrency=1 integration/apiAccess.integration.js",
+    "test:api": "node --test --test-concurrency=1 integration/apiAccess.integration.js integration/offersTicketsWorkflow.integration.js",
     "test:e2e": "playwright test --config playwright.config.js",
     "check": "npm run lint && npm test",
     "check:full": "npm run check && npm run test:api",
