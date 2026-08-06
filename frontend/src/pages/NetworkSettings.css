@@ -52,10 +52,11 @@
 .network-copy-button {
   justify-content: center;
   border: 1px solid #cbd9e9;
-  border-radius: 6px;
+  border-radius: 8px;
   font: inherit;
-  font-weight: 800;
+  font-weight: 550;
   cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .network-refresh {
@@ -106,10 +107,10 @@
 
 .network-summary-card,
 .network-panel {
-  border: 1px solid #d8e2ef;
-  border-radius: 8px;
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 8px 24px rgba(10, 38, 76, .05);
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
 }
 
 .network-summary-card {
@@ -185,7 +186,7 @@
   margin-bottom: 7px;
   color: #294362;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .network-mode-control { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -207,7 +208,7 @@
 .network-mode-control button:hover { border-color: #7bb5ef; background: #f9fcff; }
 .network-mode-control button.active { border-color: #0aa653; background: #effcf4; color: #067b3c; box-shadow: inset 0 0 0 1px #0aa653; }
 .network-mode-control svg { width: 20px; height: 20px; flex: 0 0 auto; }
-.network-mode-control span { min-width: 0; font-size: 13px; font-weight: 800; }
+.network-mode-control span { min-width: 0; font-size: 13px; font-weight: 550; }
 .network-mode-control small { display: block; margin-top: 3px; color: #60748f; font-size: 11px; font-weight: 650; }
 
 .network-form-field.public-url,
@@ -272,7 +273,7 @@
 .network-interface code,
 .network-interface small { display: block; }
 .network-interface strong { color: #17395f; font-size: 13px; }
-.network-interface code { overflow: hidden; margin-top: 2px; color: #0874e6; font-family: inherit; font-size: 12px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.network-interface code { overflow: hidden; margin-top: 2px; color: #0874e6; font-family: inherit; font-size: 12px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .network-interface small { margin-top: 3px; color: #677c97; font-size: 10px; font-weight: 650; }
 .network-interface-actions { flex: 0 0 auto; gap: 6px; }
 .network-interface-actions > button { min-height: 31px; padding: 0 9px; background: #ffffff; color: #143b66; font-size: 11px; }
@@ -285,7 +286,7 @@
   padding: 11px 0;
 }
 
-.network-link a { overflow: hidden; color: #0874e6; font-size: 12px; font-weight: 750; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.network-link a { overflow: hidden; color: #0874e6; font-size: 12px; font-weight: 500; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
 .network-link a:hover { text-decoration: underline; }
 
 .network-mode-control button:focus-visible,
