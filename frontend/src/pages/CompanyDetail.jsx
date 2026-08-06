@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { companies } from "../api";
 import AppState from "../components/AppState";
@@ -6,13 +6,14 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { getRequestErrorMessage, showFeedback, showSuccess } from "../lib/feedback";
 import CompanyContractsTab from "./companies/CompanyContractsTab";
 import CompanyDataTab from "./companies/CompanyDataTab";
-import CompanyEmployeesTab from "./companies/CompanyEmployeesTab";
 import CompanyFormModal from "./companies/CompanyFormModal";
 import { createCompanyFormData } from "./companies/companyFormData";
-import CompanyOffersTab from "./companies/CompanyOffersTab";
-import CompanySitesTab from "./companies/CompanySitesTab";
 import CompanyTicketsTab from "./companies/CompanyTicketsTab";
 import "./Companies.css";
+
+const CompanyEmployeesTab = lazy(() => import("./companies/CompanyEmployeesTab"));
+const CompanySitesTab = lazy(() => import("./companies/CompanySitesTab"));
+const CompanyOffersTab = lazy(() => import("./companies/CompanyOffersTab"));
 
 const tabs = [
   { id: "data", label: "Dane firmy" },
@@ -121,11 +122,15 @@ export default function CompanyDetail() {
       </div>
 
       {activeTab === "data" && <CompanyDataTab company={company} />}
-      {activeTab === "employees" && <CompanyEmployeesTab companyId={companyId} />}
-      {activeTab === "sites" && <CompanySitesTab companyId={companyId} />}
-      {activeTab === "offers" && <CompanyOffersTab companyId={companyId} onChangeTab={setActiveTab} />}
       {activeTab === "tickets" && <CompanyTicketsTab companyId={companyId} />}
       {activeTab === "contracts" && <CompanyContractsTab />}
+      {(activeTab === "employees" || activeTab === "sites" || activeTab === "offers") && (
+        <Suspense fallback={<AppState variant="loading" title="Ladowanie zakladki" description="Pobieramy dane." />}>
+          {activeTab === "employees" && <CompanyEmployeesTab companyId={companyId} />}
+          {activeTab === "sites" && <CompanySitesTab companyId={companyId} />}
+          {activeTab === "offers" && <CompanyOffersTab companyId={companyId} onChangeTab={setActiveTab} />}
+        </Suspense>
+      )}
 
       {showForm && (
         <CompanyFormModal
