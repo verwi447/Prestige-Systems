@@ -311,7 +311,6 @@ export default function MyOffers() {
             <li><CheckCircle2 size={18} /> Przejrzyj szczegóły oferty, a następnie ją zaakceptuj lub odrzuć.</li>
             <li><SlidersHorizontal size={18} /> Śledź status realizacji każdej oferty w czasie rzeczywistym.</li>
           </ul>
-          <button type="button">Dowiedz się więcej</button>
         </aside>
       </div>
     </div>
