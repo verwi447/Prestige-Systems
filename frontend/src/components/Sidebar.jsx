@@ -248,13 +248,15 @@ export default function Sidebar({ user }) {
                   <span>System</span>
                   <SidebarIcon name="chevron" />
                 </button>
-                {systemOpen && <ul id="admin-system-menu" className="sidebar-system-menu">
-                  {adminSystemMenu.map((item) => (
-                    <li key={item.to}>
-                      <SidebarLink item={item} />
-                    </li>
-                  ))}
-                </ul>}
+                <div className="sidebar-system-collapse">
+                  <ul id="admin-system-menu" className="sidebar-system-menu">
+                    {adminSystemMenu.map((item) => (
+                      <li key={item.to}>
+                        <SidebarLink item={item} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </li>
             </ul>
           </>
