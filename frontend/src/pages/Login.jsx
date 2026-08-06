@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Moon, Sun, UserRound } from "lucide-react";
 import { auth } from "../api.js";
 import LoginBarrier from "../components/LoginBarrier";
@@ -6,6 +7,7 @@ import LoginBarrier from "../components/LoginBarrier";
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 export default function Login({ setToken, theme, onThemeToggle }) {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -36,6 +38,7 @@ export default function Login({ setToken, theme, onThemeToggle }) {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
         await wait(650);
+        navigate("/", { replace: true });
         setToken(res.data.token);
       } else {
         throw new Error("Odpowiedź serwera nie zawiera tokenu.");
