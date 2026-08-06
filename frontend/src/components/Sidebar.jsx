@@ -17,7 +17,8 @@ const adminMenu = [
 const adminSettings = [
   { to: "/settings", label: "Nasza firma", icon: "office", end: true },
   { to: "/settings/admins", label: "Administratorzy", icon: "admin" },
-  { to: "/settings/notifications", label: "Powiadomienia", icon: "bell" }
+  { to: "/settings/notifications", label: "Powiadomienia", icon: "bell" },
+  { to: "/profile", label: "Moje konto", icon: "settings" }
 ];
 
 const adminSystemMenu = [

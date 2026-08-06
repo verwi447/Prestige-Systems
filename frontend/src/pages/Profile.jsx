@@ -27,7 +27,8 @@ const tabs = [
 
 const roleLabels = {
   CLIENT_OWNER: "Właściciel konta",
-  CLIENT_EMPLOYEE: "Pracownik"
+  CLIENT_EMPLOYEE: "Pracownik",
+  ADMIN: "Administrator"
 };
 
 const formatDate = (value, withTime = true) => {
