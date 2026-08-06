@@ -22,10 +22,10 @@
 .client-detail-action-button,
 .client-detail-icon-button,
 .client-ticket-wide-link {
-  border: 1px solid #d5e1ee;
+  border: 1px solid #d8e2ee;
   border-radius: 8px;
   background: #ffffff;
-  color: #071a35;
+  color: #26374f;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -33,9 +33,18 @@
   min-height: 42px;
   padding: 0.55rem 0.9rem;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.client-ticket-back-link:hover,
+.client-detail-action-button:hover,
+.client-detail-icon-button:hover,
+.client-ticket-wide-link:hover {
+  border-color: #b9c9dd;
+  box-shadow: 0 4px 12px rgba(15, 33, 56, 0.08);
 }
 
 .client-detail-icon-button {
@@ -44,9 +53,14 @@
 }
 
 .client-detail-action-button.primary {
-  background: #0aa05a;
-  border-color: #0aa05a;
+  background: #0a8f52;
+  border-color: #0a8f52;
   color: #ffffff;
+}
+
+.client-detail-action-button.primary:hover {
+  background: #097e48;
+  border-color: #097e48;
 }
 
 .client-detail-action-button.compact {
@@ -62,17 +76,18 @@
 }
 
 .client-ticket-detail-heading h1 {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
   line-height: 1.1;
   margin: 0;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .client-ticket-detail-heading p {
-  color: #415675;
+  color: #536783;
   font-size: 0.95rem;
-  font-weight: 800;
-  margin: 0.35rem 0 0.6rem;
+  font-weight: 500;
+  margin: 0.4rem 0 0.6rem;
 }
 
 .client-ticket-detail-badges,
@@ -85,15 +100,16 @@
 
 .client-detail-badge,
 .client-detail-pill {
-  border-radius: 7px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   min-height: 25px;
-  padding: 0.22rem 0.55rem;
+  padding: 0.25rem 0.65rem;
   width: fit-content;
-  font-size: 0.76rem;
-  font-weight: 950;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .type-SYSTEM_FAILURE,
@@ -150,9 +166,9 @@
 .client-ticket-detail-card,
 .client-ticket-help-card {
   background: #ffffff;
-  border: 1px solid #d8e3ef;
-  border-radius: 8px;
-  box-shadow: 0 12px 28px rgba(12, 30, 56, 0.06);
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
 }
 
 .client-ticket-status-card,
@@ -164,11 +180,12 @@
 .client-ticket-detail-card h2,
 .client-ticket-help-card h2 {
   align-items: center;
+  color: #0f2138;
   display: flex;
   gap: 0.55rem;
-  font-size: 1rem;
-  font-weight: 950;
-  margin: 0 0 1rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin: 0 0 1.1rem;
 }
 
 .client-order-offer-card {
@@ -190,7 +207,7 @@
 .client-order-offer-heading p {
   color: #46607f;
   font-size: 0.82rem;
-  font-weight: 850;
+  font-weight: 600;
   margin: 0;
 }
 
@@ -211,7 +228,7 @@
 .client-order-offer-summary span {
   color: #5f718b;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .client-order-offer-summary strong {
@@ -266,14 +283,14 @@
 
 .client-ticket-status-step strong {
   font-size: 0.82rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .client-ticket-status-step small {
   color: #415675;
   display: block;
   font-size: 0.74rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .client-ticket-cancelled-status {
@@ -285,7 +302,7 @@
   display: flex;
   gap: 0.6rem;
   padding: 0.9rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .client-ticket-detail-layout {
@@ -317,20 +334,22 @@
 }
 
 .client-ticket-detail-row span {
-  color: #536783;
-  font-size: 0.76rem;
-  font-weight: 850;
+  color: #7686a0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .client-ticket-detail-row strong {
-  color: #061a3a;
+  color: #16283f;
   display: flex;
   align-items: center;
   gap: 0.4rem;
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 0.9rem;
-  font-weight: 950;
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 .client-detail-dot {
@@ -366,7 +385,7 @@
 .client-ticket-help-card p {
   color: #415675;
   font-size: 0.88rem;
-  font-weight: 750;
+  font-weight: 500;
   line-height: 1.55;
   margin: 0;
   white-space: pre-wrap;
@@ -407,19 +426,19 @@
 .client-ticket-upload-zone span {
   color: #253d5f;
   font-size: 0.84rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .client-ticket-upload-zone small {
   color: #65758d;
   font-size: 0.74rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .client-ticket-form-error {
   color: #d92d20;
   font-size: 0.8rem;
-  font-weight: 900;
+  font-weight: 600;
   margin: 0.55rem 0 0;
 }
 
@@ -456,7 +475,7 @@
   color: #0764d6;
   display: inline-flex;
   font-size: 0.67rem;
-  font-weight: 950;
+  font-weight: 700;
   height: 40px;
   justify-content: center;
   width: 40px;
@@ -482,7 +501,7 @@
   color: #061a3a;
   display: block;
   font-size: 0.88rem;
-  font-weight: 950;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -494,7 +513,7 @@
   color: #536783;
   display: block;
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 550;
   margin-top: 0.2rem;
 }
 
@@ -528,7 +547,7 @@
   color: #ffffff;
   display: inline-flex;
   font-size: 0.8rem;
-  font-weight: 950;
+  font-weight: 700;
   height: 40px;
   justify-content: center;
   width: 40px;
@@ -578,14 +597,14 @@
   border-radius: 6px;
   color: #0764d6;
   font-size: 0.72rem;
-  font-weight: 950;
+  font-weight: 700;
   padding: 0.12rem 0.4rem;
 }
 
 .client-ticket-comment p {
   color: #253d5f;
   font-size: 0.86rem;
-  font-weight: 750;
+  font-weight: 500;
   line-height: 1.55;
   margin: 0.45rem 0 0;
   white-space: pre-wrap;
@@ -609,7 +628,7 @@
   background: #f4f7fb;
   color: #415675;
   font-size: 0.74rem;
-  font-weight: 950;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -617,7 +636,7 @@
   border-top: 1px solid #e1e9f2;
   color: #253d5f;
   font-size: 0.84rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .client-ticket-item-row strong {
@@ -645,7 +664,7 @@
   margin-top: 0.2rem;
   padding: 0.75rem;
   font-size: 0.82rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .client-ticket-site-summary {
@@ -708,7 +727,7 @@
   color: #415675;
   display: block;
   font-size: 0.78rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .client-ticket-help-card {
@@ -743,12 +762,12 @@
   padding: 0.65rem 0.8rem;
   text-decoration: none;
   font-size: 0.84rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .client-ticket-detail-error {
   color: #d92d20;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 @media (min-width: 1181px) and (min-height: 760px) {

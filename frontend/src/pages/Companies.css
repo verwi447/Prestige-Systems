@@ -9,7 +9,7 @@
 .page-kicker {
   color: #667085;
   font-size: 0.76rem;
-  font-weight: 850;
+  font-weight: 600;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -20,10 +20,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px solid rgba(213, 224, 235, 0.95);
-  border-radius: 10px;
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 14px 34px rgba(20, 36, 57, 0.065);
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
   padding: 1rem 1.15rem;
 }
 
@@ -38,8 +38,10 @@
 .companies-list-header h1,
 .company-detail-header h1 {
   margin: 0;
-  color: #071a35;
-  font-size: 1.65rem;
+  color: #0f2138;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1.12;
 }
 
@@ -78,7 +80,7 @@
   color: #667085;
   cursor: pointer;
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 550;
   line-height: 1;
   padding: 0.35rem 0.55rem;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
@@ -201,7 +203,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #f7f9fc;
   color: #52647a;
   font-size: 0.68rem;
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -273,13 +275,13 @@ html[data-theme="dark"] .company-view-button.active {
 .company-kanban-column-header span {
   color: #071a35;
   font-size: 0.86rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .company-kanban-column-header small {
   color: #667085;
   font-size: 0.74rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .company-kanban-column-header strong {
@@ -352,7 +354,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #071a35;
   font-size: 0.98rem;
-  font-weight: 900;
+  font-weight: 600;
   line-height: 1.28;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -413,14 +415,14 @@ html[data-theme="dark"] .company-view-button.active {
   min-width: 0;
   color: #52647a;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .company-kanban-stats dd {
   margin: 0;
   color: #071a35;
   font-size: 0.85rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .company-kanban-card-footer {
@@ -431,7 +433,7 @@ html[data-theme="dark"] .company-view-button.active {
   border-top: 1px solid #e8eef5;
   color: #667085;
   font-size: 0.74rem;
-  font-weight: 800;
+  font-weight: 550;
   padding-top: 0.7rem;
 }
 
@@ -446,7 +448,7 @@ html[data-theme="dark"] .company-view-button.active {
   border-radius: 7px;
   color: #667085;
   font-size: 0.8rem;
-  font-weight: 750;
+  font-weight: 500;
   padding: 1rem;
   text-align: center;
 }
@@ -464,7 +466,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #eaf7e5;
   color: #2f7d1d;
   font-size: 0.74rem;
-  font-weight: 850;
+  font-weight: 600;
   padding: 0.22rem 0.62rem;
   white-space: nowrap;
 }
@@ -507,7 +509,7 @@ html[data-theme="dark"] .company-view-button.active {
   color: #071a35;
   font-size: 1.75rem;
   line-height: 1;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .company-modal-close {
@@ -539,7 +541,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #071a35;
   font-size: 0.98rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .company-form-grid label span b {
@@ -579,7 +581,7 @@ html[data-theme="dark"] .company-view-button.active {
   align-items: flex-start;
   gap: 0.65rem;
   color: #071a35;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .company-checkbox input {
@@ -614,7 +616,7 @@ html[data-theme="dark"] .company-view-button.active {
   min-height: 44px;
   border-radius: 7px;
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .company-modal-actions .btn-success {
@@ -628,14 +630,20 @@ html[data-theme="dark"] .company-view-button.active {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  color: #667085;
-  font-size: 0.88rem;
+  color: #7686a0;
+  font-size: 0.86rem;
+  font-weight: 500;
 }
 
 .company-breadcrumb a {
-  color: #0b7fc3;
-  font-weight: 800;
+  color: #536783;
+  font-weight: 600;
   text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.company-breadcrumb a:hover {
+  color: #0b7fc3;
 }
 
 .company-header-meta {
@@ -643,8 +651,9 @@ html[data-theme="dark"] .company-view-button.active {
   align-items: center;
   gap: 0.65rem;
   margin-top: 0.45rem;
-  color: #667085;
-  font-size: 0.9rem;
+  color: #536783;
+  font-size: 0.88rem;
+  font-weight: 500;
 }
 
 .company-header-actions {
@@ -666,9 +675,14 @@ html[data-theme="dark"] .company-view-button.active {
   background: rgba(255, 255, 255, 0.55);
   color: #667085;
   cursor: pointer;
-  font-weight: 850;
+  font-weight: 600;
   padding: 0.85rem 0.9rem;
+  transition: color 0.15s ease, border-color 0.15s ease;
   white-space: nowrap;
+}
+
+.company-tabs button:hover {
+  color: #0b4d7a;
 }
 
 .company-tabs button.active {
@@ -719,7 +733,7 @@ html[data-theme="dark"] .company-view-button.active {
   display: block;
   color: #667085;
   font-size: 0.76rem;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -749,7 +763,7 @@ html[data-theme="dark"] .company-view-button.active {
   grid-column: 1 / -1;
   color: #667085;
   font-size: 0.76rem;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -762,7 +776,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #ffffff;
   color: #24364b;
   font-size: 0.82rem;
-  font-weight: 750;
+  font-weight: 500;
   padding: 0.55rem 0.65rem;
 }
 
@@ -810,7 +824,7 @@ html[data-theme="dark"] .company-view-button.active {
   gap: 0.32rem;
   color: #344054;
   font-size: 0.78rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .employees-toolbar input,
@@ -869,7 +883,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #f7f9fc;
   color: #52647a;
   font-size: 0.7rem;
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -909,7 +923,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #eaf1fb;
   color: #0b4d7a;
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .employee-person strong,
@@ -924,7 +938,7 @@ html[data-theme="dark"] .company-view-button.active {
 .employee-person strong {
   color: #071a35;
   font-size: 0.9rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .employee-person small {
@@ -941,7 +955,7 @@ html[data-theme="dark"] .company-view-button.active {
   min-height: 24px;
   border-radius: 999px;
   font-size: 0.74rem;
-  font-weight: 900;
+  font-weight: 600;
   padding: 0.2rem 0.58rem;
   white-space: nowrap;
 }
@@ -968,7 +982,7 @@ html[data-theme="dark"] .company-view-button.active {
 
 .employee-permission-count {
   color: #071a35;
-  font-weight: 900;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -991,7 +1005,7 @@ html[data-theme="dark"] .company-view-button.active {
   cursor: pointer;
   font: inherit;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 600;
   min-height: 34px;
 }
 
@@ -1038,7 +1052,7 @@ html[data-theme="dark"] .company-view-button.active {
   cursor: pointer;
   font: inherit;
   font-size: 0.84rem;
-  font-weight: 800;
+  font-weight: 550;
   padding: 0.58rem 0.68rem;
   text-align: left;
 }
@@ -1053,7 +1067,7 @@ html[data-theme="dark"] .company-view-button.active {
 
 .employees-empty-row {
   color: #667085;
-  font-weight: 800;
+  font-weight: 550;
   text-align: center !important;
   padding: 1.4rem !important;
 }
@@ -1066,7 +1080,7 @@ html[data-theme="dark"] .company-view-button.active {
   padding: 0.9rem 0.25rem 0;
   color: #52647a;
   font-size: 0.86rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .employees-pagination > div {
@@ -1091,7 +1105,7 @@ html[data-theme="dark"] .company-view-button.active {
   color: #0b2c4f;
   cursor: pointer;
   font: inherit;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .employees-pagination button:disabled {
@@ -1128,7 +1142,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0 0 0.95rem;
   color: #071a35;
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .employee-permissions-section > p {
@@ -1149,7 +1163,7 @@ html[data-theme="dark"] .company-view-button.active {
   gap: 0.4rem;
   color: #071a35;
   font-size: 0.88rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .employee-form-grid b {
@@ -1233,7 +1247,7 @@ html[data-theme="dark"] .company-view-button.active {
 .permission-tile strong {
   color: #071a35;
   font-size: 0.84rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .permission-tile small {
@@ -1281,7 +1295,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #071a35;
   font-size: 1.12rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .sites-card-header p,
@@ -1374,7 +1388,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #f7f9fc;
   color: #52647a;
   font-size: 0.68rem;
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -1391,7 +1405,7 @@ html[data-theme="dark"] .company-view-button.active {
   min-height: 24px;
   border-radius: 999px;
   font-size: 0.74rem;
-  font-weight: 900;
+  font-weight: 600;
   padding: 0.2rem 0.58rem;
   white-space: nowrap;
 }
@@ -1440,7 +1454,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #071a35;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .site-kanban-column-header span {
@@ -1453,7 +1467,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #e8eef5;
   color: #52647a;
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .site-kanban-stack {
@@ -1506,7 +1520,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #edf3f8;
   color: #6f8298;
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .site-card-image-placeholder svg {
@@ -1528,7 +1542,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #071a35;
   font-size: 0.9rem;
-  font-weight: 900;
+  font-weight: 600;
   line-height: 1.3;
 }
 
@@ -1551,7 +1565,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin-top: 0.7rem;
   color: #41546a;
   font-size: 0.74rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .site-kanban-meta span {
@@ -1586,7 +1600,7 @@ html[data-theme="dark"] .company-view-button.active {
   cursor: pointer;
   font: inherit;
   font-size: 0.74rem;
-  font-weight: 900;
+  font-weight: 600;
   padding: 0 0.52rem;
 }
 
@@ -1615,7 +1629,7 @@ html[data-theme="dark"] .company-view-button.active {
   border-radius: 7px;
   color: #667085;
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 500;
   padding: 1rem;
   text-align: center;
 }
@@ -1627,7 +1641,7 @@ html[data-theme="dark"] .company-view-button.active {
 .sites-empty-row,
 .site-empty-state {
   color: #667085;
-  font-weight: 800;
+  font-weight: 550;
   text-align: center !important;
   padding: 1.3rem !important;
 }
@@ -1640,7 +1654,7 @@ html[data-theme="dark"] .company-view-button.active {
   padding: 0.9rem 0.1rem 0;
   color: #52647a;
   font-size: 0.86rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .sites-pagination > div {
@@ -1665,7 +1679,7 @@ html[data-theme="dark"] .company-view-button.active {
   color: #0b2c4f;
   cursor: pointer;
   font: inherit;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .sites-pagination button:disabled {
@@ -1734,7 +1748,7 @@ html[data-theme="dark"] .company-view-button.active {
   cursor: pointer;
   font: inherit;
   font-size: 0.86rem;
-  font-weight: 900;
+  font-weight: 600;
   padding: 0.8rem 0.1rem;
 }
 
@@ -1765,7 +1779,7 @@ html[data-theme="dark"] .company-view-button.active {
   display: block;
   color: #667085;
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -1788,7 +1802,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #071a35;
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .site-employees-panel p {
@@ -1841,7 +1855,7 @@ html[data-theme="dark"] .company-view-button.active {
 .site-employee-row strong {
   color: #071a35;
   font-size: 0.86rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .site-employee-row small {
@@ -1861,7 +1875,7 @@ html[data-theme="dark"] .company-view-button.active {
 .site-assignment-footer span {
   color: #52647a;
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .site-tickets-panel {
@@ -1893,7 +1907,7 @@ html[data-theme="dark"] .company-view-button.active {
   gap: 0.4rem;
   color: #071a35;
   font-size: 0.9rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .site-modal-form b {
@@ -1952,7 +1966,7 @@ html[data-theme="dark"] .company-view-button.active {
 .contracts-placeholder span {
   color: #667085;
   font-size: 0.76rem;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -2010,14 +2024,14 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #52647a;
   font-size: 0.76rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .offer-stat-card strong {
   margin-top: 0.18rem;
   color: #071a35;
   font-size: 1.35rem;
-  font-weight: 950;
+  font-weight: 700;
   line-height: 1.05;
 }
 
@@ -2095,7 +2109,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #071a35;
   font-size: 1rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .company-offers-command-bar p {
@@ -2138,7 +2152,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #0f6ab4;
   color: #ffffff;
   font-size: 0.7rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .company-offers-toolbar {
@@ -2174,7 +2188,7 @@ html[data-theme="dark"] .company-view-button.active {
 .offer-filter-control > span:first-child {
   color: #52647a;
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .offers-search,
@@ -2200,7 +2214,7 @@ html[data-theme="dark"] .company-view-button.active {
   border: 0;
   background: transparent;
   color: #071a35;
-  font-weight: 800;
+  font-weight: 550;
   outline: none;
 }
 
@@ -2225,7 +2239,7 @@ html[data-theme="dark"] .company-view-button.active {
 .offers-date-range b {
   color: #98a2b3;
   font-size: 0.76rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .offer-filter-dates .offers-date-range {
@@ -2277,7 +2291,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0;
   color: #071a35;
   font-size: 0.96rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .company-offers-list-header p {
@@ -2293,7 +2307,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #eef5ff;
   color: #0b5ea8;
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 600;
   padding: 0.32rem 0.55rem;
 }
 
@@ -2323,7 +2337,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #f8fafc;
   color: #52647a;
   font-size: 0.66rem;
-  font-weight: 950;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -2370,7 +2384,7 @@ html[data-theme="dark"] .company-view-button.active {
 
 .company-offers-table td strong {
   color: #071a35;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .company-offers-pagination button,
@@ -2383,7 +2397,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #ffffff;
   color: #071a35;
   cursor: pointer;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .offer-status-badge {
@@ -2393,7 +2407,7 @@ html[data-theme="dark"] .company-view-button.active {
   min-height: 24px;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 950;
+  font-weight: 700;
   padding: 0.22rem 0.58rem;
   white-space: nowrap;
 }
@@ -2431,7 +2445,7 @@ html[data-theme="dark"] .company-view-button.active {
   padding: 0.8rem;
   color: #52647a;
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .company-offers-pagination div {
@@ -2512,13 +2526,13 @@ html[data-theme="dark"] .company-view-button.active {
 .offer-detail-grid span {
   color: #667085;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .offer-detail-grid strong {
   color: #071a35;
   font-size: 0.85rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .offer-products-panel {
@@ -2530,7 +2544,7 @@ html[data-theme="dark"] .company-view-button.active {
   margin: 0 0 0.85rem;
   color: #071a35;
   font-size: 0.98rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .offer-products-table th,
@@ -2546,7 +2560,7 @@ html[data-theme="dark"] .company-view-button.active {
 .offer-products-table th {
   color: #52647a;
   font-size: 0.62rem;
-  font-weight: 950;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -2560,7 +2574,7 @@ html[data-theme="dark"] .company-view-button.active {
 .offer-product-cell strong {
   overflow: hidden;
   color: #071a35;
-  font-weight: 900;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2577,7 +2591,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #f4f7fb;
   color: #0f6ab4;
   font-size: 0.8rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .offer-detail-summary {
@@ -2594,7 +2608,7 @@ html[data-theme="dark"] .company-view-button.active {
   gap: 1rem;
   color: #52647a;
   font-size: 0.78rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .offer-detail-summary strong {
@@ -2656,14 +2670,14 @@ html[data-theme="dark"] .company-view-button.active {
 .company-offers-sidebar dt {
   color: #667085;
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .company-offers-sidebar dd {
   margin: 0;
   color: #071a35;
   font-size: 0.78rem;
-  font-weight: 950;
+  font-weight: 700;
   text-align: right;
 }
 
@@ -2684,7 +2698,7 @@ html[data-theme="dark"] .company-view-button.active {
   background: #ffffff;
   color: #0f6ab4;
   cursor: pointer;
-  font-weight: 950;
+  font-weight: 700;
   padding: 0 0.7rem;
   text-align: left;
 }
@@ -2713,7 +2727,7 @@ html[data-theme="dark"] .company-view-button.active {
 .sidebar-empty {
   color: #667085;
   font-size: 0.74rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .company-offers-empty {
@@ -2725,7 +2739,7 @@ html[data-theme="dark"] .company-view-button.active {
   border-radius: 10px;
   background: #fbfdff;
   color: #667085;
-  font-weight: 900;
+  font-weight: 600;
   padding: 1rem;
   text-align: center;
 }

@@ -10,7 +10,7 @@
   display: flex;
   gap: 10px;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .ticket-admin-breadcrumb a {
@@ -51,23 +51,24 @@
 }
 
 .ticket-admin-title-row h1 {
-  font-size: 28px;
-  font-weight: 950;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1.1;
   margin: 0;
 }
 
 .ticket-admin-hero h2 {
-  font-size: 25px;
-  font-weight: 950;
+  font-size: 22px;
+  font-weight: 600;
   line-height: 1.2;
-  margin: 14px 0 6px;
+  margin: 12px 0 6px;
 }
 
 .ticket-admin-hero p {
   color: #344864;
   font-size: 16px;
-  font-weight: 750;
+  font-weight: 500;
   margin: 0 0 12px;
 }
 
@@ -81,16 +82,17 @@
   display: inline-flex;
   gap: 6px;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .ticket-admin-badge {
-  border-radius: 6px;
+  border-radius: 999px;
   display: inline-flex;
-  font-size: 13px;
-  font-weight: 950;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   line-height: 1;
-  padding: 8px 10px;
+  padding: 8px 12px;
 }
 
 .ticket-admin-badge.priority.CRITICAL {
@@ -148,17 +150,18 @@
 .ticket-admin-quick-actions button {
   align-items: center;
   border: 1px solid #dbe4ef;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   display: inline-flex;
   font: inherit;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
   gap: 8px;
   justify-content: center;
   min-height: 42px;
   padding: 0 16px;
   text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .ticket-admin-button.ghost,
@@ -170,12 +173,27 @@
   color: #071735;
 }
 
+.ticket-admin-button.ghost:hover,
+.ticket-admin-icon-button:hover,
+.ticket-admin-inline-actions button:hover,
+.ticket-admin-attach-button:hover,
+.ticket-admin-quick-actions button:hover {
+  border-color: #b9c9dd;
+  box-shadow: 0 4px 12px rgba(15, 33, 56, 0.08);
+}
+
 .ticket-admin-button.primary,
 .ticket-admin-form footer button:last-child {
   background: #071f78;
   border-color: #071f78;
   box-shadow: 0 10px 18px rgba(7, 31, 120, 0.18);
   color: #fff;
+}
+
+.ticket-admin-button.primary:hover,
+.ticket-admin-form footer button:last-child:hover {
+  background: #102a8c;
+  border-color: #102a8c;
 }
 
 .ticket-admin-icon-button {
@@ -187,6 +205,7 @@
 .ticket-admin-form button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+  box-shadow: none;
 }
 
 .ticket-admin-menu-wrap {
@@ -224,9 +243,9 @@
 .ticket-admin-panel,
 .ticket-admin-modal {
   background: #fff;
-  border: 1px solid #e0e7f0;
-  border-radius: 8px;
-  box-shadow: 0 16px 36px rgba(12, 30, 56, 0.06);
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
 }
 
 .ticket-admin-operation-bar {
@@ -312,18 +331,19 @@
 
 .ticket-admin-operation-bar small,
 .ticket-admin-side-label {
-  color: #10223d;
+  color: #7686a0;
   display: block;
-  font-size: 12px;
-  font-weight: 950;
-  letter-spacing: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   margin: 0;
+  text-transform: uppercase;
 }
 
 .ticket-admin-operation-bar strong {
   display: block;
   font-size: 17px;
-  font-weight: 950;
+  font-weight: 700;
   margin-top: 5px;
 }
 
@@ -332,7 +352,7 @@
   display: block;
   font-size: 13px;
   font-style: normal;
-  font-weight: 750;
+  font-weight: 500;
   margin-top: 4px;
 }
 
@@ -349,7 +369,7 @@
   display: inline-flex;
   flex: 0 0 auto;
   font-size: 13px;
-  font-weight: 950;
+  font-weight: 700;
   height: 46px;
   justify-content: center;
   position: relative;
@@ -406,10 +426,15 @@
   flex: 0 0 auto;
   font: inherit;
   font-size: 14px;
-  font-weight: 850;
+  font-weight: 600;
   gap: 9px;
   min-height: 58px;
   padding: 0 3px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.ticket-admin-tabs button:hover {
+  color: #071f78;
 }
 
 .ticket-admin-tabs button.active {
@@ -446,7 +471,7 @@
 .ticket-admin-panel h3,
 .ticket-admin-offers-head h3 {
   font-size: 16px;
-  font-weight: 950;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -465,15 +490,17 @@
 }
 
 .ticket-admin-field span {
-  color: #65738a;
-  font-size: 12px;
-  font-weight: 850;
+  color: #7686a0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .ticket-admin-field strong {
   color: #071735;
   font-size: 14px;
-  font-weight: 950;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -544,7 +571,7 @@
   display: inline-flex;
   font: inherit;
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 600;
   gap: 7px;
   min-height: 42px;
   padding: 0 12px;
@@ -569,7 +596,7 @@
   color: #173b68;
   display: inline-flex;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 550;
   gap: 6px;
   max-width: 100%;
   padding: 6px 8px;
@@ -596,7 +623,7 @@
   display: inline-flex;
   gap: 8px;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .ticket-admin-internal-note {
@@ -637,7 +664,7 @@
 
 .ticket-admin-internal-note strong {
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .ticket-admin-internal-note small {
@@ -680,7 +707,7 @@
 
 .ticket-admin-comment header strong {
   font-size: 14px;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .ticket-admin-comment header span {
@@ -688,7 +715,7 @@
   border-radius: 6px;
   color: #075ee8;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   padding: 4px 7px;
 }
 
@@ -700,7 +727,7 @@
 .ticket-admin-comment header time {
   color: #69778c;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 500;
   margin-left: auto;
 }
 
@@ -795,7 +822,7 @@
   color: #075ee8;
   display: inline-flex;
   font-size: 11px;
-  font-weight: 950;
+  font-weight: 700;
   height: 46px;
   justify-content: center;
   overflow: hidden;
@@ -811,7 +838,7 @@
 .ticket-admin-attachments-table strong {
   display: block;
   font-size: 14px;
-  font-weight: 950;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -819,7 +846,7 @@
 .ticket-admin-attachments-table article > span:not(.file-preview) {
   color: #65738a;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .file-actions {
@@ -877,18 +904,18 @@
 .ticket-admin-history time {
   color: #64738a;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .ticket-admin-history strong {
   font-size: 14px;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .ticket-admin-history span {
   color: #53647d;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .ticket-admin-offers-head {
@@ -922,7 +949,7 @@
 .ticket-admin-offer-card p {
   color: #53647d;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 500;
   margin: 0;
 }
 
@@ -935,7 +962,7 @@
 .ticket-admin-offer-card a {
   color: #071f78;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -987,28 +1014,28 @@
   background: #fff4f4;
   border-color: #ffcaca;
   color: #dc1717;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .ticket-admin-side-card select.priority-select.HIGH {
   background: #fff7ed;
   border-color: #fed7aa;
   color: #c75c00;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .ticket-admin-side-card select.priority-select.NORMAL {
   background: #eef6ff;
   border-color: #cfe2ff;
   color: #075ee8;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .ticket-admin-side-card select.priority-select.LOW {
   background: #ecfdf3;
   border-color: #b8ebcc;
   color: #087342;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .ticket-admin-assignee {
@@ -1022,7 +1049,7 @@
 .ticket-admin-side-info strong {
   display: block;
   font-size: 14px;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .ticket-admin-assignee span,
@@ -1031,7 +1058,7 @@
   display: block;
   font-size: 12px;
   font-style: normal;
-  font-weight: 750;
+  font-weight: 500;
   margin-top: 3px;
   white-space: pre-line;
 }
@@ -1043,7 +1070,7 @@
   cursor: pointer;
   font: inherit;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   min-height: 38px;
   padding: 0 13px;
 }
@@ -1115,7 +1142,7 @@
 
 .ticket-admin-modal header h2 {
   font-size: 18px;
-  font-weight: 950;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -1141,7 +1168,7 @@
   display: grid;
   gap: 7px;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .ticket-admin-form select,
@@ -1160,7 +1187,7 @@
 .ticket-admin-modal-copy {
   color: #4f6078;
   font-size: 14px;
-  font-weight: 750;
+  font-weight: 500;
   margin: 0;
 }
 
@@ -1205,7 +1232,7 @@
   color: #64738a;
   display: block;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 500;
   margin-top: 3px;
 }
 
@@ -1214,7 +1241,7 @@
   box-shadow: 0 18px 36px rgba(12, 30, 56, 0.18);
   color: #fff;
   font-size: 13px;
-  font-weight: 950;
+  font-weight: 700;
   padding: 12px 14px;
   position: fixed;
   right: 22px;
@@ -1262,7 +1289,7 @@
 
 .ticket-admin-error {
   color: #dc1717;
-  font-weight: 950;
+  font-weight: 700;
   padding: 18px;
 }
 
