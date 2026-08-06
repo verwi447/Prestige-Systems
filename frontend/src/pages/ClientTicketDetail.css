@@ -948,3 +948,318 @@
     min-width: 520px;
   }
 }
+
+html[data-theme="dark"] .client-ticket-detail-page {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] :is(
+  .client-ticket-back-link,
+  .client-detail-action-button,
+  .client-detail-icon-button,
+  .client-ticket-wide-link
+) {
+  border-color: #304b66;
+  background: #14253a;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] :is(
+  .client-ticket-back-link:hover,
+  .client-detail-action-button:hover,
+  .client-detail-icon-button:hover,
+  .client-ticket-wide-link:hover
+) {
+  border-color: #4f789b;
+  background: #183049;
+}
+
+html[data-theme="dark"] .client-detail-action-button.primary {
+  background: #0a8f52;
+  border-color: #0a8f52;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .client-detail-action-button.primary:hover {
+  background: #097e48;
+  border-color: #097e48;
+}
+
+html[data-theme="dark"] .client-ticket-detail-heading h1 {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-ticket-detail-heading p {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] :is(
+  .client-ticket-status-card,
+  .client-ticket-detail-card,
+  .client-ticket-help-card
+) {
+  border-color: #29435d;
+  background: #101e2e;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme="dark"] :is(
+  .client-ticket-status-card h2,
+  .client-ticket-detail-card h2,
+  .client-ticket-help-card h2
+) {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-order-offer-heading p {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-order-offer-summary > div {
+  border-left-color: #304b66;
+}
+
+html[data-theme="dark"] .client-order-offer-summary span {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-order-offer-summary strong {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-ticket-status-track::before {
+  background: #304b66;
+}
+
+html[data-theme="dark"] .client-ticket-status-icon {
+  background: #1c3550;
+  border-color: #304b66;
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-ticket-status-step.is-active .client-ticket-status-icon {
+  background: #0a8f52;
+  border-color: #0a8f52;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .client-ticket-status-step strong {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-ticket-status-step small {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-ticket-cancelled-status {
+  background: #111f30;
+  border-color: #29435d;
+  color: #b7c8dc;
+}
+
+html[data-theme="dark"] .client-ticket-detail-row {
+  border-bottom-color: #29435d;
+}
+
+html[data-theme="dark"] .client-ticket-detail-row span:not(.client-detail-pill):not(.client-detail-badge) {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] :is(
+  .type-SYSTEM_FAILURE,
+  .type-HARDWARE_FAILURE,
+  .type-ORDER,
+  .status-NEW,
+  .status-IN_PROGRESS
+) {
+  background: #10283a;
+  color: #68baff;
+}
+
+html[data-theme="dark"] .status-ACCEPTED {
+  background: #3a2a10;
+  color: #e0ac5c;
+}
+
+html[data-theme="dark"] :is(.status-WAITING_FOR_CLIENT, .status-WAITING_FOR_PARTS) {
+  background: #2a1f42;
+  color: #b794f6;
+}
+
+html[data-theme="dark"] :is(.status-COMPLETED, .priority-LOW) {
+  background: #0f2e1e;
+  color: #5fd095;
+}
+
+html[data-theme="dark"] .status-CANCELLED {
+  background: #1c3550;
+  color: #b7c8dc;
+}
+
+html[data-theme="dark"] .priority-NORMAL {
+  background: #1c3550;
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .priority-HIGH {
+  background: #3a2410;
+  color: #ff9d5c;
+}
+
+html[data-theme="dark"] .priority-CRITICAL {
+  background: #3a1614;
+  color: #ff8080;
+}
+
+html[data-theme="dark"] .client-ticket-detail-row strong {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-detail-pill.muted {
+  background: #1c3550;
+  color: #b7c8dc;
+}
+
+html[data-theme="dark"] :is(
+  .client-ticket-description,
+  .client-ticket-empty,
+  .client-ticket-help-card p
+) {
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .client-ticket-upload-zone {
+  background: #111f30;
+  border-color: #35516c;
+  color: #68baff;
+}
+
+html[data-theme="dark"] .client-ticket-upload-zone span {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-ticket-upload-zone small {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-ticket-global-error {
+  background: #3a1614;
+  border-color: #6b2622;
+}
+
+html[data-theme="dark"] .client-ticket-attachment {
+  border-color: #29435d;
+}
+
+html[data-theme="dark"] .client-ticket-file-kind {
+  background: #1c3550;
+  border-color: #304b66;
+  color: #68baff;
+}
+
+html[data-theme="dark"] .client-ticket-file-kind.kind-pdf {
+  background: #3a1614;
+  border-color: #6b2622;
+  color: #ff6b6b;
+}
+
+html[data-theme="dark"] .client-ticket-file-kind.kind-doc {
+  background: #10283a;
+  border-color: #1f4863;
+  color: #68baff;
+}
+
+html[data-theme="dark"] :is(
+  .client-ticket-attachment strong,
+  .client-ticket-comment strong,
+  .client-ticket-history-item strong,
+  .client-ticket-site-summary strong,
+  .client-ticket-contact-grid strong
+) {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] :is(
+  .client-ticket-attachment small,
+  .client-ticket-comment time,
+  .client-ticket-history-item span,
+  .client-ticket-site-summary span,
+  .client-ticket-contact-grid span
+) {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-ticket-attachment a,
+html[data-theme="dark"] .client-ticket-muted-icon {
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .client-ticket-muted-icon {
+  color: #ff6b6b;
+}
+
+html[data-theme="dark"] .client-ticket-comment-composer textarea {
+  background: #14253a;
+  border-color: #304b66;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-ticket-comment header span {
+  background: #1c3550;
+  color: #68baff;
+}
+
+html[data-theme="dark"] .client-ticket-comment p {
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .client-ticket-items-table {
+  border-color: #29435d;
+}
+
+html[data-theme="dark"] .client-ticket-items-head {
+  background: #172b43;
+  color: #b7c8dc;
+}
+
+html[data-theme="dark"] .client-ticket-item-row {
+  border-top-color: #29435d;
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .client-ticket-item-row strong {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-ticket-side-alert {
+  background: #10283a;
+  border-color: #1f4863;
+  color: #d7e5f4;
+}
+
+html[data-theme="dark"] .client-ticket-site-summary svg,
+html[data-theme="dark"] .client-ticket-contact-grid svg {
+  color: #68baff;
+}
+
+html[data-theme="dark"] .client-ticket-history {
+  border-left-color: #35516c;
+}
+
+html[data-theme="dark"] .client-ticket-history-item::before {
+  background: #edf5ff;
+  border-color: #101e2e;
+}
+
+html[data-theme="dark"] .client-ticket-history-item time {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .client-ticket-help-card a {
+  border-color: #0a8f52;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .client-ticket-detail-error {
+  color: #ff6b6b;
+}
