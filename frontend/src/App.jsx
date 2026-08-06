@@ -89,6 +89,30 @@ function App() {
     }
   }, [theme]);
 
+  useEffect(() => {
+    const isEditableTarget = (target) => {
+      if (!target) return false;
+      if (target.isContentEditable) return true;
+      const tag = target.tagName;
+      if (tag === "TEXTAREA") return true;
+      if (tag !== "INPUT") return false;
+      const nonTextTypes = new Set(["checkbox", "radio", "button", "submit", "reset", "file", "range", "color", "image"]);
+      const type = (target.getAttribute("type") || "text").toLowerCase();
+      return !nonTextTypes.has(type) && !target.disabled && !target.readOnly;
+    };
+
+    // Backspace navigates the browser back when focus isn't on an editable
+    // field (e.g. focus landed on a button/icon next to a password input),
+    // which silently discards whatever the user was filling in.
+    const preventStrayBackspaceNavigation = (event) => {
+      if (event.key !== "Backspace" || isEditableTarget(event.target)) return;
+      event.preventDefault();
+    };
+
+    document.addEventListener("keydown", preventStrayBackspaceNavigation);
+    return () => document.removeEventListener("keydown", preventStrayBackspaceNavigation);
+  }, []);
+
   const toggleTheme = () => setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark");
 
   const handleLogout = () => {
