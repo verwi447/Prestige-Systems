@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   companies as companiesAPI,
@@ -13,8 +13,10 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import OfferPreview from "./offers/OfferPreview";
 import PdfExporter from "./offers/PdfExporter";
 import { buildOfferPayload, calculateSummary, createEmptyOffer, emptyItem, mapOfferFromApi, normalizeCustomer } from "./offers/offerUtils";
-import { ClientStep, CatalogStep, DocumentParamsStep, OfferDataStep, ProductsStep, steps, SummaryStep } from "./NewOfferSteps";
+import { ClientStep, DocumentParamsStep, OfferDataStep, ProductsStep, steps, SummaryStep } from "./NewOfferSteps";
 import "./NewOffer.css";
+
+const CatalogStep = lazy(() => import("./NewOfferCatalogStep"));
 
 const UNSAVED_OFFER_MESSAGE = "Masz niezapisane zmiany w ofercie. Jeśli opuścisz kreator, zmiany mogą zostać utracone.";
 
@@ -421,12 +423,14 @@ export default function NewOffer() {
           {activeStep === 2 && <OfferDataStep offer={offer} onChange={setOffer} users={users} errors={errors} />}
           {activeStep === 3 && <DocumentParamsStep offer={offer} onChange={setOffer} templates={templates} errors={errors} />}
           {activeStep === 4 && (
-            <CatalogStep
-              products={products}
-              categories={categories}
-              items={offer.items}
-              onItemsChange={(items) => setOffer((current) => ({ ...current, items }))}
-            />
+            <Suspense fallback={null}>
+              <CatalogStep
+                products={products}
+                categories={categories}
+                items={offer.items}
+                onItemsChange={(items) => setOffer((current) => ({ ...current, items }))}
+              />
+            </Suspense>
           )}
           {activeStep === 5 && (
             <ProductsStep
