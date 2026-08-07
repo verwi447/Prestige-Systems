@@ -69,7 +69,7 @@ function Toggle({ checked, label, onChange }) {
   );
 }
 
-export default function AdminNotificationSettings() {
+export default function AdminNotificationSettings({ embedded = false } = {}) {
   const [preferences, setPreferences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -122,15 +122,15 @@ export default function AdminNotificationSettings() {
   };
 
   if (loading) {
-    return <div className="page admin-notification-settings-page"><AppState variant="loading" title="Ladowanie ustawien powiadomien" description="Pobieramy zapisane preferencje administratora." /></div>;
+    return <div className={embedded ? "admin-notification-settings-page" : "page admin-notification-settings-page"}><AppState variant="loading" title="Ladowanie ustawien powiadomien" description="Pobieramy zapisane preferencje administratora." /></div>;
   }
 
   return (
-    <div className="page admin-notification-settings-page">
+    <div className={embedded ? "admin-notification-settings-page" : "page admin-notification-settings-page"}>
       <header className="admin-notification-settings-header">
         <div>
-          <div className="admin-breadcrumb">Ustawienia <span>&rsaquo;</span> Powiadomienia</div>
-          <h1>Powiadomienia</h1>
+          {!embedded && <div className="admin-breadcrumb">Ustawienia <span>&rsaquo;</span> Powiadomienia</div>}
+          {!embedded && <h1>Powiadomienia</h1>}
           <p>Wybierz, o ktorych zdarzeniach administrator ma otrzymywac alerty.</p>
         </div>
         <button type="button" className="admin-notification-save" onClick={savePreferences} disabled={saving}>

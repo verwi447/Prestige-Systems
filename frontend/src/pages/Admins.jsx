@@ -94,7 +94,7 @@ function AdminIcon({ type }) {
   );
 }
 
-export default function Admins() {
+export default function Admins({ embedded = false } = {}) {
   const [admins, setAdmins] = useState([]);
   const [form, setForm] = useState(emptyAdmin);
   const [editing, setEditing] = useState(null);
@@ -203,11 +203,11 @@ export default function Admins() {
   };
 
   return (
-    <div className="page admin-users-page admin-management-page">
+    <div className={embedded ? "admin-management-page admin-management-embedded" : "page admin-users-page admin-management-page"}>
       <div className="admin-management-header">
         <div>
-          <div className="admin-breadcrumb">Ustawienia <span>›</span> Administratorzy</div>
-          <h1>Administratorzy</h1>
+          {!embedded && <div className="admin-breadcrumb">Ustawienia <span>›</span> Administratorzy</div>}
+          {!embedded && <h1>Administratorzy</h1>}
           <p>Zarządzaj kontami administratorów i ich dostępem do systemu.</p>
         </div>
         <button className="admin-primary-action" onClick={resetForm}>+ Dodaj administratora</button>

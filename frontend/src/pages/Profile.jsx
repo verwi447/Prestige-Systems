@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Activity,
   Bell,
@@ -10,6 +11,7 @@ import {
   Mail,
   ShieldCheck,
   User,
+  Users,
   X
 } from "lucide-react";
 import { client as clientAPI } from "../api";
@@ -18,12 +20,20 @@ import BarrierIcon from "../components/BarrierIcon";
 import { getRequestErrorMessage, showFeedback } from "../lib/feedback";
 import "./Profile.css";
 
+const Admins = lazy(() => import("./Admins"));
+const AdminNotificationSettings = lazy(() => import("./AdminNotificationSettings"));
+
 const tabs = [
   { id: "profile", label: "Profil", icon: User },
   { id: "security", label: "Bezpieczeństwo", icon: ShieldCheck },
   { id: "notifications", label: "Powiadomienia", icon: Bell },
   { id: "sessions", label: "Sesje logowania", icon: Laptop },
   { id: "activity", label: "Aktywność konta", icon: Activity }
+];
+
+const adminTabs = [
+  { id: "admins", label: "Administratorzy", icon: Users },
+  { id: "admin-notifications", label: "Powiadomienia systemowe", icon: Bell }
 ];
 
 const roleLabels = {
@@ -80,12 +90,16 @@ function ToggleRow({ label, description, checked, onChange }) {
   );
 }
 
+const validTabIds = new Set([...tabs, ...adminTabs].map((tab) => tab.id));
+
 export default function Profile() {
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
   const [account, setAccount] = useState(null);
   const [preferences, setPreferences] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [activity, setActivity] = useState([]);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(validTabIds.has(requestedTab) ? requestedTab : "profile");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editOpen, setEditOpen] = useState(false);
@@ -243,7 +257,7 @@ export default function Profile() {
       </section>
 
       <nav className="account-tabs">
-        {tabs.map((tab) => {
+        {[...tabs, ...(account.role === "ADMIN" ? adminTabs : [])].map((tab) => {
           const Icon = tab.icon;
           return (
             <button key={tab.id} type="button" className={activeTab === tab.id ? "active" : ""} onClick={() => setActiveTab(tab.id)}>
@@ -327,6 +341,22 @@ export default function Profile() {
             {activity.map((item) => <article key={item.id}><Clock3 size={18} /><div><strong>{item.label}</strong><span>{formatDate(item.createdAt)}</span></div></article>)}
             {!activity.length && <div className="account-empty-state"><Activity size={34} /><h3>Brak ostatniej aktywności.</h3></div>}
           </div>
+        </section>
+      )}
+
+      {activeTab === "admins" && account.role === "ADMIN" && (
+        <section className="account-card account-embedded-page">
+          <Suspense fallback={<AppState variant="loading" title="Ladowanie" description="Pobieramy liste administratorow." />}>
+            <Admins embedded />
+          </Suspense>
+        </section>
+      )}
+
+      {activeTab === "admin-notifications" && account.role === "ADMIN" && (
+        <section className="account-card account-embedded-page">
+          <Suspense fallback={<AppState variant="loading" title="Ladowanie" description="Pobieramy ustawienia powiadomien." />}>
+            <AdminNotificationSettings embedded />
+          </Suspense>
         </section>
       )}
 

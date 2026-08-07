@@ -27,10 +27,8 @@ const ClientTicketDetail = lazy(() => import("./pages/ClientTicketDetail"));
 const NewOffer = lazy(() => import("./pages/NewOffer"));
 const OfferDetail = lazy(() => import("./pages/OfferDetail"));
 const Settings = lazy(() => import("./pages/Settings"));
-const Admins = lazy(() => import("./pages/Admins"));
 const BackupSystem = lazy(() => import("./pages/BackupSystem"));
 const EmailSettingsPage = lazy(() => import("./pages/EmailSettingsPage"));
-const AdminNotificationSettings = lazy(() => import("./pages/AdminNotificationSettings"));
 const AdminOrders = lazy(() => import("./pages/AdminOrders"));
 const AdminOrderDetail = lazy(() => import("./pages/AdminOrderDetail"));
 const SystemStatus = lazy(() => import("./pages/SystemStatus"));
@@ -199,8 +197,8 @@ function App() {
           <Route path="/admin" element={<AdminOnly user={user}><Admin /></AdminOnly>} />
           <Route path="/templates" element={<AdminOnly user={user}><Templates /></AdminOnly>} />
           <Route path="/settings" element={<AdminOnly user={user}><Settings /></AdminOnly>} />
-          <Route path="/settings/admins" element={<AdminOnly user={user}><Admins /></AdminOnly>} />
-          <Route path="/settings/notifications" element={<AdminOnly user={user}><AdminNotificationSettings /></AdminOnly>} />
+          <Route path="/settings/admins" element={<Navigate to="/profile?tab=admins" replace />} />
+          <Route path="/settings/notifications" element={<Navigate to="/profile?tab=admin-notifications" replace />} />
           <Route path="/settings/email" element={<AdminOnly user={user}><EmailSettingsPage /></AdminOnly>} />
           <Route path="/settings/backups" element={<AdminOnly user={user}><BackupSystem /></AdminOnly>} />
           <Route path="/settings/network" element={<AdminOnly user={user}><NetworkSettings /></AdminOnly>} />

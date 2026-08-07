@@ -425,6 +425,19 @@
   }
 }
 
+.account-embedded-page {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+html[data-theme="dark"] .account-embedded-page {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
 html[data-theme="dark"] .account-page {
   color: #edf5ff;
 }
