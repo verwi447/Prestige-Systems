@@ -1516,6 +1516,12 @@ select:focus {
   font-weight: 650;
 }
 
+.login-message-info {
+  color: #1a5ea8;
+  background: #eaf3ff;
+  border-color: #bcdcff;
+}
+
 @media (max-width: 640px) {
   .login-page {
     background-position: 58% center;
@@ -2321,6 +2327,12 @@ html[data-theme="dark"] .login-field input {
 html[data-theme="dark"] .login-password-toggle:hover {
   background: #20354b;
   color: #edf5ff;
+}
+
+html[data-theme="dark"] .login-message-info {
+  color: #8fd0ff;
+  background: rgba(31, 72, 99, 0.35);
+  border-color: #2f5573;
 }
 
 .login-theme-toggle {

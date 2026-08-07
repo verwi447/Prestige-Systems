@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import Login from "./pages/Login";
 import Sidebar from "./components/Sidebar";
@@ -36,6 +36,11 @@ const NetworkSettings = lazy(() => import("./pages/NetworkSettings"));
 const AuditLog = lazy(() => import("./pages/AuditLog"));
 
 const THEME_STORAGE_KEY = "ps-hub-theme";
+const IDLE_ACTIVITY_STORAGE_KEY = "ps-hub-last-activity";
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const IDLE_CHECK_INTERVAL_MS = 15_000;
+const IDLE_ACTIVITY_THROTTLE_MS = 5_000;
+const IDLE_ACTIVITY_EVENTS = ["mousedown", "keydown", "scroll", "touchstart", "wheel"];
 
 function getInitialTheme() {
   try {
@@ -75,6 +80,8 @@ function App() {
   const [identityReady, setIdentityReady] = useState(false);
   const [sessionError, setSessionError] = useState("");
   const [sessionAttempt, setSessionAttempt] = useState(0);
+  const [sessionNotice, setSessionNotice] = useState("");
+  const idleActivityRef = useRef(0);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -113,18 +120,55 @@ function App() {
 
   const toggleTheme = () => setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark");
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     auth.logout().catch(() => {});
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-  };
+  }, []);
 
   const handleLoginSuccess = (loggedInUser) => {
     setSessionError("");
+    setSessionNotice("");
     setUser(loggedInUser);
     setIdentityReady(true);
   };
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const markActivity = () => {
+      const now = Date.now();
+      if (now - idleActivityRef.current < IDLE_ACTIVITY_THROTTLE_MS) return;
+      idleActivityRef.current = now;
+      try {
+        localStorage.setItem(IDLE_ACTIVITY_STORAGE_KEY, String(now));
+      } catch {
+        // The interface can still work when storage is unavailable.
+      }
+    };
+
+    markActivity();
+    IDLE_ACTIVITY_EVENTS.forEach((eventName) => window.addEventListener(eventName, markActivity, { passive: true }));
+
+    const intervalId = window.setInterval(() => {
+      let lastActivity = idleActivityRef.current;
+      try {
+        lastActivity = Math.max(lastActivity, Number(localStorage.getItem(IDLE_ACTIVITY_STORAGE_KEY)) || 0);
+      } catch {
+        // Fall back to the in-memory timestamp when storage is unavailable.
+      }
+      if (Date.now() - lastActivity >= IDLE_TIMEOUT_MS) {
+        setSessionNotice("Zostałeś wylogowany z powodu braku aktywności. Zaloguj się ponownie.");
+        handleLogout();
+      }
+    }, IDLE_CHECK_INTERVAL_MS);
+
+    return () => {
+      IDLE_ACTIVITY_EVENTS.forEach((eventName) => window.removeEventListener(eventName, markActivity));
+      window.clearInterval(intervalId);
+    };
+  }, [user, handleLogout]);
 
   useEffect(() => {
     let mounted = true;
@@ -168,7 +212,7 @@ function App() {
         </>
       );
     }
-    return <><AppFeedback /><Login onLoginSuccess={handleLoginSuccess} theme={theme} onThemeToggle={toggleTheme} /></>;
+    return <><AppFeedback /><Login onLoginSuccess={handleLoginSuccess} theme={theme} onThemeToggle={toggleTheme} notice={sessionNotice} /></>;
   }
 
   return (

@@ -6,7 +6,7 @@ import LoginBarrier from "../components/LoginBarrier";
 
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-export default function Login({ onLoginSuccess, theme, onThemeToggle }) {
+export default function Login({ onLoginSuccess, theme, onThemeToggle, notice }) {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -112,6 +112,7 @@ export default function Login({ onLoginSuccess, theme, onThemeToggle }) {
             </div>
           </label>
 
+          {notice && !message && <div className="login-message login-message-info" role="status">{notice}</div>}
           {message && <div className="login-message" role="alert">{message}</div>}
 
           <button className={`login-submit login-submit--${authState}`} type="submit" disabled={loading}>
