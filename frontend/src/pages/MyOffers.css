@@ -13,14 +13,14 @@
 
 .client-offers-header h1 {
   font-size: 1.75rem;
-  font-weight: 950;
+  font-weight: 700;
   margin: 0;
 }
 
 .client-offers-header p {
   color: #415675;
   font-size: 0.94rem;
-  font-weight: 750;
+  font-weight: 500;
   margin: 0.35rem 0 0;
 }
 
@@ -38,7 +38,7 @@
   cursor: pointer;
   font: inherit;
   font-size: 0.86rem;
-  font-weight: 950;
+  font-weight: 700;
   padding: 0.75rem 0;
 }
 
@@ -50,9 +50,9 @@
 .client-offers-card,
 .client-offer-stat {
   background: #ffffff;
-  border: 1px solid #d8e3ef;
-  border-radius: 8px;
-  box-shadow: 0 12px 28px rgba(12, 30, 56, 0.055);
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
 }
 
 .client-offer-stats {
@@ -87,14 +87,14 @@
 .client-offer-stat strong {
   display: block;
   font-size: 1.45rem;
-  font-weight: 950;
+  font-weight: 700;
   line-height: 1;
 }
 
 .client-offer-stat p {
   color: #253d5f;
   font-size: 0.86rem;
-  font-weight: 950;
+  font-weight: 700;
   margin: 0.4rem 0 0;
 }
 
@@ -102,7 +102,7 @@
   color: #536783;
   display: block;
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 500;
   margin-top: 0.35rem;
 }
 
@@ -114,7 +114,7 @@
 .client-offers-table-card h2,
 .client-offers-help h2 {
   font-size: 1rem;
-  font-weight: 950;
+  font-weight: 700;
   margin: 0 0 0.9rem;
 }
 
@@ -140,7 +140,7 @@
 .client-progress-row small {
   color: #253d5f;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .client-progress-row div {
@@ -160,7 +160,7 @@
 .client-status-overview p {
   color: #65758d;
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 500;
   margin: 1.2rem 0 0;
 }
 
@@ -185,7 +185,7 @@
   display: inline-flex;
   font: inherit;
   font-size: 0.86rem;
-  font-weight: 900;
+  font-weight: 600;
   gap: 0.5rem;
   min-height: 42px;
   padding: 0 1rem;
@@ -231,7 +231,7 @@
   color: #061a3a;
   display: block;
   font-size: 0.84rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .client-attention-row small {
@@ -256,7 +256,7 @@
   cursor: pointer;
   font: inherit;
   font-size: 0.82rem;
-  font-weight: 950;
+  font-weight: 700;
   min-height: 38px;
 }
 
@@ -282,7 +282,7 @@
 .client-offers-filters label span {
   color: #536783;
   font-size: 0.74rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .client-offers-filters .client-offer-search {
@@ -308,7 +308,7 @@
   color: #071a35;
   font: inherit;
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 550;
   min-height: 42px;
   outline: none;
   padding: 0 0.75rem;
@@ -381,7 +381,7 @@
 .client-offers-table th {
   color: #536783;
   font-size: 0.74rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .client-offers-table tbody tr {
@@ -394,14 +394,14 @@
 
 .client-offers-table td strong {
   color: #075fd6;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .client-offer-status {
   border-radius: 7px;
   display: inline-flex;
   font-size: 0.76rem;
-  font-weight: 950;
+  font-weight: 700;
   min-height: 25px;
   padding: 0.25rem 0.6rem;
   white-space: nowrap;
@@ -463,7 +463,7 @@
 .client-offers-pagination span {
   color: #536783;
   font-size: 0.82rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .client-offers-pagination div {
@@ -515,7 +515,7 @@
 .client-empty-line {
   color: #536783;
   font-size: 0.84rem;
-  font-weight: 750;
+  font-weight: 500;
   line-height: 1.5;
   margin: 0;
 }
@@ -533,7 +533,7 @@
   color: #415675;
   display: grid;
   font-size: 0.83rem;
-  font-weight: 800;
+  font-weight: 550;
   gap: 0.55rem;
   grid-template-columns: 20px minmax(0, 1fr);
 }
@@ -551,7 +551,7 @@
 
 .client-offers-card.error {
   color: #d92d20;
-  font-weight: 950;
+  font-weight: 700;
   padding: 1rem;
 }
 

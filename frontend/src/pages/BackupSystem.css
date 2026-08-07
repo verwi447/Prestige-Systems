@@ -13,10 +13,10 @@
 .backup-stat-card,
 .backup-card,
 .backup-restore-section {
-  border: 1px solid rgba(213, 224, 235, 0.95);
+  border: 1px solid #e1e8f1;
   border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 12px 30px rgba(20, 36, 57, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
 }
 
 .backup-topbar {
@@ -30,7 +30,7 @@
 .backup-breadcrumb {
   color: #0f6ab4;
   font-size: 0.8rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .backup-breadcrumb span {
@@ -86,14 +86,14 @@
   margin: 0;
   color: #52647a;
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .backup-stat-card strong {
   margin-top: 0.2rem;
   color: #071a35;
   font-size: 1.2rem;
-  font-weight: 950;
+  font-weight: 700;
   line-height: 1.1;
   overflow-wrap: anywhere;
 }
@@ -102,7 +102,7 @@
   margin-top: 0.25rem;
   color: #52647a;
   font-size: 0.73rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .backup-actions-bar {
@@ -134,7 +134,7 @@
   background: transparent;
   color: #52647a;
   cursor: pointer;
-  font-weight: 900;
+  font-weight: 600;
   padding: 0 0.8rem;
   white-space: nowrap;
 }
@@ -154,7 +154,7 @@
   min-height: 38px;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 950;
+  font-weight: 700;
   padding: 0 0.85rem;
 }
 
@@ -226,7 +226,7 @@
   margin: 0 0 0.85rem;
   color: #071a35;
   font-size: 1rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .backup-card-header {
@@ -243,7 +243,7 @@
   gap: 1rem;
   margin-bottom: 0.78rem;
   color: #071a35;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .switch {
@@ -334,7 +334,7 @@
   gap: 0.35rem;
   color: #071a35;
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .backup-settings-grid input,
@@ -348,7 +348,7 @@
   border-radius: 8px;
   background: #ffffff;
   color: #071a35;
-  font-weight: 800;
+  font-weight: 550;
   padding: 0 0.75rem;
 }
 
@@ -402,7 +402,7 @@
   gap: 0.45rem;
   color: #071a35;
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -514,7 +514,7 @@
   background: #ffffff;
   color: #0b3570;
   font-size: 0.76rem;
-  font-weight: 950;
+  font-weight: 700;
   padding: 0 0.75rem;
   box-shadow: 0 6px 14px rgba(11, 35, 66, 0.06);
 }
@@ -661,7 +661,7 @@
   background: #f4f8fc;
   color: #10233f;
   font-size: 0.66rem;
-  font-weight: 950;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -671,7 +671,7 @@
 
 .backup-table td strong {
   color: #071a35;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .backup-row-actions {
@@ -769,7 +769,7 @@
 .backup-history-card .backup-table td:nth-child(8) {
   width: 112px;
   color: #071a35;
-  font-weight: 850;
+  font-weight: 600;
   line-height: 1.25;
   white-space: normal;
 }
@@ -809,7 +809,7 @@
 
 .backup-size-missing {
   color: #9b1c1c;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .backup-history-card .backup-row-actions button:disabled {
@@ -828,7 +828,7 @@
   padding: 0.9rem 0.2rem 0;
   color: #52647a;
   font-size: 0.74rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .backup-pagination {
@@ -849,7 +849,7 @@
   border-radius: 7px;
   background: #ffffff;
   color: #0b3570;
-  font-weight: 950;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -904,7 +904,7 @@
   background: #eef2f6;
   color: #52647a;
   font-size: 0.68rem;
-  font-weight: 950;
+  font-weight: 700;
   padding: 0.2rem 0.55rem;
   white-space: nowrap;
 }
@@ -1021,14 +1021,14 @@
   display: block;
   color: #0f8f46;
   font-size: 0.95rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .backup-integrity-body p {
   margin: 0.25rem 0 0;
   color: #52647a;
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .backup-activity-list {
@@ -1072,7 +1072,7 @@
 .backup-activity-list strong {
   color: #071a35;
   font-size: 0.78rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .backup-activity-list small {
@@ -1080,7 +1080,7 @@
   overflow: hidden;
   color: #52647a;
   font-size: 0.68rem;
-  font-weight: 750;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1088,7 +1088,7 @@
 .backup-activity-list time {
   color: #52647a;
   font-size: 0.65rem;
-  font-weight: 850;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -1096,7 +1096,7 @@
   margin: 0;
   color: #52647a;
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .backup-ring-card {
@@ -1153,7 +1153,7 @@
 .backup-ring-card p {
   color: #52647a;
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .backup-ring-card > p {
@@ -1170,7 +1170,7 @@
   margin: 0;
   color: #52647a;
   font-size: 0.76rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .backup-ring-legend b {
@@ -1184,7 +1184,7 @@
   margin: 0.8rem 0 0.7rem;
   color: #071a35;
   font-size: 0.85rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .backup-ring-card > button {
@@ -1249,7 +1249,7 @@
   margin: 0 0 0.7rem;
   color: #52647a;
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .backup-import-card {
@@ -1289,7 +1289,7 @@
   background: #f8fbff;
   color: #071a35;
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .backup-selected-file span {
@@ -1302,7 +1302,7 @@
 .backup-selected-file small {
   color: #52647a;
   font-size: 0.68rem;
-  font-weight: 850;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -1340,7 +1340,7 @@
 .backup-dropzone strong {
   color: #071a35;
   font-size: 0.76rem;
-  font-weight: 950;
+  font-weight: 700;
 }
 
 .backup-dropzone small,
@@ -1348,7 +1348,7 @@
   color: #52647a;
   font-size: 0.72rem;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 550;
   line-height: 1.35;
 }
 
@@ -1360,7 +1360,7 @@
 .backup-restore-modal p {
   margin: 0;
   color: #52647a;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .backup-page svg {

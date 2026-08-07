@@ -16,10 +16,10 @@
   height: 100%;
   min-height: 0;
   overflow-y: auto;
-  border: 1px solid #d9e2ea;
-  border-radius: 8px;
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 10px 26px rgba(16, 24, 40, 0.08);
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
   padding: 0.85rem;
 }
 
@@ -48,7 +48,7 @@
 .article-modal-header span {
   color: #667085;
   font-size: 0.76rem;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -125,7 +125,7 @@
   cursor: pointer;
   font: inherit;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .article-category-panel nav {
@@ -151,7 +151,7 @@
   background: transparent;
   color: #24364b;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 550;
   padding: 0.55rem 0.62rem;
   text-align: left;
 }
@@ -209,10 +209,10 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px solid #d9e2ea;
-  border-radius: 8px;
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 10px 26px rgba(16, 24, 40, 0.055);
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
   padding: 0.95rem 1rem;
 }
 
@@ -232,10 +232,10 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  border: 1px solid #d9e2ea;
-  border-radius: 8px;
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 10px 26px rgba(16, 24, 40, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
   padding: 0.65rem;
 }
 
@@ -285,7 +285,7 @@
   background: #ffffff;
   color: #24364b;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 550;
   padding: 0;
 }
 
@@ -311,7 +311,7 @@
   background: #ffffff;
   color: #24364b;
   cursor: pointer;
-  font-weight: 850;
+  font-weight: 600;
   padding: 0.5rem 0.8rem;
 }
 
@@ -324,10 +324,10 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  border: 1px solid #d9e2ea;
-  border-radius: 8px;
+  border: 1px solid #e1e8f1;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 10px 26px rgba(16, 24, 40, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 33, 56, 0.04), 0 10px 24px rgba(15, 33, 56, 0.05);
 }
 
 .article-table-shell::-webkit-scrollbar {
@@ -398,7 +398,7 @@
   background: #0b2545;
   color: #ffffff;
   font-size: 0.7rem;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .article-table td {
@@ -435,7 +435,7 @@
   border: 1px dashed #cfd9e3;
   color: #5f7f9c;
   font-size: 1.5rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .table-image {
@@ -449,7 +449,7 @@
   min-width: 38px;
   border-radius: 999px;
   font-size: 0.66rem;
-  font-weight: 900;
+  font-weight: 600;
   padding: 0.18rem 0.4rem;
 }
 
@@ -581,7 +581,7 @@
 .article-card-body span {
   color: #5b7d49;
   font-size: 0.76rem;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -647,7 +647,7 @@
 .article-card-details small {
   color: #667085;
   font-size: 0.68rem;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -749,7 +749,7 @@
 .article-form-fields label {
   color: #24364b;
   font-size: 0.84rem;
-  font-weight: 800;
+  font-weight: 550;
 }
 
 .article-form-fields input,
@@ -828,7 +828,7 @@
   color: #071a35;
   font-size: 1.55rem;
   line-height: 1.05;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .article-modal-header p {
@@ -860,7 +860,7 @@
   border-radius: 8px;
   background: #f2f8ff;
   color: #0b4d7a;
-  font-weight: 850;
+  font-weight: 600;
   padding: 0.75rem 0.9rem;
 }
 
@@ -896,7 +896,7 @@
   margin: 0;
   color: #071a35;
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .product-edit-section > p {
@@ -989,7 +989,7 @@
 .product-switch strong {
   color: #071a35;
   font-size: 0.92rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .product-visibility-note {
@@ -1028,7 +1028,7 @@
   gap: 0.42rem;
   color: #071a35;
   font-size: 0.9rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .product-fields-grid b {
@@ -1072,7 +1072,7 @@
   color: #667085;
   font-size: 0.78rem;
   font-style: normal;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .product-price-section {
@@ -1110,7 +1110,7 @@
   background: #f8fafc;
   color: #344054;
   font-size: 0.86rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .gross-price-box {
@@ -1132,7 +1132,7 @@
 
 .gross-price-box strong {
   font-size: 0.98rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .gross-price-box span {
@@ -1152,7 +1152,7 @@
   min-height: 44px;
   border-radius: 7px;
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .article-modal-actions .btn-success {
