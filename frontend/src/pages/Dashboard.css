@@ -423,6 +423,72 @@
   color: #c82020;
 }
 
+.admin-stats-grid.embedded {
+  height: 100%;
+  align-content: start;
+}
+
+.admin-widget-table,
+.admin-widget-attention {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-widget-link-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.6rem;
+}
+
+.admin-widget-link-row a {
+  color: #157f3b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-widget-attention-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.admin-widget-attention-top p {
+  margin: 0;
+  color: #62738a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.admin-widget-attention-top a {
+  color: #157f3b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-widget-attention .admin-attention-list {
+  border-top: 0;
+  border: 1px solid #e8eef5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-widget-attention .admin-attention-item {
+  border-right: 0;
+}
+
+.admin-widget-attention .admin-attention-empty {
+  border-top: 0;
+  border: 1px solid #e8eef5;
+  border-radius: 8px;
+}
+
 .quick-actions-card {
   align-self: start;
 }
@@ -1065,6 +1131,15 @@ html[data-theme="dark"] .admin-attention-empty,
 html[data-theme="dark"] .admin-table-shell,
 html[data-theme="dark"] .client-info-empty {
   border-color: #29435d;
+}
+
+html[data-theme="dark"] .admin-widget-attention-top p {
+  color: #aabbd0;
+}
+
+html[data-theme="dark"] .admin-widget-attention-top a,
+html[data-theme="dark"] .admin-widget-link-row a {
+  color: #5fd095;
 }
 
 html[data-theme="dark"] .admin-attention-item {

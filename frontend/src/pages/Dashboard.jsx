@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { client as clientAPI, dashboard as dashboardAPI } from "../api.js";
 import AppState from "../components/AppState";
+import DashboardGrid from "../components/DashboardGrid";
 import { hasClientPermission, isClientOwner } from "../lib/permissions";
 import { apiOrigin } from "../lib/runtimeConfig";
 import "./Dashboard.css";
@@ -147,67 +148,102 @@ function StatusBadge({ value, type }) {
   return <span className={`admin-status ${statusClass(value)}`}>{label}</span>;
 }
 
-function AdminTable({ title, link, columns, children, emptyText }) {
+function AdminTable({ title, link, columns, children, emptyText, embedded = false }) {
+  const table = (
+    <div className="admin-table-shell">
+      <table className="admin-table">
+        <thead>
+          <tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr>
+        </thead>
+        <tbody>
+          {children || (
+            <tr>
+              <td colSpan={columns.length} className="admin-empty">{emptyText}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="admin-widget-table">
+        {link && (
+          <div className="admin-widget-link-row">
+            <Link to={link}>Zobacz wszystkie <span aria-hidden="true">→</span></Link>
+          </div>
+        )}
+        {table}
+      </div>
+    );
+  }
+
   return (
     <section className="admin-panel-card">
       <div className="admin-section-header">
         <h2>{title}</h2>
         {link && <Link to={link}>Zobacz wszystkie <span aria-hidden="true">→</span></Link>}
       </div>
-      <div className="admin-table-shell">
-        <table className="admin-table">
-          <thead>
-            <tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr>
-          </thead>
-          <tbody>
-            {children || (
-              <tr>
-                <td colSpan={columns.length} className="admin-empty">{emptyText}</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {table}
     </section>
   );
 }
 
-function AdminAttentionPanel({ items = [] }) {
+function AdminAttentionPanel({ items = [], embedded = false }) {
   const icons = {
     ticket: Wrench,
     order: ClipboardList,
     offer: FileText
   };
 
+  const summaryText = items.length
+    ? `Pozostalo ${items.length} ${items.length === 1 ? "zadanie wymagajace" : "zadan wymagajacych"} dalszej pracy.`
+    : "Wszystkie bieżące sprawy mają opiekuna.";
+
+  const body = items.length ? (
+    <div className="admin-attention-list">
+      {items.map((item) => {
+        const Icon = icons[item.kind] || CircleAlert;
+        return (
+          <Link className={`admin-attention-item tone-${item.tone || "info"}`} to={item.link} key={item.id}>
+            <span className="admin-attention-icon"><Icon size={19} /></span>
+            <span className="admin-attention-copy">
+              <strong>{item.title}</strong>
+              <span>{item.description}</span>
+              <small>{item.companyName}{item.createdAt ? ` · ${formatDate(item.createdAt)}` : ""}</small>
+            </span>
+            <ChevronRight className="admin-attention-arrow" size={18} aria-hidden="true" />
+          </Link>
+        );
+      })}
+    </div>
+  ) : (
+    <div className="admin-attention-empty">Brak spraw wymagających przypisania lub wysłania oferty.</div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="admin-widget-attention">
+        <div className="admin-widget-attention-top">
+          <p>{summaryText}</p>
+          <Link to="/tickets">Przejdź do zgłoszeń</Link>
+        </div>
+        {body}
+      </div>
+    );
+  }
+
   return (
     <section className="admin-panel-card admin-attention-panel" aria-labelledby="admin-attention-title">
       <div className="admin-section-header admin-attention-header">
         <div>
           <h2 id="admin-attention-title">Wymaga Twojej uwagi</h2>
-          <p>{items.length ? `Pozostalo ${items.length} ${items.length === 1 ? "zadanie wymagajace" : "zadan wymagajacych"} dalszej pracy.` : "Wszystkie bieżące sprawy mają opiekuna."}</p>
+          <p>{summaryText}</p>
         </div>
         <Link to="/tickets">Przejdź do zgłoszeń</Link>
       </div>
-      {items.length ? (
-        <div className="admin-attention-list">
-          {items.map((item) => {
-            const Icon = icons[item.kind] || CircleAlert;
-            return (
-              <Link className={`admin-attention-item tone-${item.tone || "info"}`} to={item.link} key={item.id}>
-                <span className="admin-attention-icon"><Icon size={19} /></span>
-                <span className="admin-attention-copy">
-                  <strong>{item.title}</strong>
-                  <span>{item.description}</span>
-                  <small>{item.companyName}{item.createdAt ? ` · ${formatDate(item.createdAt)}` : ""}</small>
-                </span>
-                <ChevronRight className="admin-attention-arrow" size={18} aria-hidden="true" />
-              </Link>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="admin-attention-empty">Brak spraw wymagających przypisania lub wysłania oferty.</div>
-      )}
+      {body}
     </section>
   );
 }
@@ -239,34 +275,39 @@ function AdminDashboard() {
 
   if (loading) return <div className="page admin-dashboard-page"><AppState variant="loading" title="Ladowanie dashboardu" description="Pobieramy najnowsze dane operacyjne." /></div>;
 
-  return (
-    <div className="page admin-dashboard-page">
-      <div className="admin-dashboard-title">
-        <div>
-          <span>Centrum zarządzania</span>
-          <h1>Dashboard</h1>
+  const widgets = [
+    {
+      id: "stats",
+      title: "Statystyki",
+      defaultLayout: { x: 0, y: 0, w: 12, h: 4, minW: 6, minH: 3 },
+      content: (
+        <div className="admin-stats-grid embedded">
+          {statCards.map((card) => (
+            <Link className="admin-stat-card" to={card.link} key={card.key}>
+              <AdminIcon name={card.icon} />
+              <div>
+                <strong>{summary.stats?.[card.key] ?? 0}</strong>
+                <span>{card.label}</span>
+              </div>
+              <small>{card.linkText} <span aria-hidden="true">→</span></small>
+            </Link>
+          ))}
         </div>
-      </div>
-
-      {message && <div className="settings-message">{message}</div>}
-
-      <div className="admin-stats-grid">
-        {statCards.map((card) => (
-          <Link className="admin-stat-card" to={card.link} key={card.key}>
-            <AdminIcon name={card.icon} />
-            <div>
-              <strong>{summary.stats?.[card.key] ?? 0}</strong>
-              <span>{card.label}</span>
-            </div>
-            <small>{card.linkText} <span aria-hidden="true">→</span></small>
-          </Link>
-        ))}
-      </div>
-
-      <AdminAttentionPanel items={summary.actionItems} />
-
-      <div className="admin-dashboard-grid two-columns">
+      )
+    },
+    {
+      id: "attention",
+      title: "Wymaga Twojej uwagi",
+      defaultLayout: { x: 0, y: 4, w: 12, h: 4, minW: 6, minH: 3 },
+      content: <AdminAttentionPanel items={summary.actionItems} embedded />
+    },
+    {
+      id: "recentOffers",
+      title: "Ostatnie oferty",
+      defaultLayout: { x: 0, y: 8, w: 6, h: 7, minW: 4, minH: 4 },
+      content: (
         <AdminTable
+          embedded
           title="Ostatnie oferty"
           link="/offers"
           columns={["Numer oferty", "Firma", "Wartość netto", "Data utworzenia", "Status"]}
@@ -282,8 +323,15 @@ function AdminDashboard() {
             </tr>
           ))}
         </AdminTable>
-
+      )
+    },
+    {
+      id: "recentTickets",
+      title: "Ostatnie zgłoszenia",
+      defaultLayout: { x: 6, y: 8, w: 6, h: 7, minW: 4, minH: 4 },
+      content: (
         <AdminTable
+          embedded
           title="Ostatnie zgłoszenia"
           link="/tickets"
           columns={["Numer", "Firma", "Obiekt", "Status"]}
@@ -309,10 +357,15 @@ function AdminDashboard() {
             </tr>
           ))}
         </AdminTable>
-      </div>
-
-      <div className="admin-dashboard-grid bottom-grid">
+      )
+    },
+    {
+      id: "recentCompanies",
+      title: "Ostatnio dodane firmy",
+      defaultLayout: { x: 0, y: 15, w: 8, h: 6, minW: 6, minH: 4 },
+      content: (
         <AdminTable
+          embedded
           title="Ostatnio dodane firmy"
           link="/companies"
           columns={["Nazwa firmy", "NIP", "Miasto", "Email", "Data dodania"]}
@@ -328,22 +381,38 @@ function AdminDashboard() {
             </tr>
           ))}
         </AdminTable>
+      )
+    },
+    {
+      id: "quickActions",
+      title: "Szybkie akcje",
+      defaultLayout: { x: 8, y: 15, w: 4, h: 6, minW: 3, minH: 3 },
+      content: (
+        <div className="quick-actions-list">
+          {quickActions.map((action) => (
+            <Link to={action.to} key={action.label} className="quick-action">
+              <AdminIcon name={action.icon} />
+              <span>{action.label}</span>
+              <strong aria-hidden="true">→</strong>
+            </Link>
+          ))}
+        </div>
+      )
+    }
+  ];
 
-        <section className="admin-panel-card quick-actions-card">
-          <div className="admin-section-header">
-            <h2>Szybkie akcje</h2>
-          </div>
-          <div className="quick-actions-list">
-            {quickActions.map((action) => (
-              <Link to={action.to} key={action.label} className="quick-action">
-                <AdminIcon name={action.icon} />
-                <span>{action.label}</span>
-                <strong aria-hidden="true">→</strong>
-              </Link>
-            ))}
-          </div>
-        </section>
+  return (
+    <div className="page admin-dashboard-page">
+      <div className="admin-dashboard-title">
+        <div>
+          <span>Centrum zarządzania</span>
+          <h1>Dashboard</h1>
+        </div>
       </div>
+
+      {message && <div className="settings-message">{message}</div>}
+
+      <DashboardGrid storageKey="ps-hub-admin-dashboard-layout" widgets={widgets} />
     </div>
   );
 }
