@@ -6,7 +6,7 @@ import Header from "./components/Header";
 import AppFeedback from "./components/AppFeedback";
 import AppState from "./components/AppState";
 import { auth } from "./api";
-import { getRequestErrorMessage } from "./lib/feedback";
+import { getRequestErrorMessage, showFeedback } from "./lib/feedback";
 import { getStoredUser, hasClientPermission, isClientRole } from "./lib/permissions";
 import "./App.css";
 
@@ -38,6 +38,7 @@ const AuditLog = lazy(() => import("./pages/AuditLog"));
 const THEME_STORAGE_KEY = "ps-hub-theme";
 const IDLE_ACTIVITY_STORAGE_KEY = "ps-hub-last-activity";
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const IDLE_WARNING_MS = 2 * 60 * 1000;
 const IDLE_CHECK_INTERVAL_MS = 15_000;
 const IDLE_ACTIVITY_THROTTLE_MS = 5_000;
 const IDLE_ACTIVITY_EVENTS = ["mousedown", "keydown", "scroll", "touchstart", "wheel"];
@@ -82,6 +83,7 @@ function App() {
   const [sessionAttempt, setSessionAttempt] = useState(0);
   const [sessionNotice, setSessionNotice] = useState("");
   const idleActivityRef = useRef(0);
+  const idleWarnedRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -141,6 +143,7 @@ function App() {
       const now = Date.now();
       if (now - idleActivityRef.current < IDLE_ACTIVITY_THROTTLE_MS) return;
       idleActivityRef.current = now;
+      idleWarnedRef.current = false;
       try {
         localStorage.setItem(IDLE_ACTIVITY_STORAGE_KEY, String(now));
       } catch {
@@ -158,9 +161,17 @@ function App() {
       } catch {
         // Fall back to the in-memory timestamp when storage is unavailable.
       }
-      if (Date.now() - lastActivity >= IDLE_TIMEOUT_MS) {
+      const elapsed = Date.now() - lastActivity;
+      if (elapsed >= IDLE_TIMEOUT_MS) {
         setSessionNotice("Zostałeś wylogowany z powodu braku aktywności. Zaloguj się ponownie.");
         handleLogout();
+      } else if (elapsed >= IDLE_TIMEOUT_MS - IDLE_WARNING_MS && !idleWarnedRef.current) {
+        idleWarnedRef.current = true;
+        showFeedback({
+          message: "Za 2 minuty zostaniesz wylogowany z powodu braku aktywności. Porusz myszką lub kliknij, aby pozostać zalogowanym.",
+          type: "warning",
+          duration: 15_000
+        });
       }
     }, IDLE_CHECK_INTERVAL_MS);
 
