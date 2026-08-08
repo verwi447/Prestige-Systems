@@ -28,7 +28,8 @@ router.get("/admin-summary", auth, async (req, res) => {
             recentOffers,
             recentTickets,
             recentCompanies,
-            actionItems
+            actionItems,
+            monthlyTrend
         ] = await Promise.all([
             db.query("SELECT COUNT(*)::int AS count FROM companies WHERE COALESCE(is_own_company, FALSE)=FALSE"),
             db.query(`
@@ -81,7 +82,30 @@ router.get("/admin-summary", auth, async (req, res) => {
                 ORDER BY created_at DESC
                 LIMIT 5
             `),
-            getAdminActionItems((...args) => db.query(...args))
+            getAdminActionItems((...args) => db.query(...args)),
+            db.query(`
+                WITH months AS (
+                    SELECT date_trunc('month', CURRENT_DATE) - (n || ' months')::interval AS month_start
+                    FROM generate_series(5, 0, -1) AS n
+                )
+                SELECT
+                    to_char(m.month_start, 'YYYY-MM') AS month,
+                    COALESCE(o.count, 0)::int AS offers,
+                    COALESCE(t.count, 0)::int AS tickets
+                FROM months m
+                LEFT JOIN (
+                    SELECT date_trunc('month', created_at) AS month_start, COUNT(*) AS count
+                    FROM offers
+                    GROUP BY 1
+                ) o ON o.month_start = m.month_start
+                LEFT JOIN (
+                    SELECT date_trunc('month', created_at) AS month_start, COUNT(*) AS count
+                    FROM tickets
+                    WHERE type <> 'ORDER'
+                    GROUP BY 1
+                ) t ON t.month_start = m.month_start
+                ORDER BY m.month_start
+            `)
         ]);
 
         res.json({
@@ -95,7 +119,8 @@ router.get("/admin-summary", auth, async (req, res) => {
             recentOffers: recentOffers.rows,
             recentTickets: recentTickets.rows,
             recentCompanies: recentCompanies.rows,
-            actionItems
+            actionItems,
+            monthlyTrend: monthlyTrend.rows
         });
     } catch (err) {
         console.error("Błąd przy pobieraniu dashboardu admina:", err);

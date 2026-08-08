@@ -15,6 +15,7 @@ import {
 import { client as clientAPI, dashboard as dashboardAPI } from "../api.js";
 import AppState from "../components/AppState";
 import DashboardGrid from "../components/DashboardGrid";
+import TrendChart from "../components/TrendChart";
 import { hasClientPermission, isClientOwner } from "../lib/permissions";
 import { apiOrigin } from "../lib/runtimeConfig";
 import "./Dashboard.css";
@@ -97,6 +98,11 @@ const quickActions = [
   { label: "Nowa oferta", to: "/offers/new", icon: "document" },
   { label: "Nowe zgłoszenie", to: "/tickets/new", icon: "ticket" },
   { label: "Dodaj produkt", to: "/products", icon: "catalog" }
+];
+
+const trendSeries = [
+  { key: "offers", label: "Oferty", color: "var(--trend-series-1)" },
+  { key: "tickets", label: "Zgłoszenia", color: "var(--trend-series-2)" }
 ];
 
 const iconPaths = {
@@ -255,7 +261,8 @@ function AdminDashboard() {
     recentOffers: [],
     recentTickets: [],
     recentCompanies: [],
-    actionItems: []
+    actionItems: [],
+    monthlyTrend: []
   });
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -267,7 +274,8 @@ function AdminDashboard() {
         recentOffers: [],
         recentTickets: [],
         recentCompanies: [],
-        actionItems: []
+        actionItems: [],
+        monthlyTrend: []
       }))
       .catch((error) => setMessage(error.response?.data?.error || "Nie udało się pobrać danych dashboardu."))
       .finally(() => setLoading(false));
@@ -303,9 +311,15 @@ function AdminDashboard() {
       content: <AdminAttentionPanel items={summary.actionItems} embedded />
     },
     {
+      id: "monthlyTrend",
+      title: "Trend miesięczny",
+      defaultLayout: { x: 0, y: 8, w: 12, h: 6, minW: 6, minH: 4 },
+      content: <TrendChart data={summary.monthlyTrend} series={trendSeries} />
+    },
+    {
       id: "recentOffers",
       title: "Ostatnie oferty",
-      defaultLayout: { x: 0, y: 8, w: 6, h: 7, minW: 4, minH: 4 },
+      defaultLayout: { x: 0, y: 14, w: 6, h: 7, minW: 4, minH: 4 },
       content: (
         <AdminTable
           embedded
@@ -329,7 +343,7 @@ function AdminDashboard() {
     {
       id: "recentTickets",
       title: "Ostatnie zgłoszenia",
-      defaultLayout: { x: 6, y: 8, w: 6, h: 7, minW: 4, minH: 4 },
+      defaultLayout: { x: 6, y: 14, w: 6, h: 7, minW: 4, minH: 4 },
       content: (
         <AdminTable
           embedded
@@ -363,7 +377,7 @@ function AdminDashboard() {
     {
       id: "recentCompanies",
       title: "Ostatnio dodane firmy",
-      defaultLayout: { x: 0, y: 15, w: 8, h: 6, minW: 6, minH: 4 },
+      defaultLayout: { x: 0, y: 21, w: 8, h: 6, minW: 6, minH: 4 },
       content: (
         <AdminTable
           embedded
@@ -387,7 +401,7 @@ function AdminDashboard() {
     {
       id: "quickActions",
       title: "Szybkie akcje",
-      defaultLayout: { x: 8, y: 15, w: 4, h: 6, minW: 3, minH: 3 },
+      defaultLayout: { x: 8, y: 21, w: 4, h: 6, minW: 3, minH: 3 },
       content: (
         <div className="quick-actions-list">
           {quickActions.map((action) => (
