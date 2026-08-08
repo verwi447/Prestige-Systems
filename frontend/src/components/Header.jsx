@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
-import { ChevronDown, LogOut, Moon, Sun } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Bell, ChevronDown, LogOut, Moon, Sun } from "lucide-react";
 import { client as clientAPI } from "../api.js";
-import NotificationCenter from "./NotificationCenter";
 import "./Header.css";
+
+const NotificationCenter = lazy(() => import("./NotificationCenter"));
+
+const NotificationCenterFallback = () => (
+  <button className="header-notification" type="button" aria-label="Powiadomienia" disabled>
+    <Bell size={19} />
+  </button>
+);
 
 export default function Header({ user, theme, onThemeToggle, onLogout }) {
   const [companyName, setCompanyName] = useState("ABC Sp. z o.o.");
@@ -53,7 +60,9 @@ export default function Header({ user, theme, onThemeToggle, onLogout }) {
         >
           {theme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
         </button>
-        <NotificationCenter />
+        <Suspense fallback={<NotificationCenterFallback />}>
+          <NotificationCenter />
+        </Suspense>
         <div className="header-user">
           <span className="header-avatar">{initials}</span>
           <div>
