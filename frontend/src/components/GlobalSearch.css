@@ -130,7 +130,8 @@
 }
 
 .global-search-result:hover,
-.global-search-result:focus-visible {
+.global-search-result:focus-visible,
+.global-search-result.active {
   background: #eef4ff;
   outline: none;
 }
@@ -229,7 +230,8 @@ html[data-theme="dark"] .global-search-result {
 }
 
 html[data-theme="dark"] .global-search-result:hover,
-html[data-theme="dark"] .global-search-result:focus-visible {
+html[data-theme="dark"] .global-search-result:focus-visible,
+html[data-theme="dark"] .global-search-result.active {
   background: #14253a;
 }
 

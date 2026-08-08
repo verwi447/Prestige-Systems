@@ -16,8 +16,10 @@ export default function GlobalSearch({ user }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(EMPTY_RESULTS);
   const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef(null);
   const requestIdRef = useRef(0);
+  const itemRefs = useRef(new Map());
   const navigate = useNavigate();
   const isClient = isClientRole(user?.role);
 
@@ -78,6 +80,10 @@ export default function GlobalSearch({ user }) {
     return () => window.clearTimeout(timeoutId);
   }, [query, open]);
 
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [results]);
+
   const sections = useMemo(() => ([
     !isClient && {
       key: "companies",
@@ -125,10 +131,18 @@ export default function GlobalSearch({ user }) {
     }
   ].filter(Boolean)), [results, isClient]);
 
-  const totalCount = useMemo(
-    () => sections.reduce((sum, section) => sum + section.items.length, 0),
+  const flatItems = useMemo(
+    () => sections.flatMap((section) => section.items.map((item) => ({ ...item, sectionKey: section.key, icon: section.icon }))),
     [sections]
   );
+
+  const totalCount = flatItems.length;
+
+  useEffect(() => {
+    const activeItem = flatItems[activeIndex];
+    if (!activeItem) return;
+    itemRefs.current.get(`${activeItem.sectionKey}-${activeItem.id}`)?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, flatItems]);
 
   if (!open) return null;
 
@@ -136,6 +150,20 @@ export default function GlobalSearch({ user }) {
   const goTo = (path) => {
     setOpen(false);
     navigate(path);
+  };
+
+  const handleInputKeyDown = (event) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (totalCount > 0) setActiveIndex((index) => (index + 1) % totalCount);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (totalCount > 0) setActiveIndex((index) => (index - 1 + totalCount) % totalCount);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      const activeItem = flatItems[activeIndex];
+      if (activeItem) goTo(activeItem.path);
+    }
   };
 
   return (
@@ -148,12 +176,16 @@ export default function GlobalSearch({ user }) {
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleInputKeyDown}
+            role="combobox"
+            aria-expanded={totalCount > 0}
+            aria-activedescendant={flatItems[activeIndex] ? `global-search-option-${flatItems[activeIndex].sectionKey}-${flatItems[activeIndex].id}` : undefined}
             placeholder="Szukaj firmy, oferty, zamówienia, zgłoszenia..."
           />
           <button type="button" aria-label="Zamknij wyszukiwanie" onClick={() => setOpen(false)}><X size={18} /></button>
         </div>
 
-        <div className="global-search-results">
+        <div className="global-search-results" role="listbox">
           {trimmedQuery.length < MIN_QUERY_LENGTH && (
             <p className="global-search-hint">Wpisz co najmniej 2 znaki, aby wyszukać.</p>
           )}
@@ -163,29 +195,49 @@ export default function GlobalSearch({ user }) {
           {trimmedQuery.length >= MIN_QUERY_LENGTH && !loading && totalCount === 0 && (
             <p className="global-search-hint">Brak wyników dla „{trimmedQuery}”.</p>
           )}
-          {sections.map((section) => section.items.length > 0 && (
-            <div className="global-search-section" key={section.key}>
-              <div className="global-search-section-label">{section.label}</div>
-              {section.items.map((item) => (
-                <button
-                  type="button"
-                  className="global-search-result"
-                  key={`${section.key}-${item.id}`}
-                  onClick={() => goTo(item.path)}
-                >
-                  <section.icon size={16} aria-hidden="true" />
-                  <span>
-                    <strong>{item.title}</strong>
-                    {item.subtitle && <small>{item.subtitle}</small>}
-                  </span>
-                </button>
-              ))}
-            </div>
-          ))}
+          {(() => {
+            let flatIndex = -1;
+            return sections.map((section) => section.items.length > 0 && (
+              <div className="global-search-section" key={section.key}>
+                <div className="global-search-section-label">{section.label}</div>
+                {section.items.map((item) => {
+                  flatIndex += 1;
+                  const optionId = `global-search-option-${section.key}-${item.id}`;
+                  const isActive = flatIndex === activeIndex;
+                  return (
+                    <button
+                      type="button"
+                      id={optionId}
+                      role="option"
+                      aria-selected={isActive}
+                      className={isActive ? "global-search-result active" : "global-search-result"}
+                      key={optionId}
+                      ref={(node) => {
+                        if (node) itemRefs.current.set(`${section.key}-${item.id}`, node);
+                        else itemRefs.current.delete(`${section.key}-${item.id}`);
+                      }}
+                      onMouseEnter={() => setActiveIndex(flatIndex)}
+                      onClick={() => goTo(item.path)}
+                    >
+                      <section.icon size={16} aria-hidden="true" />
+                      <span>
+                        <strong>{item.title}</strong>
+                        {item.subtitle && <small>{item.subtitle}</small>}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ));
+          })()}
         </div>
 
         <div className="global-search-footer">
-          <span><kbd>Ctrl</kbd> + <kbd>K</kbd> aby otworzyć</span>
+          {totalCount > 0 ? (
+            <span><kbd>↑</kbd><kbd>↓</kbd> nawigacja · <kbd>Enter</kbd> otwórz</span>
+          ) : (
+            <span><kbd>Ctrl</kbd> + <kbd>K</kbd> aby otworzyć</span>
+          )}
           <span><kbd>Esc</kbd> aby zamknąć</span>
         </div>
       </div>
