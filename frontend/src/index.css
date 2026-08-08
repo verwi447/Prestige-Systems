@@ -1902,7 +1902,7 @@ select:focus-visible {
   border-color: var(--ui-danger);
 }
 
-.main-content :is(.table-container, .companies-table-card, .companies-kanban-board, .audit-log-summary, .audit-log-panel, .admin-stat-card, .admin-panel-card) {
+.main-content :is(.table-container, .companies-table-card, .companies-kanban-board, .audit-log-summary, .audit-log-panel, .admin-panel-card) {
   border-color: var(--ui-border);
   box-shadow: var(--ui-shadow-md);
 }

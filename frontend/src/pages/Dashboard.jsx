@@ -275,26 +275,27 @@ function AdminDashboard() {
 
   if (loading) return <div className="page admin-dashboard-page"><AppState variant="loading" title="Ladowanie dashboardu" description="Pobieramy najnowsze dane operacyjne." /></div>;
 
+  const statLayouts = [
+    { x: 0, y: 0, w: 2, h: 4 },
+    { x: 2, y: 0, w: 2, h: 4 },
+    { x: 4, y: 0, w: 2, h: 4 },
+    { x: 6, y: 0, w: 3, h: 4 },
+    { x: 9, y: 0, w: 3, h: 4 }
+  ];
+
   const widgets = [
-    {
-      id: "stats",
-      title: "Statystyki",
-      defaultLayout: { x: 0, y: 0, w: 12, h: 4, minW: 6, minH: 3 },
+    ...statCards.map((card, index) => ({
+      id: `stat-${card.key}`,
+      title: card.label,
+      defaultLayout: { ...statLayouts[index], minW: 2, minH: 3 },
       content: (
-        <div className="admin-stats-grid embedded">
-          {statCards.map((card) => (
-            <Link className="admin-stat-card" to={card.link} key={card.key}>
-              <AdminIcon name={card.icon} />
-              <div>
-                <strong>{summary.stats?.[card.key] ?? 0}</strong>
-                <span>{card.label}</span>
-              </div>
-              <small>{card.linkText} <span aria-hidden="true">→</span></small>
-            </Link>
-          ))}
-        </div>
+        <Link className="admin-stat-widget-body" to={card.link}>
+          <AdminIcon name={card.icon} />
+          <strong>{summary.stats?.[card.key] ?? 0}</strong>
+          <small>{card.linkText} <span aria-hidden="true">→</span></small>
+        </Link>
       )
-    },
+    })),
     {
       id: "attention",
       title: "Wymaga Twojej uwagi",
