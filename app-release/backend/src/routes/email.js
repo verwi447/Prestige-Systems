@@ -3,12 +3,33 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import multer from "multer";
+import sanitizeHtml from "sanitize-html";
 import { fileURLToPath } from "url";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
 import { loadCurrentUser, requireRole } from "../middleware/access.js";
 import { encryptText } from "../utils/emailCrypto.js";
 import { createTransporter, isValidEmail, sendEmail } from "../services/emailService.js";
+
+const footerHtmlOptions = {
+  allowedTags: ["p", "br", "strong", "b", "em", "i", "u", "span", "div", "a", "img", "ul", "ol", "li", "small", "hr", "table", "tbody", "tr", "td"],
+  allowedAttributes: {
+    a: ["href", "title", "target", "rel"],
+    img: ["src", "alt", "width", "height"],
+    "*": ["style"]
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  allowedStyles: {
+    "*": {
+      color: [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/],
+      "text-align": [/^left$|^right$|^center$/],
+      "font-size": [/^\d+(?:px|em|rem|%)$/],
+      "font-weight": [/^\d+$|^bold$|^normal$/]
+    }
+  }
+};
+
+const sanitizeFooterHtml = (html) => sanitizeHtml(String(html || ""), footerHtmlOptions);
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -58,7 +79,7 @@ router.put("/footer", async (req, res) => {
      ON CONFLICT (id)
      DO UPDATE SET footer_enabled=$1, footer_html=$2, footer_logo_url=$3, updated_at=CURRENT_TIMESTAMP
      RETURNING *`,
-    [Boolean(footerEnabled), footerHtml, footerLogoUrl]
+    [Boolean(footerEnabled), sanitizeFooterHtml(footerHtml), footerLogoUrl]
   );
   res.json(result.rows[0]);
 });
@@ -78,6 +99,7 @@ router.put("/settings", async (req, res) => {
     footerHtml = null,
     footerLogoUrl = null
   } = req.body;
+  const sanitizedFooterHtml = footerHtml === null ? null : sanitizeFooterHtml(footerHtml);
   if (!smtpHost?.trim() || !smtpPort || !fromEmail?.trim()) {
     return res.status(400).json({ error: "Host SMTP, port i e-mail nadawcy są wymagane." });
   }
@@ -110,7 +132,7 @@ router.put("/settings", async (req, res) => {
         Boolean(isActive),
         current.id,
         Boolean(footerEnabled),
-        footerHtml,
+        sanitizedFooterHtml,
         footerLogoUrl,
         ...passwordParams
       ]
@@ -135,7 +157,7 @@ router.put("/settings", async (req, res) => {
         replyToEmail?.trim() || null,
         Boolean(isActive),
         Boolean(footerEnabled),
-        footerHtml,
+        sanitizedFooterHtml,
         footerLogoUrl
       ]
     );

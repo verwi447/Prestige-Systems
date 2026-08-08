@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 import { Braces, CheckCircle2, Code2, Edit3, Eye, FileImage, FileText, History, LockKeyhole, Mail, Save, Send, Settings, ShieldCheck, Type } from "lucide-react";
 import { email as emailAPI } from "../api";
 import BarrierCheckbox from "../components/BarrierCheckbox";
@@ -88,6 +89,7 @@ const ticketTemplateVariables = [
 export default function EmailSettingsPage() {
   const [activeTab, setActiveTab] = useState("smtp");
   const [settings, setSettings] = useState(emptySettings);
+  const sanitizedFooterPreview = useMemo(() => DOMPurify.sanitize(settings.footerHtml || ""), [settings.footerHtml]);
   const [hasPassword, setHasPassword] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
@@ -511,7 +513,7 @@ export default function EmailSettingsPage() {
             <aside className="footer-preview">
               <span>Podgląd</span>
               {settings.footerLogoUrl && <img src={assetUrl(settings.footerLogoUrl)} alt="Logo stopki" />}
-              <div dangerouslySetInnerHTML={{ __html: settings.footerHtml }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizedFooterPreview }} />
             </aside>
           </div>
         </section>

@@ -180,7 +180,10 @@ router.post("/", requireRole("ADMIN"), async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  if (req.currentUser.role !== "ADMIN" && Number(req.currentUser.company_id) !== Number(req.params.id)) {
+  const role = normalizeRole(req.currentUser.role);
+  const isAdmin = role === "ADMIN";
+  const isOwnerOfCompany = role === "CLIENT_OWNER" && Number(req.currentUser.company_id) === Number(req.params.id);
+  if (!isAdmin && !isOwnerOfCompany) {
     return res.status(403).json({ error: "Brak dostępu do tej firmy." });
   }
   const company = mapCompanyBody(req.body);

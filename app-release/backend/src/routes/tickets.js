@@ -386,10 +386,21 @@ router.post("/", auth, upload.array("photos", 10), async (req, res) => {
   const client = await db.connect();
   try {
     await client.query("BEGIN");
-    const customerRes = await client.query("SELECT id FROM customers WHERE user_id=$1", [req.user.id]);
+    const customerRes = await client.query("SELECT id, company_id FROM customers WHERE user_id=$1", [req.user.id]);
     if (!customerRes.rows[0]) {
       await client.query("ROLLBACK");
       return res.status(403).json({ error: "Tylko klienci moga tworzyc zgloszenia." });
+    }
+
+    const customerCompanyId = customerRes.rows[0].company_id;
+    if (!customerCompanyId) {
+      await client.query("ROLLBACK");
+      return res.status(403).json({ error: "Twoje konto nie jest przypisane do zadnej firmy." });
+    }
+    const siteRes = await client.query("SELECT id FROM objects WHERE id=$1 AND company_id=$2", [object_id, customerCompanyId]);
+    if (!siteRes.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Wybrany obiekt nie istnieje albo nie nalezy do Twojej firmy." });
     }
 
     const ticketNumber = await generateTicketNumber();
