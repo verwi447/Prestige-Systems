@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Bell, ChevronDown, LogOut, Moon, Sun } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Moon, Search, Sun } from "lucide-react";
 import { client as clientAPI } from "../api.js";
+import { GLOBAL_SEARCH_EVENT } from "./GlobalSearch";
 import "./Header.css";
 
 const NotificationCenter = lazy(() => import("./NotificationCenter"));
@@ -51,6 +52,17 @@ export default function Header({ user, theme, onThemeToggle, onLogout }) {
         )}
       </div>
       <div className="header-right">
+        <button
+          className="header-search-trigger"
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent(GLOBAL_SEARCH_EVENT))}
+          aria-label="Szukaj (Ctrl+K)"
+          title="Szukaj (Ctrl+K)"
+        >
+          <Search size={18} aria-hidden="true" />
+          <span>Szukaj...</span>
+          <kbd>Ctrl K</kbd>
+        </button>
         <button
           className="header-theme-toggle"
           type="button"

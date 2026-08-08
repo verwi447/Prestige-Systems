@@ -346,3 +346,7 @@ export const admins = {
   update: (id, data) => api.put(`/admins/${id}`, data),
   delete: (id) => api.delete(`/admins/${id}`)
 };
+
+export const search = {
+  query: (q) => api.get("/api/search", { params: { q }, skipGlobalFeedback: true })
+};

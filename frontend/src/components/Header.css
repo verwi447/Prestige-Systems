@@ -68,6 +68,48 @@
   box-shadow: 0 8px 18px rgba(20, 36, 57, 0.05);
 }
 
+.header-search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #cfdded;
+  cursor: pointer;
+  padding: 0 0.75rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.header-search-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.header-search-trigger:focus-visible {
+  outline: 3px solid rgba(128, 204, 255, 0.82);
+  outline-offset: 3px;
+}
+
+.header-search-trigger svg {
+  flex: 0 0 auto;
+  stroke-width: 2;
+}
+
+.header-search-trigger kbd {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+  font-family: inherit;
+  font-size: 0.68rem;
+}
+
 .header-theme-toggle {
   flex: 0 0 38px;
   width: 38px;
@@ -684,6 +726,18 @@ html[data-theme="dark"] .notification-menu button:hover {
   .header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .header-search-trigger {
+    flex: 0 0 38px;
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .header-search-trigger span,
+  .header-search-trigger kbd {
+    display: none;
   }
 
   .header-right {

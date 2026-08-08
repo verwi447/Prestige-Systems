@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, Link } from "react-router-dom";
 import Login from "./pages/Login";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+import GlobalSearch from "./components/GlobalSearch";
 import AppFeedback from "./components/AppFeedback";
 import AppState from "./components/AppState";
 import { auth } from "./api";
@@ -229,6 +230,7 @@ function App() {
   return (
     <>
       <AppFeedback />
+      <GlobalSearch user={user} />
       <div className="app-layout">
         <Sidebar user={user} />
         <main className="main-content">
