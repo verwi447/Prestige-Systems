@@ -8,9 +8,12 @@ import {
   ChevronRight,
   ClipboardList,
   FileText,
+  Mail,
+  Phone,
   Plus,
   Users,
-  Wrench
+  Wrench,
+  XCircle
 } from "lucide-react";
 import { client as clientAPI, dashboard as dashboardAPI } from "../api.js";
 import AppState from "../components/AppState";
@@ -450,13 +453,20 @@ function ClientDashboard({ user }) {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [offerModal, setOfferModal] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
 
-  useEffect(() => {
-    clientAPI.dashboard()
+  const fetchDashboard = (showSpinner) => {
+    if (showSpinner) setLoading(true);
+    return clientAPI.dashboard()
       .then((response) => setDashboardData(response.data))
       .catch((error) => setMessage(error.response?.data?.error || "Nie udało się pobrać danych panelu klienta."))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => { if (showSpinner) setLoading(false); });
+  };
+
+  useEffect(() => { fetchDashboard(true); }, []);
 
   const firstName = dashboardData?.user?.firstName || user?.firstName || user?.first_name || user?.username || "Jan";
   const stats = dashboardData?.stats || {};
@@ -466,44 +476,79 @@ function ClientDashboard({ user }) {
   const recentActivity = dashboardData?.recentActivity || [];
   const canViewTickets = hasClientPermission(user, "VIEW_TICKETS");
   const canViewOffers = hasClientPermission(user, "VIEW_OFFERS");
+  const canAcceptOffers = hasClientPermission(user, "ACCEPT_OFFERS");
+
+  const closeOfferModal = () => {
+    setOfferModal(null);
+    setRejectReason("");
+    setActionError("");
+  };
+
+  const confirmAcceptOffer = async () => {
+    if (!offerModal) return;
+    setActionBusy(true);
+    setActionError("");
+    try {
+      await clientAPI.acceptOffer(offerModal.offer.id);
+      closeOfferModal();
+      await fetchDashboard(false);
+    } catch (err) {
+      setActionError(err.response?.data?.error || "Nie udało się zaakceptować oferty.");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const confirmRejectOffer = async () => {
+    if (!offerModal) return;
+    setActionBusy(true);
+    setActionError("");
+    try {
+      await clientAPI.rejectOffer(offerModal.offer.id, rejectReason);
+      closeOfferModal();
+      await fetchDashboard(false);
+    } catch (err) {
+      setActionError(err.response?.data?.error || "Nie udało się odrzucić oferty.");
+    } finally {
+      setActionBusy(false);
+    }
+  };
 
   if (loading) return <div className="page client-dashboard-page"><AppState variant="loading" title="Ladowanie panelu firmy" description="Pobieramy najwazniejsze informacje o Twojej firmie." /></div>;
 
-  return (
-    <div className="page client-dashboard-page">
-      <div className="client-welcome">
-        <h1>Witaj, {firstName}!</h1>
-        <p>Poniżej znajdziesz najważniejsze informacje o Twojej firmie.</p>
-      </div>
-
-      {message && <div className="settings-message">{message}</div>}
-
-      <section className="client-stats-row" aria-label="Statystyki firmy">
-        {clientStatConfig.filter((item) => (
-          (item.key !== "openTicketsCount" || canViewTickets)
-          && (item.key !== "offersCount" || canViewOffers)
-        )).map((item) => {
-          const Icon = item.icon;
-          const subtitle = item.subtitleKey ? `Do akceptacji: ${stats[item.subtitleKey] ?? 0}` : item.subtitle;
-          return (
-            <article className="client-stat-card" key={item.key}>
-              <span className={`client-stat-icon ${item.tone}`}><Icon size={28} /></span>
-              <div>
-                <strong>{stats[item.key] ?? 0}</strong>
-                <h2>{item.title}</h2>
-                <p>{subtitle}</p>
-              </div>
-            </article>
-          );
-        })}
-      </section>
-
-      <div className="client-dashboard-grid">
-        <section className="client-panel-card wide" style={{ display: canViewTickets ? undefined : "none" }}>
-          <div className="client-section-header">
-            <h2>Ostatnie zgłoszenia</h2>
-            <Link to="/client/tickets">Zobacz wszystkie</Link>
+  const statWidgets = clientStatConfig
+    .filter((item) => (
+      (item.key !== "openTicketsCount" || canViewTickets)
+      && (item.key !== "offersCount" || canViewOffers)
+    ))
+    .map((item, index) => {
+      const Icon = item.icon;
+      const subtitle = item.subtitleKey ? `Do akceptacji: ${stats[item.subtitleKey] ?? 0}` : item.subtitle;
+      return {
+        id: `stat-${item.key}`,
+        title: item.title,
+        defaultLayout: { x: index * 3, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
+        content: (
+          <div className="client-stat-widget-body">
+            <span className={`client-stat-icon ${item.tone}`}><Icon size={26} /></span>
+            <div>
+              <strong>{stats[item.key] ?? 0}</strong>
+              <p>{subtitle}</p>
+            </div>
           </div>
+        )
+      };
+    });
+
+  const widgets = [
+    ...statWidgets,
+    canViewTickets && {
+      id: "recentTickets",
+      title: "Ostatnie zgłoszenia",
+      defaultLayout: { x: 0, y: 4, w: 12, h: 7, minW: 6, minH: 4 },
+      content: (
+        <div className="client-widget-table">
+          <div className="client-widget-link-row"><Link to="/client/tickets">Zobacz wszystkie</Link></div>
           <div className="client-table-shell">
             <table className="client-table tickets-table">
               <thead>
@@ -532,13 +577,16 @@ function ClientDashboard({ user }) {
               </tbody>
             </table>
           </div>
-        </section>
-
-        <section className="client-panel-card" style={{ display: canViewOffers ? undefined : "none" }}>
-          <div className="client-section-header">
-            <h2>Oferty do akceptacji</h2>
-            <Link to="/client/offers">Zobacz wszystkie</Link>
-          </div>
+        </div>
+      )
+    },
+    canViewOffers && {
+      id: "offersToAccept",
+      title: "Oferty do akceptacji",
+      defaultLayout: { x: 0, y: 11, w: 7, h: 8, minW: 5, minH: 5 },
+      content: (
+        <div className="client-widget-table">
+          <div className="client-widget-link-row"><Link to="/client/offers">Zobacz wszystkie</Link></div>
           <div className="client-table-shell compact">
             <table className="client-table offers-table">
               <thead>
@@ -547,6 +595,7 @@ function ClientDashboard({ user }) {
                   <th>Tytuł</th>
                   <th>Ważna do</th>
                   <th>Wartość netto</th>
+                  {canAcceptOffers && <th>Decyzja</th>}
                 </tr>
               </thead>
               <tbody>
@@ -556,24 +605,59 @@ function ClientDashboard({ user }) {
                     <td>{offer.title || "-"}</td>
                     <td className="danger-date">{formatDate(offer.validUntil)}</td>
                     <td>{money.format(Number(offer.totalNet || 0))}</td>
+                    {canAcceptOffers && (
+                      <td>
+                        <div className="client-row-actions">
+                          <button type="button" className="client-row-action success" title="Akceptuj ofertę" onClick={() => setOfferModal({ type: "accept", offer })}>
+                            <CheckCircle2 size={16} />
+                          </button>
+                          <button type="button" className="client-row-action danger" title="Odrzuć ofertę" onClick={() => setOfferModal({ type: "reject", offer })}>
+                            <XCircle size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 )) : (
-                  <tr><td colSpan="4" className="client-empty">Brak ofert do akceptacji.</td></tr>
+                  <tr><td colSpan={canAcceptOffers ? 5 : 4} className="client-empty">Brak ofert do akceptacji.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
-          <Link className="client-outline-button" to="/client/offers">
-            <ClipboardList size={16} />
-            Zobacz wszystkie oferty
-          </Link>
-        </section>
-
-        <section className="client-panel-card wide">
-          <div className="client-section-header">
-            <h2>Moje obiekty</h2>
-            <Link to="/client/sites">Zobacz wszystkie</Link>
-          </div>
+        </div>
+      )
+    },
+    {
+      id: "quickActions",
+      title: "Szybkie akcje",
+      defaultLayout: { x: 7, y: 11, w: 5, h: 8, minW: 3, minH: 4 },
+      content: (
+        <div className="client-actions-grid">
+          {clientQuickActions.filter((action) => (
+            (!action.ownerOnly || isClientOwner(user))
+            && (!action.permission || hasClientPermission(user, action.permission))
+          )).map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link className="client-action-card" to={action.to} key={action.title}>
+                <span className={`client-action-icon ${action.tone}`}><Icon size={22} /></span>
+                <span>
+                  <strong>{action.title}</strong>
+                  <small>{action.desc}</small>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      )
+    },
+    {
+      id: "sites",
+      title: "Moje obiekty",
+      defaultLayout: { x: 0, y: 19, w: 12, h: 7, minW: 6, minH: 4 },
+      content: (
+        <div className="client-widget-table">
+          <div className="client-widget-link-row"><Link to="/client/sites">Zobacz wszystkie</Link></div>
           <div className="client-sites-grid">
             {sites.length ? sites.map((site) => (
               <article className="client-site-card" key={site.id}>
@@ -594,57 +678,96 @@ function ClientDashboard({ user }) {
               <div className="client-empty site-empty">Brak obiektów dla Twojej firmy.</div>
             )}
           </div>
-        </section>
+        </div>
+      )
+    },
+    {
+      id: "recentActivity",
+      title: "Ostatnia aktywność",
+      defaultLayout: { x: 0, y: 26, w: 7, h: 6, minW: 4, minH: 4 },
+      content: (
+        <div className="client-activity-list">
+          {recentActivity.length ? recentActivity.map((activity) => (
+            <article key={`${activity.type}-${activity.id}`}>
+              <span className={`activity-icon ${activity.type === "offer" ? "orange" : "red"}`}>
+                {activity.type === "offer" ? <FileText size={16} /> : <Wrench size={16} />}
+              </span>
+              <p>{activity.title}</p>
+              <time>{formatDateTime(activity.timestamp)}</time>
+            </article>
+          )) : (
+            <div className="client-empty">Brak ostatniej aktywności.</div>
+          )}
+        </div>
+      )
+    },
+    {
+      id: "info",
+      title: "Informacje",
+      defaultLayout: { x: 7, y: 26, w: 5, h: 6, minW: 3, minH: 4 },
+      content: (
+        <div className="client-info-list">
+          <div className="client-info-row">
+            <span>Firma</span>
+            <strong>{dashboardData?.company?.name || "-"}</strong>
+          </div>
+          <div className="client-info-row">
+            <span>Twoja rola</span>
+            <strong>{isClientOwner(user) ? "Właściciel konta" : "Pracownik"}</strong>
+          </div>
+          <div className="client-info-row">
+            <span>Twój e-mail</span>
+            <strong>{dashboardData?.user?.email || user?.email || "-"}</strong>
+          </div>
+          <div className="client-info-row support">
+            <span>Wsparcie techniczne</span>
+            <a href="tel:+48221234567"><Phone size={14} /> +48 22 123 45 67</a>
+            <a href="mailto:serwis@prestige-systems.pl"><Mail size={14} /> serwis@prestige-systems.pl</a>
+          </div>
+        </div>
+      )
+    }
+  ].filter(Boolean);
 
-        <section className="client-panel-card">
-          <div className="client-section-header">
-            <h2>Szybkie akcje</h2>
-          </div>
-          <div className="client-actions-grid">
-            {clientQuickActions.filter((action) => (
-              (!action.ownerOnly || isClientOwner(user))
-              && (!action.permission || hasClientPermission(user, action.permission))
-            )).map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link className="client-action-card" to={action.to} key={action.title}>
-                  <span className={`client-action-icon ${action.tone}`}><Icon size={22} /></span>
-                  <span>
-                    <strong>{action.title}</strong>
-                    <small>{action.desc}</small>
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="client-panel-card wide">
-          <div className="client-section-header">
-            <h2>Ostatnia aktywność</h2>
-          </div>
-          <div className="client-activity-list">
-            {recentActivity.length ? recentActivity.map((activity) => (
-              <article key={`${activity.type}-${activity.id}`}>
-                <span className={`activity-icon ${activity.type === "offer" ? "orange" : "red"}`}>
-                  {activity.type === "offer" ? <FileText size={16} /> : <Wrench size={16} />}
-                </span>
-                <p>{activity.title}</p>
-                <time>{formatDateTime(activity.timestamp)}</time>
-              </article>
-            )) : (
-              <div className="client-empty">Brak ostatniej aktywności.</div>
-            )}
-          </div>
-        </section>
-
-        <section className="client-panel-card info-card">
-          <div className="client-section-header">
-            <h2>Informacje</h2>
-          </div>
-          <div className="client-info-empty">Dodatkowe informacje będą widoczne tutaj.</div>
-        </section>
+  return (
+    <div className="page client-dashboard-page">
+      <div className="client-welcome">
+        <h1>Witaj, {firstName}!</h1>
+        <p>Poniżej znajdziesz najważniejsze informacje o Twojej firmie.</p>
       </div>
+
+      {message && <div className="settings-message">{message}</div>}
+
+      <DashboardGrid storageKey="ps-hub-client-dashboard-layout" widgets={widgets} />
+
+      {offerModal?.type === "accept" && (
+        <div className="client-quick-modal-backdrop" onClick={closeOfferModal}>
+          <div className="client-quick-modal" onClick={(event) => event.stopPropagation()}>
+            <h2>Zaakceptować ofertę {offerModal.offer.number}?</h2>
+            <p>Po akceptacji oferta zmieni status na zaakceptowaną.</p>
+            {actionError && <div className="client-quick-modal-error">{actionError}</div>}
+            <div className="client-quick-modal-actions">
+              <button type="button" onClick={closeOfferModal} disabled={actionBusy}>Anuluj</button>
+              <button type="button" className="success" onClick={confirmAcceptOffer} disabled={actionBusy}>{actionBusy ? "Zapisywanie..." : "Tak, akceptuję"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {offerModal?.type === "reject" && (
+        <div className="client-quick-modal-backdrop" onClick={closeOfferModal}>
+          <div className="client-quick-modal" onClick={(event) => event.stopPropagation()}>
+            <h2>Odrzuć ofertę {offerModal.offer.number}?</h2>
+            <p>Możesz dodać powód odrzucenia. Będzie widoczny przy ofercie.</p>
+            <textarea value={rejectReason} onChange={(event) => setRejectReason(event.target.value)} placeholder="Powód odrzucenia" rows={4} />
+            {actionError && <div className="client-quick-modal-error">{actionError}</div>}
+            <div className="client-quick-modal-actions">
+              <button type="button" onClick={closeOfferModal} disabled={actionBusy}>Anuluj</button>
+              <button type="button" className="danger" onClick={confirmRejectOffer} disabled={actionBusy}>{actionBusy ? "Zapisywanie..." : "Odrzuć ofertę"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
