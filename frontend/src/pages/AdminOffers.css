@@ -297,6 +297,75 @@
   min-width: 94px;
 }
 
+.admin-offers-checkbox-col {
+  width: 40px;
+}
+
+.admin-offers-checkbox-col input {
+  cursor: pointer;
+  height: 16px;
+  width: 16px;
+}
+
+.bulk-actions-bar {
+  align-items: center;
+  background: #eef5ff;
+  border: 1px solid #bcd7fb;
+  border-radius: 10px;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.65rem 0.9rem;
+}
+
+.bulk-actions-count {
+  color: #075fd6;
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.bulk-actions-bar select {
+  background: #fff;
+  border: 1px solid #bcd7fb;
+  border-radius: 7px;
+  color: #071a35;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-height: 36px;
+  padding: 0 0.6rem;
+}
+
+.bulk-actions-apply {
+  background: #075fd6;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0 0.9rem;
+}
+
+.bulk-actions-apply:disabled,
+.bulk-actions-clear:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.bulk-actions-clear {
+  background: transparent;
+  border: 1px solid #bcd7fb;
+  border-radius: 7px;
+  color: #075fd6;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0 0.9rem;
+}
+
 .admin-offer-actions > button:nth-child(2) {
   width: 38px;
   padding: 0;
@@ -483,4 +552,20 @@ html[data-theme="dark"] .admin-offer-menu button {
 
 html[data-theme="dark"] .admin-offer-menu button:hover {
   background: #1a324a;
+}
+
+html[data-theme="dark"] .bulk-actions-bar {
+  background: #16324e;
+  border-color: #35516c;
+}
+
+html[data-theme="dark"] .bulk-actions-count {
+  color: #70baff;
+}
+
+html[data-theme="dark"] .bulk-actions-bar select,
+html[data-theme="dark"] .bulk-actions-clear {
+  background: #0d1928;
+  border-color: #35516c;
+  color: #dce9f6;
 }

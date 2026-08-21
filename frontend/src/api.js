@@ -78,6 +78,7 @@ export const offers = {
   update: (id, data) => api.put(`/offers/${id}`, data),
   saveDraft: (id, data) => api.put(`/offers/${id}/draft`, data),
   updateStatus: (id, status) => api.patch(`/offers/${id}/status`, { status }),
+  bulkUpdateStatus: (ids, status) => api.patch("/offers/bulk-status", { ids, status }),
   delete: (id) => api.delete(`/offers/${id}`),
   getPDF: (id) => api.get(`/pdf/${id}`, { responseType: "blob" })
 };
@@ -139,6 +140,7 @@ export const adminOrders = {
   getAssignees: () => api.get("/api/admin-orders/assignees"),
   getById: (id) => api.get(`/api/admin-orders/${id}`),
   changeStatus: (id, status) => api.patch(`/api/admin-orders/${id}/status`, { status }),
+  bulkChangeStatus: (ids, status) => api.patch("/api/admin-orders/bulk-status", { ids, status }),
   changePriority: (id, priority) => api.patch(`/api/admin-orders/${id}/priority`, { priority }),
   assign: (id, adminId) => api.patch(`/api/admin-orders/${id}/assign`, { adminId }),
   addComment: (id, content) => api.post(`/api/admin-orders/${id}/comments`, { content })
@@ -242,6 +244,7 @@ export const tickets = {
   getAssignableAdmins: () => api.get("/tickets/assignees/admins"),
   assignAdmin: (id, adminId) => api.post(`/tickets/${id}/assign`, { adminId }),
   changeStatus: (id, payload) => api.post(`/tickets/${id}/change-status`, typeof payload === "string" ? { status: payload } : payload),
+  bulkChangeStatus: (ids, status) => api.post("/tickets/bulk-change-status", { ids, status }),
   changePriority: (id, priority) => api.post(`/tickets/${id}/change-priority`, { priority }),
   close: (id, data) => api.post(`/tickets/${id}/close`, data),
   addComment: (id, data) => {

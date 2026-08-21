@@ -574,6 +574,49 @@ router.post("/:id/change-status", auth, requireAdmin, async (req, res) => {
   }
 });
 
+router.post("/bulk-change-status", auth, requireAdmin, async (req, res) => {
+  const status = normalizeTicketStatus(req.body.status);
+  if (!ticketStatuses.has(status)) return res.status(400).json({ error: "Nieprawidlowy status zgloszenia." });
+  const ids = Array.isArray(req.body.ids) ? [...new Set(req.body.ids.map(Number).filter(Number.isInteger))] : [];
+  if (!ids.length) return res.status(400).json({ error: "Brak wybranych zgloszen." });
+
+  const updated = [];
+  const failed = [];
+
+  for (const id of ids) {
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      const current = await client.query("SELECT status, customer_id, ticket_number, subject FROM tickets WHERE id=$1 FOR UPDATE", [id]);
+      if (!current.rows[0]) {
+        await client.query("ROLLBACK");
+        failed.push({ id, error: "Zgloszenie nie istnieje." });
+        continue;
+      }
+      await client.query(
+        `UPDATE tickets
+         SET status=$1,
+             assigned_to_id=CASE WHEN $1='NEW' THEN NULL ELSE assigned_to_id END,
+             updated_at=CURRENT_TIMESTAMP,
+             closed_at=CASE WHEN $1='COMPLETED' THEN COALESCE(closed_at, CURRENT_TIMESTAMP) ELSE closed_at END
+         WHERE id=$2`,
+        [status, id]
+      );
+      await addHistory(client, id, req.user.id, "TICKET_STATUS_CHANGED", normalizeTicketStatus(current.rows[0].status), status, { bulk: true });
+      await auditTicket(client, "TICKET_STATUS_CHANGED", req.user.id, id, { status });
+      await client.query("COMMIT");
+      updated.push(id);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      failed.push({ id, error: "Nie udalo sie zmienic statusu." });
+    } finally {
+      client.release();
+    }
+  }
+
+  res.json({ updated, failed });
+});
+
 router.post("/:id/change-priority", auth, requireAdmin, async (req, res) => {
   const priority = normalizeTicketPriority(req.body.priority);
   if (!ticketPriorities.has(priority)) return res.status(400).json({ error: "Nieprawidlowy priorytet zgloszenia." });

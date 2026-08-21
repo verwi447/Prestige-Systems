@@ -15,7 +15,7 @@ import {
 import { offers as offersAPI } from "../api.js";
 import AppState from "../components/AppState";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { getRequestErrorMessage, showSuccess } from "../lib/feedback";
+import { getRequestErrorMessage, showFeedback, showSuccess } from "../lib/feedback";
 import "./AdminOffers.css";
 
 const statusOptions = [
@@ -85,6 +85,9 @@ export default function AdminOffers() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkStatus, setBulkStatus] = useState(statusOptions[1].value);
+  const [bulkApplying, setBulkApplying] = useState(false);
 
   const loadOffers = async () => {
     setLoading(true);
@@ -106,6 +109,10 @@ export default function AdminOffers() {
   useEffect(() => {
     setPage(1);
   }, [query, status, owner, dateFrom, dateTo, pageSize]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [query, status, owner, dateFrom, dateTo, page, pageSize]);
 
   const owners = useMemo(() => [...new Set(offers.map(ownerName).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pl")), [offers]);
 
@@ -149,6 +156,47 @@ export default function AdminOffers() {
   };
 
   const activeFilterCount = [query.trim(), status !== "ALL", owner !== "ALL", dateFrom, dateTo].filter(Boolean).length;
+
+  const allVisibleSelected = visibleOffers.length > 0 && visibleOffers.every((offer) => selectedIds.has(offer.id));
+  const someVisibleSelected = visibleOffers.some((offer) => selectedIds.has(offer.id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allVisibleSelected) {
+        visibleOffers.forEach((offer) => next.delete(offer.id));
+      } else {
+        visibleOffers.forEach((offer) => next.add(offer.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectOne = (id) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const applyBulkStatus = async () => {
+    if (!selectedIds.size) return;
+    setBulkApplying(true);
+    try {
+      const response = await offersAPI.bulkUpdateStatus([...selectedIds], bulkStatus);
+      const { updated = [], failed = [] } = response.data || {};
+      if (updated.length) showSuccess(`Zmieniono status ${updated.length} ofert(y).`);
+      if (failed.length) showFeedback({ message: `Nie udalo sie zmienic statusu ${failed.length} ofert(y).`, type: "error" });
+      setSelectedIds(new Set());
+      await loadOffers();
+    } catch (err) {
+      showFeedback({ message: getRequestErrorMessage(err, "Nie udalo sie wykonac akcji zbiorczej."), type: "error" });
+    } finally {
+      setBulkApplying(false);
+    }
+  };
 
   const downloadPdf = async (offer) => {
     const response = await offersAPI.getPDF(offer.id);
@@ -229,11 +277,25 @@ export default function AdminOffers() {
       </section>
       )}
 
+      {selectedIds.size > 0 && (
+        <section className="bulk-actions-bar">
+          <span className="bulk-actions-count">Wybrano {selectedIds.size} ofert(y)</span>
+          <select value={bulkStatus} onChange={(event) => setBulkStatus(event.target.value)} disabled={bulkApplying}>
+            {statusOptions.filter((option) => option.value !== "ALL").map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          <button type="button" className="bulk-actions-apply" onClick={applyBulkStatus} disabled={bulkApplying}>
+            {bulkApplying ? "Zapisywanie..." : "Zmień status"}
+          </button>
+          <button type="button" className="bulk-actions-clear" onClick={() => setSelectedIds(new Set())} disabled={bulkApplying}>Anuluj</button>
+        </section>
+      )}
+
       <section className="admin-offers-table-card admin-offers-card">
         <div className="admin-offers-table-wrap">
           <table className="admin-offers-table">
             <thead>
               <tr>
+                <th className="admin-offers-checkbox-col"><input type="checkbox" checked={allVisibleSelected} ref={(el) => { if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected; }} onChange={toggleSelectAll} aria-label="Zaznacz wszystkie" /></th>
                 <th>Numer</th>
                 <th>Temat</th>
                 <th>Klient</th>
@@ -247,6 +309,7 @@ export default function AdminOffers() {
             <tbody>
               {visibleOffers.map((offer) => (
                 <tr key={offer.id} onClick={() => navigate(`/offers/${offer.id}`)}>
+                  <td className="admin-offers-checkbox-col" onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={selectedIds.has(offer.id)} onChange={() => toggleSelectOne(offer.id)} aria-label={`Zaznacz ofertę ${offer.offer_number || offer.id}`} /></td>
                   <td><strong>{offer.offer_number || `OF/${offer.id}`}</strong><small>{formatDate(offer.created_at)}</small></td>
                   <td>{offer.title || "-"}</td>
                   <td>{customerName(offer)}</td>
@@ -270,7 +333,7 @@ export default function AdminOffers() {
                   </td>
                 </tr>
               ))}
-              {!visibleOffers.length && <tr><td colSpan="8" className="admin-empty">Brak ofert spełniających wybrane filtry.</td></tr>}
+              {!visibleOffers.length && <tr><td colSpan="9" className="admin-empty">Brak ofert spełniających wybrane filtry.</td></tr>}
             </tbody>
           </table>
         </div>

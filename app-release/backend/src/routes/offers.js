@@ -662,6 +662,78 @@ router.patch("/:id/status", auth, requireAdmin, async (req, res) => {
     client.release();
   }
 });
+
+router.patch("/bulk-status", auth, requireAdmin, async (req, res) => {
+  const status = String(req.body.status || "").toUpperCase();
+  const validStatuses = ["SZKIC", "WYSŁANA", "W REALIZACJI", "DO AKCEPTACJI", "ZAAKCEPTOWANA", "ODRZUCONA", "ZAKOŃCZONA"];
+  const ids = Array.isArray(req.body.ids) ? [...new Set(req.body.ids.map(Number).filter(Number.isInteger))] : [];
+
+  if (!validStatuses.includes(status)) return res.status(400).json({ error: "Niepoprawny status" });
+  if (!ids.length) return res.status(400).json({ error: "Brak wybranych ofert." });
+
+  const updated = [];
+  const failed = [];
+
+  for (const id of ids) {
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      const current = await client.query("SELECT status FROM offers WHERE id=$1 FOR UPDATE", [id]);
+      if (!current.rows[0]) {
+        await client.query("ROLLBACK");
+        failed.push({ id, error: "Oferta nie znaleziona" });
+        continue;
+      }
+
+      const offer = await client.query(
+        "UPDATE offers SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *",
+        [status, id]
+      );
+
+      const savedOffer = offer.rows[0];
+      await applyLinkedOrderWorkflow(client, savedOffer, req.user.id);
+      await client.query("COMMIT");
+
+      const delivery = shouldPublishOffer(current.rows[0].status, savedOffer.status)
+        ? await publishOfferToClient(savedOffer, req)
+        : null;
+
+      if (["ZAAKCEPTOWANA", "ODRZUCONA", "WYSŁANA"].includes(status)) {
+        const title = status === "ZAAKCEPTOWANA" ? "Oferta zaakceptowana" : status === "ODRZUCONA" ? "Oferta odrzucona" : "Oferta wysłana";
+        const message = `${savedOffer.client_company_name || "Klient"}: ${savedOffer.offer_number || "oferta #" + savedOffer.id}`;
+        await notifyAdmins({
+          category: "OFFERS",
+          type: status === "ZAAKCEPTOWANA" ? "OFFER_ACCEPTED" : status === "ODRZUCONA" ? "OFFER_REJECTED" : "OFFER_SENT",
+          priority: status === "ODRZUCONA" ? "WARNING" : "SUCCESS",
+          title,
+          message,
+          entityType: "offer",
+          entityId: savedOffer.id,
+          link: `/offers/${savedOffer.id}`
+        });
+      }
+      await writeAuditLog({
+        category: "OFFER",
+        action: "OFFER_STATUS_CHANGED",
+        userId: req.user.id,
+        entityType: "offer",
+        entityId: savedOffer.id,
+        message: `Zmieniono status oferty ${savedOffer.offer_number || `#${savedOffer.id}`}`,
+        metadata: { previousStatus: current.rows[0].status, status, bulk: true }
+      }).catch((error) => console.error("Global audit log failed:", error));
+
+      updated.push({ ...savedOffer, delivery });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      failed.push({ id, error: "Wewnętrzny błąd serwera." });
+    } finally {
+      client.release();
+    }
+  }
+
+  res.json({ updated, failed });
+});
+
 router.post("/:id/send-email", auth, requireAdmin, async (req, res) => {
   if (normalizeRole(req.user.role) !== "ADMIN") {
     return res.status(403).json({ error: "Brak uprawnień do wysyłki oferty." });

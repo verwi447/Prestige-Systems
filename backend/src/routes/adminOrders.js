@@ -266,4 +266,69 @@ router.patch("/:id/status", async (req, res) => {
   }
 });
 
+router.patch("/bulk-status", async (req, res) => {
+  const status = String(req.body.status || "").toUpperCase();
+  if (!ORDER_STATUSES.has(status)) return res.status(400).json({ error: "Nieprawidłowy status zamówienia." });
+  const ids = Array.isArray(req.body.ids) ? [...new Set(req.body.ids.map(Number).filter(Number.isInteger))] : [];
+  if (!ids.length) return res.status(400).json({ error: "Brak wybranych zamówień." });
+
+  const updated = [];
+  const failed = [];
+
+  for (const id of ids) {
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      const current = await client.query(
+        `SELECT t.id, t.ticket_number, t.status, t.customer_id, u.id AS customer_user_id
+         FROM tickets t
+         LEFT JOIN customers c ON c.id=t.customer_id
+         LEFT JOIN users u ON u.id=c.user_id
+         WHERE t.id=$1 AND t.type='ORDER' FOR UPDATE OF t`,
+        [id]
+      );
+      if (!current.rows[0]) {
+        await client.query("ROLLBACK");
+        failed.push({ id, error: "Zamówienie nie istnieje." });
+        continue;
+      }
+
+      const result = await client.query(
+        `UPDATE tickets SET status=$1, updated_at=CURRENT_TIMESTAMP,
+                closed_at=CASE WHEN $1 IN ('COMPLETED','CANCELLED') THEN CURRENT_TIMESTAMP ELSE NULL END
+         WHERE id=$2 RETURNING *`,
+        [status, id]
+      );
+      await client.query(
+        `INSERT INTO ticket_history (ticket_id, user_id, action, old_value, new_value, metadata)
+         VALUES ($1,$2,'ORDER_STATUS_CHANGED',$3,$4,'{}'::jsonb)`,
+        [id, req.currentUser.id, current.rows[0].status, status]
+      );
+      await client.query("COMMIT");
+
+      if (current.rows[0].customer_user_id) {
+        await createNotification({
+          userId: current.rows[0].customer_user_id,
+          category: "TICKETS",
+          type: "ORDER_STATUS_CHANGED",
+          priority: status === "CANCELLED" ? "WARNING" : status === "COMPLETED" ? "SUCCESS" : "INFO",
+          title: "Zmiana statusu zamówienia",
+          message: `${current.rows[0].ticket_number}: ${status}`,
+          entityType: "ticket",
+          entityId: current.rows[0].id,
+          link: `/client/tickets/${current.rows[0].id}`
+        });
+      }
+      updated.push(result.rows[0]);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      failed.push({ id, error: "Nie udało się zmienić statusu zamówienia." });
+    } finally {
+      client.release();
+    }
+  }
+
+  res.json({ updated, failed });
+});
+
 export default router;

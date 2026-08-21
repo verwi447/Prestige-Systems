@@ -122,6 +122,9 @@ export default function AdminTicketsView() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkStatus, setBulkStatus] = useState("ACCEPTED");
+  const [bulkApplying, setBulkApplying] = useState(false);
   const [selectedTicketDetails, setSelectedTicketDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -242,6 +245,51 @@ export default function AdminTicketsView() {
     setPage(1);
   }, [activeTab, filters, pageSize]);
 
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeTab, filters, page, pageSize, viewMode]);
+
+  const allPagedSelected = pagedTickets.length > 0 && pagedTickets.every((ticket) => selectedIds.has(ticket.id));
+  const somePagedSelected = pagedTickets.some((ticket) => selectedIds.has(ticket.id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allPagedSelected) {
+        pagedTickets.forEach((ticket) => next.delete(ticket.id));
+      } else {
+        pagedTickets.forEach((ticket) => next.add(ticket.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectOne = (id) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const applyBulkStatus = async () => {
+    if (!selectedIds.size) return;
+    setBulkApplying(true);
+    try {
+      const response = await ticketsAPI.bulkChangeStatus([...selectedIds], bulkStatus);
+      const { updated = [], failed = [] } = response.data || {};
+      if (updated.length) showFeedback({ message: `Zmieniono status ${updated.length} zgloszen(ia).`, type: "success" });
+      if (failed.length) showFeedback({ message: `Nie udalo sie zmienic statusu ${failed.length} zgloszen(ia).`, type: "error" });
+      setSelectedIds(new Set());
+      setRefreshKey((value) => value + 1);
+    } catch (error) {
+      showFeedback({ message: error.response?.data?.error || "Nie udalo sie wykonac akcji zbiorczej.", type: "error" });
+    } finally {
+      setBulkApplying(false);
+    }
+  };
+
   const clearFilters = () => setFilters({ query: "", status: "all", priority: "all", company: "all", site: "all", assignee: "all", dateFrom: "", dateTo: "" });
   const activeFiltersCount = Object.entries(filters).filter(([key, value]) => key === "query" ? Boolean(value.trim()) : value !== "all" && value !== "").length;
 
@@ -358,6 +406,19 @@ export default function AdminTicketsView() {
             )}
           </div>
 
+          {selectedIds.size > 0 && (
+            <div className="bulk-actions-bar">
+              <span className="bulk-actions-count">Wybrano {selectedIds.size} zgłoszeń</span>
+              <select value={bulkStatus} onChange={(event) => setBulkStatus(event.target.value)} disabled={bulkApplying}>
+                {Object.entries(statusFilterLabels).filter(([value]) => value !== "all").map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+              <button type="button" className="bulk-actions-apply" onClick={applyBulkStatus} disabled={bulkApplying}>
+                {bulkApplying ? "Zapisywanie..." : "Zmień status"}
+              </button>
+              <button type="button" className="bulk-actions-clear" onClick={() => setSelectedIds(new Set())} disabled={bulkApplying}>Anuluj</button>
+            </div>
+          )}
+
           {loading ? (
             <div className="admin-ticket-state"><RefreshCcw size={28} /><h3>Ładowanie zgłoszeń...</h3></div>
           ) : error ? (
@@ -368,7 +429,7 @@ export default function AdminTicketsView() {
             <>
               <div className="admin-ticket-table-scroll">
                 <table className="admin-ticket-table">
-                  <thead><tr><th>Numer</th><th>Temat</th><th>Klient / Firma</th><th>Obiekt</th><th>Priorytet</th><th>Status</th><th>Przypisany</th><th>Ostatnia aktywność</th></tr></thead>
+                  <thead><tr><th className="admin-ticket-checkbox-col"><input type="checkbox" checked={allPagedSelected} ref={(el) => { if (el) el.indeterminate = !allPagedSelected && somePagedSelected; }} onChange={toggleSelectAll} aria-label="Zaznacz wszystkie" /></th><th>Numer</th><th>Temat</th><th>Klient / Firma</th><th>Obiekt</th><th>Priorytet</th><th>Status</th><th>Przypisany</th><th>Ostatnia aktywność</th></tr></thead>
                   <tbody>
                     {pagedTickets.map((ticket) => {
                       return (
@@ -379,6 +440,7 @@ export default function AdminTicketsView() {
                           onDoubleClick={() => navigate(`/tickets/${ticket.id}`)}
                           title="Kliknij, aby otworzyć podgląd. Kliknij dwukrotnie, aby otworzyć szczegóły."
                         >
+                          <td className="admin-ticket-checkbox-col" onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={selectedIds.has(ticket.id)} onChange={() => toggleSelectOne(ticket.id)} aria-label={`Zaznacz zgłoszenie ${ticket.number}`} /></td>
                           <td className="admin-ticket-number-cell"><strong>{ticket.number}</strong><small>{formatDateParts(ticket.createdAt).date} {formatDateParts(ticket.createdAt).time}</small></td>
                           <td className="admin-ticket-title">{ticket.title}</td>
                           <td className="admin-ticket-company-cell">{ticket.companyName}</td>
