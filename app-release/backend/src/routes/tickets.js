@@ -242,7 +242,7 @@ async function getTicketPayload(ticketId, user) {
     createdAt: comment.created_at,
     authorId: comment.author_id,
     authorRole: comment.is_ai_generated ? "AI" : comment.author_role,
-    authorName: comment.is_ai_generated ? "Asystent AI" : authorName(comment)
+    authorName: comment.is_ai_generated ? "Prestige Systems" : authorName(comment)
   }));
 
   const normalizedAttachments = attachments.rows.map((file) => ({
