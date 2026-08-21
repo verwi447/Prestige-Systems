@@ -207,7 +207,8 @@ async function getTicketPayload(ticketId, user) {
       [ticketId]
     ),
     db.query(
-      `SELECT tc.id, tc.content, COALESCE(tc.is_internal, FALSE) AS is_internal, tc.created_at,
+      `SELECT tc.id, tc.content, COALESCE(tc.is_internal, FALSE) AS is_internal,
+              COALESCE(tc.is_ai_generated, FALSE) AS is_ai_generated, tc.created_at,
               u.id AS author_id, u.role AS author_role, u.first_name, u.last_name, u.email
        FROM ticket_comments tc
        LEFT JOIN users u ON u.id=tc.author_id
@@ -237,10 +238,11 @@ async function getTicketPayload(ticketId, user) {
     content: comment.content,
     body: comment.content,
     isInternal: Boolean(comment.is_internal),
+    isAiGenerated: Boolean(comment.is_ai_generated),
     createdAt: comment.created_at,
     authorId: comment.author_id,
-    authorRole: comment.author_role,
-    authorName: authorName(comment)
+    authorRole: comment.is_ai_generated ? "AI" : comment.author_role,
+    authorName: comment.is_ai_generated ? "Asystent AI" : authorName(comment)
   }));
 
   const normalizedAttachments = attachments.rows.map((file) => ({

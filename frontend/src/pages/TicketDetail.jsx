@@ -24,6 +24,7 @@ import {
   Plus,
   Search,
   Send,
+  Sparkles,
   Trash2,
   UserCog,
   Users,
@@ -266,6 +267,13 @@ export default function TicketDetail() {
     window.setTimeout(() => commentRef.current?.focus(), 80);
   };
 
+  const prefillAiSuggestion = (comment) => {
+    setActiveTab("comments");
+    setInternalNote(false);
+    setCommentText(comment.content || comment.body || "");
+    window.setTimeout(() => commentRef.current?.focus(), 80);
+  };
+
   const createOfferDraft = async () => {
     if (!isAdmin) return;
     await runAction(() => ticketsAPI.createOfferDraft(id), "Przygotowano szkic oferty.");
@@ -503,15 +511,24 @@ export default function TicketDetail() {
 
                 <div className="ticket-admin-comments">
                   {comments.map((comment) => (
-                    <article key={comment.id} className={`ticket-admin-comment ${comment.isInternal ? "internal" : ""}`}>
-                      <Avatar name={comment.authorName} tone={comment.authorRole?.startsWith("CLIENT") ? "client" : "admin"} online={!comment.authorRole?.startsWith("CLIENT")} />
+                    <article key={comment.id} className={`ticket-admin-comment ${comment.isInternal ? "internal" : ""} ${comment.isAiGenerated ? "ai" : ""}`}>
+                      {comment.isAiGenerated
+                        ? <span className="ticket-admin-ai-avatar" aria-hidden="true"><Sparkles size={18} /></span>
+                        : <Avatar name={comment.authorName} tone={comment.authorRole?.startsWith("CLIENT") ? "client" : "admin"} online={!comment.authorRole?.startsWith("CLIENT")} />}
                       <div>
                         <header>
                           <strong>{comment.authorName}</strong>
-                          <span className={comment.isInternal ? "note" : ""}>{comment.isInternal ? "Notatka wewnetrzna" : comment.authorRole?.startsWith("CLIENT") ? "Klient" : "Prestige Systems"}</span>
+                          <span className={comment.isAiGenerated ? "ai" : comment.isInternal ? "note" : ""}>
+                            {comment.isAiGenerated ? "Sugestia AI" : comment.isInternal ? "Notatka wewnetrzna" : comment.authorRole?.startsWith("CLIENT") ? "Klient" : "Prestige Systems"}
+                          </span>
                           <time>• {formatDate(comment.createdAt || comment.created_at)}</time>
                         </header>
                         <p>{comment.content || comment.body}</p>
+                        {isAdmin && comment.isAiGenerated && (
+                          <button type="button" className="ticket-admin-ai-send" onClick={() => prefillAiSuggestion(comment)}>
+                            <Send size={14} /> Wyslij do klienta
+                          </button>
+                        )}
                         <CommentAttachments
                           files={attachments.filter((file) => commentAttachmentId(file) === Number(comment.id))}
                           onDelete={(file) => runAction(() => ticketsAPI.deleteAttachment(id, file.id), "Usunieto zalacznik.")}

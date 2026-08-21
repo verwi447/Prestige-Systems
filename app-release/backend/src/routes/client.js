@@ -10,6 +10,7 @@ import { auth } from "../middleware/auth.js";
 import { canAccessSite, getEffectivePermissions, loadCurrentUser, requireAnyPermission, requireClient, requireClientOwner, requirePermission } from "../middleware/access.js";
 import { notifyAdmins } from "../utils/notifications.js";
 import { markOfferLifecycle, synchronizeLinkedOrderStatus } from "../services/orderOfferWorkflow.js";
+import { analyzeTicketWithAi } from "../services/aiAssistant.js";
 import { writeAuditLog } from "../utils/auditLog.js";
 
 const router = express.Router();
@@ -1990,15 +1991,33 @@ router.post("/tickets/:id/attachments", requireAnyPermission("CREATE_TICKET", "C
   const saved = [];
   for (const file of req.files || []) {
     const result = await db.query(
-      `INSERT INTO ticket_photos (ticket_id, file_name, file_path, file_size, uploaded_by)
-       VALUES ($1,$2,$3,$4,$5)
+      `INSERT INTO ticket_photos (ticket_id, file_name, original_name, file_path, file_size, mime_type, uploaded_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
        RETURNING id, file_name, file_size, uploaded_at`,
-      [ticket.rows[0].id, file.filename, `/uploads/tickets/${file.filename}`, file.size, req.currentUser.id]
+      [ticket.rows[0].id, file.filename, file.originalname, `/uploads/tickets/${file.filename}`, file.size, file.mimetype, req.currentUser.id]
     );
     saved.push({ ...result.rows[0], url: `/api/files/ticket-attachments/${result.rows[0].id}` });
   }
 
   res.status(201).json(saved);
+});
+
+router.post("/tickets/:id/ai-analysis", requirePermission("CREATE_TICKET"), async (req, res) => {
+  const companyId = companyIdFromUser(req);
+  const ticket = await db.query(
+    `SELECT t.id
+     FROM tickets t
+     JOIN customers c ON c.id=t.customer_id
+     WHERE t.id=$1 AND c.company_id=$2`,
+    [req.params.id, companyId]
+  );
+
+  if (!ticket.rows[0]) {
+    return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+  }
+
+  analyzeTicketWithAi(ticket.rows[0].id);
+  res.status(202).json({ queued: true });
 });
 
 router.post("/tickets/:id/comments", requirePermission("COMMENT_TICKET"), async (req, res) => {

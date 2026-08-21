@@ -65,6 +65,7 @@ export const client = {
       headers: { "Content-Type": "multipart/form-data" }
     });
   },
+  requestTicketAiAnalysis: (id) => api.post(`/api/client/tickets/${id}/ai-analysis`, null, { skipGlobalFeedback: true }),
   catalog: () => api.get("/api/client/catalog"),
   sites: () => api.get("/api/client/sites"),
   employees: () => api.get("/api/client/employees")

@@ -12,4 +12,11 @@ export const ADD_PASSWORD_CHANGED_AT_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_PASSWORD_CHANGED_AT_MIGRATION.id;
+export const ADD_AI_TICKET_COMMENT_MIGRATION = Object.freeze({
+  id: "2026.08.21.001",
+  checksum: "add-ai-ticket-comment-v1",
+  description: "Dodaje oznaczenie komentarzy zgloszen wygenerowanych przez asystenta AI",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_AI_TICKET_COMMENT_MIGRATION.id;

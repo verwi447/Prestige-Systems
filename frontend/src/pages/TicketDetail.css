@@ -698,6 +698,49 @@
   padding: 16px 10px;
 }
 
+.ticket-admin-comment.ai {
+  background: #f5f0ff;
+  border: 1px solid #d9c8ff;
+  border-radius: 6px;
+  margin: 12px -10px;
+  padding: 16px 10px;
+}
+
+.ticket-admin-ai-avatar {
+  align-items: center;
+  background: #7c3aed;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.ticket-admin-comment header span.ai {
+  background: #ece3ff;
+  color: #7c3aed;
+}
+
+.ticket-admin-ai-send {
+  align-items: center;
+  background: #7c3aed;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 7px 12px;
+}
+
+.ticket-admin-ai-send:hover {
+  background: #6d28d9;
+}
+
 .ticket-admin-comment header {
   align-items: center;
   display: flex;
@@ -1602,6 +1645,16 @@ html[data-theme="dark"] .ticket-admin-comment {
 html[data-theme="dark"] .ticket-admin-comment.internal {
   background: #2a2109;
   border-color: #6b4d16;
+}
+
+html[data-theme="dark"] .ticket-admin-comment.ai {
+  background: #221a3a;
+  border-color: #5b3fae;
+}
+
+html[data-theme="dark"] .ticket-admin-comment header span.ai {
+  background: #3a2c66;
+  color: #c7b3ff;
 }
 
 html[data-theme="dark"] .ticket-admin-comment header strong {

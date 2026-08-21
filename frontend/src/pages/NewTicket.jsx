@@ -288,6 +288,9 @@ export default function NewTicket({ mode = "ticket" }) {
       if (files.length && created.data?.id) {
         await clientAPI.uploadTicketAttachments(created.data.id, files);
       }
+      if (!isOrder && created.data?.id) {
+        clientAPI.requestTicketAiAnalysis(created.data.id).catch(() => {});
+      }
       window.dispatchEvent(new CustomEvent("app-toast", { detail: { message: isOrder ? "Zamowienie zostalo utworzone." : "Zgloszenie zostalo utworzone." } }));
       navigate(orderFlow ? "/client/orders" : "/client/tickets");
     } catch (err) {
