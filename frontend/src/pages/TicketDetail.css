@@ -141,6 +141,24 @@
   color: #647084;
 }
 
+.ticket-admin-badge.ai.ACTIVE {
+  background: #f5f0ff;
+  border: 1px solid #ddc9ff;
+  color: #6d28d9;
+}
+
+.ticket-admin-badge.ai.ESCALATED {
+  background: #fff0f0;
+  border: 1px solid #ffc9c9;
+  color: #b42318;
+}
+
+.ticket-admin-badge.ai.RESOLVED {
+  background: #ecfdf3;
+  border: 1px solid #b8ebcc;
+  color: #07934f;
+}
+
 .ticket-admin-button,
 .ticket-admin-icon-button,
 .ticket-admin-inline-actions button,
@@ -1875,6 +1893,24 @@ html[data-theme="dark"] .ticket-admin-side-card select.priority-select.CRITICAL 
   background: #3a1614;
   border-color: #6b2622;
   color: #ff8080;
+}
+
+html[data-theme="dark"] .ticket-admin-badge.ai.ACTIVE {
+  background: #241a3d;
+  border-color: #4a2f8a;
+  color: #c7a8ff;
+}
+
+html[data-theme="dark"] .ticket-admin-badge.ai.ESCALATED {
+  background: #3a1614;
+  border-color: #6b2622;
+  color: #ff8080;
+}
+
+html[data-theme="dark"] .ticket-admin-badge.ai.RESOLVED {
+  background: #0f2e1e;
+  border-color: #1c5137;
+  color: #5fd095;
 }
 
 html[data-theme="dark"] .ticket-admin-badge.status.ACCEPTED {

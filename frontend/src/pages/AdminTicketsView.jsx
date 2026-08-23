@@ -442,7 +442,10 @@ export default function AdminTicketsView() {
                         >
                           <td className="admin-ticket-checkbox-col" onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={selectedIds.has(ticket.id)} onChange={() => toggleSelectOne(ticket.id)} aria-label={`Zaznacz zgłoszenie ${ticket.number}`} /></td>
                           <td className="admin-ticket-number-cell"><strong>{ticket.number}</strong><small>{formatDateParts(ticket.createdAt).date} {formatDateParts(ticket.createdAt).time}</small></td>
-                          <td className="admin-ticket-title">{ticket.title}</td>
+                          <td className="admin-ticket-title">
+                            <div>{ticket.title}</div>
+                            {ticket.ai_conversation_status && <TicketBadge kind="ai" value={ticket.ai_conversation_status} />}
+                          </td>
                           <td className="admin-ticket-company-cell">{ticket.companyName}</td>
                           <td className="admin-ticket-site-cell">{ticket.siteName}</td>
                           <td><TicketBadge kind="priority" value={ticket.priority} /></td>
@@ -519,6 +522,7 @@ function AdminTicketKanban({ tickets, onSelect, onOpen, selectedId }) {
                   <strong>{ticket.number}</strong>
                   <span>{ticket.title}</span>
                   <small>{ticket.companyName} · {ticket.siteName}</small>
+                  {ticket.ai_conversation_status && <TicketBadge kind="ai" value={ticket.ai_conversation_status} />}
                   <span className="admin-kanban-card-meta"><TicketBadge kind="priority" value={ticket.priority || "NORMAL"} /><small>{minutesAgo(ticket.lastActivityAt)}</small></span>
                 </button>
               );
@@ -547,7 +551,7 @@ function AdminTicketPreview({ ticket, details, detailsLoading, admins = [], onCl
         <div>
           <span className="admin-ticket-preview-eyebrow">Szybki podglad</span>
           <h2>{ticket.number}</h2>
-          <span className="admin-ticket-preview-badges"><TicketBadge kind="status" value={ticket.status} /><TicketBadge kind="priority" value={ticket.priority} /></span>
+          <span className="admin-ticket-preview-badges"><TicketBadge kind="status" value={ticket.status} /><TicketBadge kind="priority" value={ticket.priority} />{ticket.ai_conversation_status && <TicketBadge kind="ai" value={ticket.ai_conversation_status} />}</span>
         </div>
         <button type="button" onClick={onClose} aria-label="Zamknij podglad" title="Zamknij podglad">×</button>
       </header>

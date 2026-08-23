@@ -297,8 +297,17 @@ async function getTicketPayload(ticketId, user) {
       }))
     : fallbackHistory.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
+  const aiConversationStatus = normalizedHistory.some((entry) => entry.action === "AI_ESCALATED_TO_ADMIN")
+    ? "ESCALATED"
+    : normalizedHistory.some((entry) => entry.action === "AI_CONVERSATION_RESOLVED")
+      ? "RESOLVED"
+      : normalizedComments.some((comment) => comment.isAiGenerated && !comment.isInternal)
+        ? "ACTIVE"
+        : null;
+
   return {
     id: row.id,
+    aiConversationStatus,
     number: row.ticket_number,
     ticket_number: row.ticket_number,
     type: normalizeTicketType(row.type),
@@ -376,7 +385,9 @@ function historyLabel(entry) {
     TICKET_ATTACHMENT_ADDED: "Dodano zalacznik",
     TICKET_ATTACHMENT_DELETED: "Usunieto zalacznik",
     TICKET_CLOSED: "Zamknieto zgloszenie",
-    TICKET_OFFER_CREATED: "Utworzono szkic oferty"
+    TICKET_OFFER_CREATED: "Utworzono szkic oferty",
+    AI_ESCALATED_TO_ADMIN: "Asystent AI przekazal zgloszenie do administratora",
+    AI_CONVERSATION_RESOLVED: "Asystent AI zakonczyl rozmowe - problem rozwiazany"
   };
   return labels[entry.action] || entry.action;
 }
@@ -463,7 +474,13 @@ router.get("/", auth, requireAdmin, async (req, res) => {
               creator.first_name AS created_by_first_name, creator.last_name AS created_by_last_name,
               assignee.first_name AS assigned_first_name, assignee.last_name AS assigned_last_name, assignee.email AS assigned_email,
               (SELECT COUNT(*)::int FROM ticket_comments tc WHERE tc.ticket_id=t.id) AS comment_count,
-              (SELECT COUNT(*)::int FROM ticket_photos tp WHERE tp.ticket_id=t.id) AS attachment_count
+              (SELECT COUNT(*)::int FROM ticket_photos tp WHERE tp.ticket_id=t.id) AS attachment_count,
+              (CASE
+                WHEN EXISTS (SELECT 1 FROM ticket_history th WHERE th.ticket_id=t.id AND th.action='AI_ESCALATED_TO_ADMIN') THEN 'ESCALATED'
+                WHEN EXISTS (SELECT 1 FROM ticket_history th WHERE th.ticket_id=t.id AND th.action='AI_CONVERSATION_RESOLVED') THEN 'RESOLVED'
+                WHEN EXISTS (SELECT 1 FROM ticket_comments tc WHERE tc.ticket_id=t.id AND tc.is_ai_generated=TRUE AND tc.is_internal=FALSE) THEN 'ACTIVE'
+                ELSE NULL
+              END) AS ai_conversation_status
        FROM tickets t
        LEFT JOIN objects o ON t.object_id=o.id
        LEFT JOIN customers c ON c.id=t.customer_id

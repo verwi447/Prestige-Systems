@@ -33,6 +33,7 @@ import {
 import { client as clientAPI, protectedFiles, tickets as ticketsAPI } from "../api";
 import BarrierIcon from "../components/BarrierIcon";
 import BarrierCheckbox from "../components/BarrierCheckbox";
+import { aiConversationLabels } from "../lib/ticketFormatting.jsx";
 import "./TicketDetail.css";
 
 const statusOptions = [
@@ -357,6 +358,7 @@ export default function TicketDetail() {
             <h1>{ticket.number || ticket.ticket_number}</h1>
             <span className={`ticket-admin-badge priority ${priority}`}>{priorityLabels[priority] || priority}</span>
             {!isCommentsTab && <span className={`ticket-admin-badge status ${status}`}>{statusLabels[status] || status}</span>}
+            {ticket.aiConversationStatus && <span className={`ticket-admin-badge ai ${ticket.aiConversationStatus}`}>{aiConversationLabels[ticket.aiConversationStatus]}</span>}
           </div>
           <h2>{ticket.title || ticket.subject}</h2>
           <p>{companyName} <span>•</span> {siteName}</p>

@@ -22,6 +22,12 @@ export const priorityLabels = {
   CRITICAL: "Krytyczny"
 };
 
+export const aiConversationLabels = {
+  ACTIVE: "AI rozmawia z klientem",
+  ESCALATED: "Wymaga Twojej uwagi",
+  RESOLVED: "AI rozwiazalo"
+};
+
 export const normalizeLegacyStatus = (status) => {
   if (statusLabels[status]) return status;
   const value = String(status || "").toUpperCase();
@@ -52,5 +58,9 @@ export const formatDateParts = (value) => {
 };
 
 export function TicketBadge({ value, kind }) {
+  if (kind === "ai") {
+    if (!value || !aiConversationLabels[value]) return null;
+    return <span className={`ticket-badge ai-${value}`}>{aiConversationLabels[value]}</span>;
+  }
   return <span className={`ticket-badge ${kind}-${value}`}>{kind === "status" ? statusLabels[value] || value : priorityLabels[value] || value}</span>;
 }

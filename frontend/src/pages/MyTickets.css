@@ -314,6 +314,9 @@
 .priority-NORMAL { color: #40546f; background: #eef2f6; }
 .priority-HIGH { color: #ea580c; background: #fff0e4; }
 .priority-CRITICAL { color: #d92d20; background: #ffe5e2; }
+.ai-ACTIVE { color: #6d28d9; background: #f0e8ff; }
+.ai-ESCALATED { color: #b42318; background: #fee4e2; }
+.ai-RESOLVED { color: #0a8f50; background: #e3f8ed; }
 
 .tickets-actions-cell {
   position: relative;
@@ -895,6 +898,12 @@
   max-width: 230px;
   color: #071a35;
   font-weight: 700;
+}
+
+.admin-ticket-title .ticket-badge {
+  margin-top: 4px;
+  font-weight: 700;
+  white-space: normal;
 }
 
 .admin-assignee {
