@@ -56,18 +56,22 @@ export default function Companies() {
     );
   }, [companyList, query]);
 
-  const kanbanColumns = useMemo(() => ([
-    {
-      id: "active",
-      label: "Aktywne",
-      companies: filteredCompanies.filter((company) => company.is_active !== false)
-    },
-    {
-      id: "inactive",
-      label: "Nieaktywne",
-      companies: filteredCompanies.filter((company) => company.is_active === false)
-    }
-  ]), [filteredCompanies]);
+  const kanbanColumns = useMemo(() => {
+    const columns = [
+      {
+        id: "active",
+        label: "Aktywne",
+        companies: filteredCompanies.filter((company) => company.is_active !== false)
+      },
+      {
+        id: "inactive",
+        label: "Nieaktywne",
+        companies: filteredCompanies.filter((company) => company.is_active === false)
+      }
+    ];
+    const hasInactiveCompanies = companyList.some((company) => company.is_active === false);
+    return hasInactiveCompanies ? columns : columns.filter((column) => column.id !== "inactive");
+  }, [filteredCompanies, companyList]);
 
   const changeViewMode = (nextViewMode) => {
     setViewMode(nextViewMode);
