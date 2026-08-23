@@ -209,34 +209,7 @@ export default function AiAssistantSettings() {
 
       {error && <div className="ai-settings-message error" role="alert">{error}</div>}
 
-      <section className="ai-settings-panel">
-        <header className="ai-settings-panel-header">
-          <span><Sparkles aria-hidden="true" /></span>
-          <div>
-            <h2>Automatyczna wysylka sugestii</h2>
-            <p>Dotyczy zgloszen typu awaria systemu i awaria sprzetu.</p>
-          </div>
-        </header>
-
-        <div className="ai-settings-panel-body">
-          <BarrierCheckbox
-            checked={autoSendEnabled}
-            onChange={setAutoSendEnabled}
-            label="Bot wysyla sugestie AI automatycznie"
-            description="Wlaczone: sugestia trafia od razu jako publiczna wiadomosc widoczna dla klienta. Wylaczone (domyslnie): sugestia czeka jako notatka wewnetrzna, admin przegladajac zgloszenie moze ja poprawic i wyslac recznie."
-          />
-        </div>
-
-        <footer className="ai-settings-panel-footer">
-          <span>Zmiana dotyczy kolejnych zgloszen, nie wplywa na juz wyslane sugestie.</span>
-          <button type="button" className="ai-settings-save" onClick={saveSettings} disabled={saving || !hasChanges}>
-            <Save aria-hidden="true" />
-            {saving ? "Zapisywanie..." : "Zapisz"}
-          </button>
-        </footer>
-      </section>
-
-      <section className="ai-settings-panel">
+      <section className="ai-settings-panel ai-settings-panel-main">
         <header className="ai-settings-panel-header">
           <span><BookOpen aria-hidden="true" /></span>
           <div>
@@ -362,6 +335,22 @@ export default function AiAssistantSettings() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="ai-settings-panel ai-settings-panel-compact">
+        <div className="ai-settings-panel-compact-icon"><Sparkles aria-hidden="true" /></div>
+        <div className="ai-settings-panel-compact-body">
+          <BarrierCheckbox
+            checked={autoSendEnabled}
+            onChange={setAutoSendEnabled}
+            label="Automatyczna wysylka sugestii"
+            description="Dotyczy zgloszen typu awaria systemu i awaria sprzetu. Wlaczone: sugestia trafia od razu jako publiczna wiadomosc widoczna dla klienta. Wylaczone (domyslnie): sugestia czeka jako notatka wewnetrzna do recznej wysylki."
+          />
+        </div>
+        <button type="button" className="ai-settings-save ai-settings-save-compact" onClick={saveSettings} disabled={saving || !hasChanges}>
+          <Save aria-hidden="true" />
+          {saving ? "Zapisywanie..." : "Zapisz"}
+        </button>
       </section>
 
       <ConfirmationModal
