@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../src/db.js";
+import { CURRENT_SCHEMA_VERSION } from "../src/migrationPlan.js";
 import authRoutes from "../src/routes/auth.js";
 import adminOrderRoutes from "../src/routes/adminOrders.js";
 import auditRoutes from "../src/routes/audit.js";
@@ -120,7 +121,7 @@ test("API enforces authentication, roles, client scope and protected files", asy
     const { response, body } = await request("/api/system/status", adminToken);
     assert.equal(response.status, 200);
     assert.equal(body.application.version, "1.0.1");
-    assert.equal(body.application.schemaVersion, "2026.08.05.001");
+    assert.equal(body.application.schemaVersion, CURRENT_SCHEMA_VERSION);
     assert.equal(body.migration.isCurrent, true);
     assert.equal(body.database.status, "ONLINE");
     assert.equal(Object.hasOwn(body.email, "smtpHost"), false);
