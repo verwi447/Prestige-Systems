@@ -213,9 +213,6 @@
   color: #526173;
 }
 
-.ai-knowledge-badge.HARDWARE_FAILURE { background: #fff1d7; color: #d97706; }
-.ai-knowledge-badge.SYSTEM_FAILURE { background: #e8f2ff; color: #1473e6; }
-
 .ai-knowledge-entry p {
   margin: 8px 0 0;
   color: #354a67;
@@ -351,16 +348,6 @@ html[data-theme="dark"] .ai-knowledge-entry header strong {
 html[data-theme="dark"] .ai-knowledge-badge {
   background: #1c3550;
   color: #68baff;
-}
-
-html[data-theme="dark"] .ai-knowledge-badge.HARDWARE_FAILURE {
-  background: #3a2a10;
-  color: #e0ac5c;
-}
-
-html[data-theme="dark"] .ai-knowledge-badge.SYSTEM_FAILURE {
-  background: #16324e;
-  color: #70baff;
 }
 
 html[data-theme="dark"] .ai-knowledge-entry p {

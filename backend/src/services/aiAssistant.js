@@ -53,13 +53,12 @@ async function fetchTicketImages(ticketId) {
   return images;
 }
 
-async function fetchKnowledgeEntries(ticket) {
+async function fetchKnowledgeEntries() {
   const result = await db.query(
-    `SELECT title, content FROM ai_knowledge_base
-     WHERE category='GENERAL' OR category=$1
+    `SELECT title, content, category FROM ai_knowledge_base
      ORDER BY updated_at DESC
-     LIMIT $2`,
-    [ticket.type, MAX_KNOWLEDGE_ENTRIES]
+     LIMIT $1`,
+    [MAX_KNOWLEDGE_ENTRIES]
   );
   return result.rows;
 }
@@ -85,7 +84,7 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages) {
     : "awaria systemu / problem z dzialaniem uslugi";
 
   const knowledge = knowledgeEntries
-    .map((row, index) => `Wpis ${index + 1} - ${row.title}:\n${row.content}`)
+    .map((row, index) => `Wpis ${index + 1} - [${row.category}] ${row.title}:\n${row.content}`)
     .join("\n\n");
 
   const examples = similarTickets
@@ -99,7 +98,7 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages) {
     "Jesli opis sugeruje typowy przypadek (np. pojazd nie wjechal na petle indukcyjna, brak zasilania, awaria czujnika, zablokowany wjazd), zaproponuj najbardziej prawdopodobna przyczyne.",
     "Odpowiadaj rzeczowo, 2-5 zdan, bez wstepow typu 'Oczywiscie' czy 'Na podstawie zdjecia widze'. Pisz od razu tresc gotowa do przejrzenia przez admina.",
     "To jest TYLKO sugestia dla admina - nie jest jeszcze widoczna dla klienta, wiec nie pisz 'Szanowny Kliencie' ani formalnych powitan.",
-    knowledge ? `Ponizej znajduje sie WEWNETRZNA BAZA WIEDZY firmy o sprzecie i procedurach napraw, wpisana recznie przez administratorow. Traktuj ja jako NAJBARDZIEJ WIARYGODNE zrodlo - jesli cos w niej pasuje do zgloszenia, oprzyj diagnoze na niej zamiast na ogolnych domyslach:\n\n${knowledge}` : "",
+    knowledge ? `Ponizej znajduje sie WEWNETRZNA BAZA WIEDZY firmy o konkretnych urzadzeniach (np. terminal wjazdowy, terminal wyjazdowy, terminal wyjazdowy z terminalem platniczym, szlaban, kamera) i procedurach napraw, wpisana recznie przez administratorow. Kazdy wpis ma etykiete urzadzenia w nawiasach kwadratowych. Traktuj pasujace wpisy jako NAJBARDZIEJ WIARYGODNE zrodlo - jesli urzadzenie lub objaw ze zgloszenia pasuje do ktoregos wpisu, oprzyj diagnoze na nim zamiast na ogolnych domyslach. Wpisy dla innych urzadzen ignoruj:\n\n${knowledge}` : "",
     examples ? `Oto podobne wczesniej rozwiazane zgloszenia - trzymaj sie podobnego stylu i sposobu rozwiazywania, jesli pasuja do obecnego przypadku:\n\n${examples}` : "",
     `Typ zgloszenia: ${typeLabel}`,
     `Temat: ${ticket.subject}`,
@@ -201,7 +200,7 @@ export async function analyzeTicketWithAi(ticketId) {
     const [images, similarTickets, knowledgeEntries] = await Promise.all([
       fetchTicketImages(ticketId),
       fetchSimilarResolvedTickets(ticket),
-      fetchKnowledgeEntries(ticket)
+      fetchKnowledgeEntries()
     ]);
 
     const prompt = buildPrompt(ticket, knowledgeEntries, similarTickets, images.length > 0);

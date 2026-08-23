@@ -7,13 +7,16 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { getRequestErrorMessage, showFeedback, showSuccess } from "../lib/feedback";
 import "./AiAssistantSettings.css";
 
-const categoryLabels = {
-  GENERAL: "Ogólne",
-  HARDWARE_FAILURE: "Awaria sprzętu",
-  SYSTEM_FAILURE: "Awaria systemu"
-};
+const defaultCategorySuggestions = [
+  "Ogólne",
+  "Terminal wjazdowy",
+  "Terminal wyjazdowy",
+  "Terminal wyjazdowy z terminalem płatniczym",
+  "Szlaban",
+  "Kamera ANPR"
+];
 
-const emptyForm = { id: null, title: "", category: "GENERAL", content: "" };
+const emptyForm = { id: null, title: "", category: "Ogólne", content: "" };
 
 function formatDate(value) {
   if (!value) return "-";
@@ -92,7 +95,7 @@ export default function AiAssistantSettings() {
     }
     setFormSaving(true);
     try {
-      const payload = { title: form.title.trim(), category: form.category, content: form.content.trim() };
+      const payload = { title: form.title.trim(), category: form.category.trim() || "Ogólne", content: form.content.trim() };
       if (form.id) await aiAssistant.updateKnowledge(form.id, payload);
       else await aiAssistant.createKnowledge(payload);
       showSuccess(form.id ? "Wpis zostal zaktualizowany." : "Wpis zostal dodany do bazy wiedzy.");
@@ -126,6 +129,7 @@ export default function AiAssistantSettings() {
   }
 
   const hasChanges = autoSendEnabled !== Boolean(settings.auto_send_enabled);
+  const categorySuggestions = [...new Set([...defaultCategorySuggestions, ...knowledgeEntries.map((entry) => entry.category)])];
 
   return (
     <div className="page ai-settings-page">
@@ -187,10 +191,11 @@ export default function AiAssistantSettings() {
               <input type="text" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Np. Szlaban CAME Gard 4 - typowe usterki" maxLength={200} required />
             </label>
             <label>
-              <span>Kategoria</span>
-              <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
-                {Object.entries(categoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
+              <span>Kategoria (urzadzenie)</span>
+              <input type="text" list="ai-knowledge-categories" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Np. Terminal wjazdowy" maxLength={80} />
+              <datalist id="ai-knowledge-categories">
+                {categorySuggestions.map((value) => <option key={value} value={value} />)}
+              </datalist>
             </label>
             <label className="ai-knowledge-form-content">
               <span>Tresc</span>
@@ -213,7 +218,7 @@ export default function AiAssistantSettings() {
               <article className="ai-knowledge-entry" key={entry.id}>
                 <header>
                   <strong>{entry.title}</strong>
-                  <span className={`ai-knowledge-badge ${entry.category}`}>{categoryLabels[entry.category] || entry.category}</span>
+                  <span className="ai-knowledge-badge">{entry.category}</span>
                 </header>
                 <p>{entry.content}</p>
                 <footer>

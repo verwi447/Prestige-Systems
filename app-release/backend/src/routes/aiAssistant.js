@@ -43,7 +43,10 @@ router.put("/settings", async (req, res) => {
   }
 });
 
-const knowledgeCategories = new Set(["GENERAL", "HARDWARE_FAILURE", "SYSTEM_FAILURE"]);
+function normalizeCategory(value) {
+  const trimmed = String(value || "").trim().slice(0, 80);
+  return trimmed || "Ogólne";
+}
 
 router.get("/knowledge", async (_req, res) => {
   try {
@@ -71,7 +74,7 @@ router.get("/knowledge", async (_req, res) => {
 router.post("/knowledge", async (req, res) => {
   const title = String(req.body.title || "").trim();
   const content = String(req.body.content || "").trim();
-  const category = knowledgeCategories.has(req.body.category) ? req.body.category : "GENERAL";
+  const category = normalizeCategory(req.body.category);
 
   if (!title || !content) return res.status(400).json({ error: "Tytul i tresc sa wymagane." });
 
@@ -98,7 +101,7 @@ router.post("/knowledge", async (req, res) => {
 router.put("/knowledge/:id", async (req, res) => {
   const title = String(req.body.title || "").trim();
   const content = String(req.body.content || "").trim();
-  const category = knowledgeCategories.has(req.body.category) ? req.body.category : "GENERAL";
+  const category = normalizeCategory(req.body.category);
 
   if (!title || !content) return res.status(400).json({ error: "Tytul i tresc sa wymagane." });
 
