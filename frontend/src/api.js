@@ -127,7 +127,10 @@ export const aiAssistant = {
   getKnowledge: () => api.get("/api/ai-assistant/knowledge"),
   createKnowledge: (data) => api.post("/api/ai-assistant/knowledge", data),
   updateKnowledge: (id, data) => api.put(`/api/ai-assistant/knowledge/${id}`, data),
-  deleteKnowledge: (id) => api.delete(`/api/ai-assistant/knowledge/${id}`)
+  deleteKnowledge: (id) => api.delete(`/api/ai-assistant/knowledge/${id}`),
+  getEquipment: () => api.get("/api/ai-assistant/equipment"),
+  createEquipment: (data) => api.post("/api/ai-assistant/equipment", data),
+  updateEquipment: (id, data) => api.put(`/api/ai-assistant/equipment/${id}`, data)
 };
 
 export const auditLog = {

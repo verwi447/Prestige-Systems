@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Pencil, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
+import { BookOpen, Check, Pencil, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
 import { aiAssistant } from "../api";
 import AppState from "../components/AppState";
 import BarrierCheckbox from "../components/BarrierCheckbox";
@@ -7,16 +7,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { getRequestErrorMessage, showFeedback, showSuccess } from "../lib/feedback";
 import "./AiAssistantSettings.css";
 
-const defaultCategorySuggestions = [
-  "Ogólne",
-  "Terminal wjazdowy",
-  "Terminal wyjazdowy",
-  "Terminal wyjazdowy z terminalem płatniczym",
-  "Szlaban",
-  "Kamera ANPR"
-];
-
-const emptyForm = { id: null, title: "", category: "Ogólne", content: "" };
+const emptyForm = { id: null, title: "", category: "", content: "" };
 
 function formatDate(value) {
   if (!value) return "-";
@@ -37,6 +28,12 @@ export default function AiAssistantSettings() {
   const [formSaving, setFormSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+
+  const [equipment, setEquipment] = useState([]);
+  const [addingEquipment, setAddingEquipment] = useState(false);
+  const [newEquipmentName, setNewEquipmentName] = useState("");
+  const [editingEquipmentId, setEditingEquipmentId] = useState(null);
+  const [editingEquipmentName, setEditingEquipmentName] = useState("");
 
   const loadSettings = useCallback(async () => {
     setLoading(true);
@@ -64,10 +61,20 @@ export default function AiAssistantSettings() {
     }
   }, []);
 
+  const loadEquipment = useCallback(async () => {
+    try {
+      const response = await aiAssistant.getEquipment();
+      setEquipment(Array.isArray(response.data) ? response.data : []);
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie pobrac listy urzadzen."), type: "error" });
+    }
+  }, []);
+
   useEffect(() => {
     loadSettings();
     loadKnowledge();
-  }, [loadSettings, loadKnowledge]);
+    loadEquipment();
+  }, [loadSettings, loadKnowledge, loadEquipment]);
 
   const saveSettings = async () => {
     setSaving(true);
@@ -84,7 +91,9 @@ export default function AiAssistantSettings() {
     }
   };
 
-  const openNewEntryForm = () => setForm({ ...emptyForm, category: selectedCategory === "ALL" ? "Ogólne" : selectedCategory });
+  const defaultEquipmentName = () => (equipment.find((item) => item.isActive) || equipment[0])?.name || "";
+
+  const openNewEntryForm = () => setForm({ ...emptyForm, category: selectedCategory === "ALL" ? defaultEquipmentName() : selectedCategory });
   const openEditEntryForm = (entry) => setForm({ id: entry.id, title: entry.title, category: entry.category, content: entry.content });
   const closeForm = () => setForm(null);
 
@@ -96,7 +105,7 @@ export default function AiAssistantSettings() {
     }
     setFormSaving(true);
     try {
-      const payload = { title: form.title.trim(), category: form.category.trim() || "Ogólne", content: form.content.trim() };
+      const payload = { title: form.title.trim(), category: form.category || defaultEquipmentName(), content: form.content.trim() };
       if (form.id) await aiAssistant.updateKnowledge(form.id, payload);
       else await aiAssistant.createKnowledge(payload);
       showSuccess(form.id ? "Wpis zostal zaktualizowany." : "Wpis zostal dodany do bazy wiedzy.");
@@ -121,6 +130,58 @@ export default function AiAssistantSettings() {
     }
   };
 
+  const submitNewEquipment = async (event) => {
+    event.preventDefault();
+    const name = newEquipmentName.trim();
+    if (!name) return;
+    try {
+      await aiAssistant.createEquipment({ name });
+      showSuccess("Urzadzenie zostalo dodane.");
+      setNewEquipmentName("");
+      setAddingEquipment(false);
+      await loadEquipment();
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie dodac urzadzenia."), type: "error" });
+    }
+  };
+
+  const startEditEquipment = (item) => {
+    setEditingEquipmentId(item.id);
+    setEditingEquipmentName(item.name);
+  };
+
+  const cancelEditEquipment = () => {
+    setEditingEquipmentId(null);
+    setEditingEquipmentName("");
+  };
+
+  const submitEquipmentRename = async (event, item) => {
+    event.preventDefault();
+    const name = editingEquipmentName.trim();
+    if (!name || name === item.name) {
+      cancelEditEquipment();
+      return;
+    }
+    try {
+      await aiAssistant.updateEquipment(item.id, { name });
+      showSuccess("Nazwa urzadzenia zostala zaktualizowana.");
+      if (selectedCategory === item.name) setSelectedCategory(name);
+      cancelEditEquipment();
+      await Promise.all([loadEquipment(), loadKnowledge()]);
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie zapisac nazwy urzadzenia."), type: "error" });
+    }
+  };
+
+  const toggleEquipmentActive = async (item) => {
+    try {
+      await aiAssistant.updateEquipment(item.id, { isActive: !item.isActive });
+      await loadEquipment();
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie zmienic statusu urzadzenia."), type: "error" });
+    }
+  };
+
   if (loading) {
     return <div className="page ai-settings-page"><AppState variant="loading" title="Ladowanie ustawien" description="Pobieramy konfiguracje asystenta AI." /></div>;
   }
@@ -130,7 +191,6 @@ export default function AiAssistantSettings() {
   }
 
   const hasChanges = autoSendEnabled !== Boolean(settings.auto_send_enabled);
-  const categorySuggestions = [...new Set([...defaultCategorySuggestions, ...knowledgeEntries.map((entry) => entry.category)])];
   const categoryCounts = knowledgeEntries.reduce((counts, entry) => {
     counts[entry.category] = (counts[entry.category] || 0) + 1;
     return counts;
@@ -181,29 +241,67 @@ export default function AiAssistantSettings() {
           <span><BookOpen aria-hidden="true" /></span>
           <div>
             <h2>Baza wiedzy o sprzecie i naprawach</h2>
-            <p>Wpisy sa dolaczane do kazdej analizy AI jako najbardziej wiarygodne zrodlo wiedzy.</p>
+            <p>Wpisy sa dolaczane do kazdej analizy AI jako najbardziej wiarygodne zrodlo wiedzy. Aktywne urzadzenia sa widoczne do wyboru dla klienta przy zgloszeniu.</p>
           </div>
         </header>
 
         <div className="ai-knowledge-layout">
-          <nav className="ai-knowledge-categories" aria-label="Kategorie bazy wiedzy">
+          <nav className="ai-knowledge-categories" aria-label="Urzadzenia i kategorie bazy wiedzy">
             <button type="button" className={selectedCategory === "ALL" ? "active" : ""} onClick={() => setSelectedCategory("ALL")}>
               <span>Wszystkie</span>
               <b>{knowledgeEntries.length}</b>
             </button>
-            {categorySuggestions.map((cat) => (
-              <button type="button" key={cat} className={selectedCategory === cat ? "active" : ""} onClick={() => setSelectedCategory(cat)}>
-                <span>{cat}</span>
-                <b>{categoryCounts[cat] || 0}</b>
-              </button>
+
+            {equipment.map((item) => (
+              <div key={item.id} className={`ai-equipment-row ${item.isActive ? "" : "inactive"}`}>
+                {editingEquipmentId === item.id ? (
+                  <form className="ai-equipment-edit-form" onSubmit={(event) => submitEquipmentRename(event, item)}>
+                    <input autoFocus value={editingEquipmentName} onChange={(event) => setEditingEquipmentName(event.target.value)} maxLength={80} />
+                    <button type="submit" aria-label="Zapisz nazwe"><Check size={14} /></button>
+                    <button type="button" onClick={cancelEditEquipment} aria-label="Anuluj"><X size={14} /></button>
+                  </form>
+                ) : (
+                  <>
+                    <button type="button" className={selectedCategory === item.name ? "ai-equipment-select active" : "ai-equipment-select"} onClick={() => setSelectedCategory(item.name)}>
+                      <span>{item.name}</span>
+                      <b>{categoryCounts[item.name] || 0}</b>
+                    </button>
+                    <div className="ai-equipment-row-actions">
+                      <button type="button" title="Edytuj nazwe" onClick={() => startEditEquipment(item)}><Pencil size={13} /></button>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={item.isActive}
+                        className={item.isActive ? "ai-equipment-toggle on" : "ai-equipment-toggle"}
+                        title={item.isActive ? "Aktywne - widoczne dla klienta w zgloszeniach" : "Nieaktywne - ukryte dla klienta"}
+                        onClick={() => toggleEquipmentActive(item)}
+                      >
+                        <i />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             ))}
+
+            {addingEquipment ? (
+              <form className="ai-equipment-add-form" onSubmit={submitNewEquipment}>
+                <input autoFocus value={newEquipmentName} onChange={(event) => setNewEquipmentName(event.target.value)} placeholder="Nazwa urzadzenia" maxLength={80} />
+                <button type="submit" aria-label="Dodaj"><Check size={14} /></button>
+                <button type="button" onClick={() => { setAddingEquipment(false); setNewEquipmentName(""); }} aria-label="Anuluj"><X size={14} /></button>
+              </form>
+            ) : (
+              <button type="button" className="ai-equipment-add" onClick={() => setAddingEquipment(true)}>
+                <Plus size={14} /> Dodaj urzadzenie
+              </button>
+            )}
           </nav>
 
           <div className="ai-knowledge-main">
             <div className="ai-knowledge-main-header">
               <h3>{selectedCategory === "ALL" ? "Wszystkie wpisy" : selectedCategory}</h3>
               {!form && (
-                <button type="button" className="ai-knowledge-add" onClick={openNewEntryForm}>
+                <button type="button" className="ai-knowledge-add" onClick={openNewEntryForm} disabled={!equipment.length}>
                   <Plus aria-hidden="true" /> Dodaj wpis
                 </button>
               )}
@@ -216,11 +314,12 @@ export default function AiAssistantSettings() {
                   <input type="text" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Np. Szlaban CAME Gard 4 - typowe usterki" maxLength={200} required />
                 </label>
                 <label>
-                  <span>Kategoria (urzadzenie)</span>
-                  <input type="text" list="ai-knowledge-categories" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Np. Terminal wjazdowy" maxLength={80} />
-                  <datalist id="ai-knowledge-categories">
-                    {categorySuggestions.map((value) => <option key={value} value={value} />)}
-                  </datalist>
+                  <span>Urzadzenie</span>
+                  <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
+                    {equipment.map((item) => (
+                      <option key={item.id} value={item.name}>{item.name}{!item.isActive ? " (nieaktywne)" : ""}</option>
+                    ))}
+                  </select>
                 </label>
                 <label className="ai-knowledge-form-content">
                   <span>Tresc</span>

@@ -33,4 +33,11 @@ export const ADD_AI_KNOWLEDGE_BASE_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_AI_KNOWLEDGE_BASE_MIGRATION.id;
+export const ADD_AI_EQUIPMENT_TYPES_MIGRATION = Object.freeze({
+  id: "2026.08.23.003",
+  checksum: "add-ai-equipment-types-v1",
+  description: "Dodaje zarzadzana liste urzadzen dla asystenta AI i zgloszen klientow",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_AI_EQUIPMENT_TYPES_MIGRATION.id;

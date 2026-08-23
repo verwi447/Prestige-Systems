@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -996,13 +996,34 @@ async function addAiKnowledgeBaseTable({ query }) {
   `);
 }
 
+async function addAiEquipmentTypesTable({ query }) {
+  await query(`
+    CREATE TABLE IF NOT EXISTS ai_equipment_types (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await query(`
+    INSERT INTO ai_equipment_types (name)
+    SELECT name FROM (VALUES
+      ('Ogólne'), ('Terminal wjazdowy'), ('Terminal wyjazdowy'),
+      ('Terminal wyjazdowy z terminalem płatniczym'), ('Szlaban'), ('Kamera ANPR')
+    ) AS defaults(name)
+    WHERE NOT EXISTS (SELECT 1 FROM ai_equipment_types)
+  `);
+}
+
 export function getMigrationDefinitions() {
   return [
     { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
     { ...ADD_PASSWORD_CHANGED_AT_MIGRATION, up: addPasswordChangedAtColumn },
     { ...ADD_AI_TICKET_COMMENT_MIGRATION, up: addAiTicketCommentColumn },
     { ...ADD_AI_ASSISTANT_SETTINGS_MIGRATION, up: addAiAssistantSettingsTable },
-    { ...ADD_AI_KNOWLEDGE_BASE_MIGRATION, up: addAiKnowledgeBaseTable }
+    { ...ADD_AI_KNOWLEDGE_BASE_MIGRATION, up: addAiKnowledgeBaseTable },
+    { ...ADD_AI_EQUIPMENT_TYPES_MIGRATION, up: addAiEquipmentTypesTable }
   ];
 }
 

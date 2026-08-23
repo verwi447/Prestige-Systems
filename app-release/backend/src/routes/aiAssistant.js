@@ -144,4 +144,91 @@ router.delete("/knowledge/:id", async (req, res) => {
   }
 });
 
+function equipmentRow(row) {
+  return { id: row.id, name: row.name, isActive: row.is_active, createdAt: row.created_at, updatedAt: row.updated_at };
+}
+
+router.get("/equipment", async (_req, res) => {
+  try {
+    const result = await db.query("SELECT id, name, is_active, created_at, updated_at FROM ai_equipment_types ORDER BY name");
+    res.json(result.rows.map(equipmentRow));
+  } catch (error) {
+    res.status(500).json({ error: "Nie udalo sie pobrac listy urzadzen." });
+  }
+});
+
+router.post("/equipment", async (req, res) => {
+  const name = String(req.body.name || "").trim().slice(0, 80);
+  if (!name) return res.status(400).json({ error: "Podaj nazwe urzadzenia." });
+
+  try {
+    const result = await db.query(
+      "INSERT INTO ai_equipment_types (name) VALUES ($1) RETURNING id, name, is_active, created_at, updated_at",
+      [name]
+    );
+    await writeAuditLog({
+      category: "SYSTEM",
+      action: "AI_EQUIPMENT_TYPE_ADDED",
+      userId: req.user.id,
+      entityType: "ai_equipment_types",
+      entityId: result.rows[0].id,
+      message: `Dodano urzadzenie: ${name}`
+    }).catch((error) => console.error("Global audit log failed:", error));
+    res.status(201).json(equipmentRow(result.rows[0]));
+  } catch (error) {
+    if (error.code === "23505") return res.status(409).json({ error: "Urzadzenie o tej nazwie juz istnieje." });
+    res.status(500).json({ error: "Nie udalo sie dodac urzadzenia." });
+  }
+});
+
+router.put("/equipment/:id", async (req, res) => {
+  const hasName = req.body.name !== undefined;
+  const name = hasName ? String(req.body.name || "").trim().slice(0, 80) : null;
+  const hasActive = req.body.isActive !== undefined;
+  const isActive = hasActive ? Boolean(req.body.isActive) : null;
+
+  if (hasName && !name) return res.status(400).json({ error: "Podaj nazwe urzadzenia." });
+
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const current = await client.query("SELECT name FROM ai_equipment_types WHERE id=$1 FOR UPDATE", [req.params.id]);
+    if (!current.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Urzadzenie nie istnieje." });
+    }
+
+    const nextName = hasName ? name : current.rows[0].name;
+    const result = await client.query(
+      `UPDATE ai_equipment_types SET name=$1, is_active=COALESCE($2, is_active), updated_at=CURRENT_TIMESTAMP
+       WHERE id=$3 RETURNING id, name, is_active, created_at, updated_at`,
+      [nextName, hasActive ? isActive : null, req.params.id]
+    );
+
+    if (hasName && nextName !== current.rows[0].name) {
+      await client.query("UPDATE ai_knowledge_base SET category=$1 WHERE category=$2", [nextName, current.rows[0].name]);
+      await client.query("UPDATE tickets SET category=$1 WHERE category=$2", [nextName, current.rows[0].name]);
+    }
+
+    await client.query("COMMIT");
+    await writeAuditLog({
+      category: "SYSTEM",
+      action: "AI_EQUIPMENT_TYPE_UPDATED",
+      userId: req.user.id,
+      entityType: "ai_equipment_types",
+      entityId: req.params.id,
+      message: `Zaktualizowano urzadzenie: ${nextName}`,
+      metadata: { previousName: current.rows[0].name, name: nextName, isActive }
+    }).catch((error) => console.error("Global audit log failed:", error));
+
+    res.json(equipmentRow(result.rows[0]));
+  } catch (error) {
+    await client.query("ROLLBACK");
+    if (error.code === "23505") return res.status(409).json({ error: "Urzadzenie o tej nazwie juz istnieje." });
+    res.status(500).json({ error: "Nie udalo sie zapisac urzadzenia." });
+  } finally {
+    client.release();
+  }
+});
+
 export default router;

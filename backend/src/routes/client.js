@@ -1860,15 +1860,12 @@ router.get("/tickets/:id", requirePermission("VIEW_TICKETS"), async (req, res) =
   });
 });
 
-const defaultTicketCategories = ["Ogólne", "Terminal wjazdowy", "Terminal wyjazdowy", "Terminal wyjazdowy z terminalem płatniczym", "Szlaban", "Kamera ANPR"];
-
 router.get("/ticket-categories", requirePermission("CREATE_TICKET"), async (_req, res) => {
   try {
-    const result = await db.query("SELECT DISTINCT category FROM ai_knowledge_base ORDER BY category");
-    const merged = [...new Set([...defaultTicketCategories, ...result.rows.map((row) => row.category)])];
-    res.json(merged);
+    const result = await db.query("SELECT name FROM ai_equipment_types WHERE is_active=TRUE ORDER BY name");
+    res.json(result.rows.map((row) => row.name));
   } catch (error) {
-    res.json(defaultTicketCategories);
+    res.json(["Ogólne"]);
   }
 });
 
