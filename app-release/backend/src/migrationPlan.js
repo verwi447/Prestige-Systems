@@ -47,4 +47,11 @@ export const ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION.id;
+export const ADD_AI_KNOWLEDGE_FILES_MIGRATION = Object.freeze({
+  id: "2026.08.23.005",
+  checksum: "add-ai-knowledge-files-v1",
+  description: "Dodaje pliki (zdjecia, PDF) dolaczane do wpisow bazy wiedzy asystenta AI",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_AI_KNOWLEDGE_FILES_MIGRATION.id;

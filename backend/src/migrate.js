@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_FILES_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -1020,6 +1020,20 @@ async function addAiKnowledgeSolutionColumn({ query }) {
   await query(`ALTER TABLE ai_knowledge_base ADD COLUMN IF NOT EXISTS solution TEXT`);
 }
 
+async function addAiKnowledgeFilesTable({ query }) {
+  await query(`
+    CREATE TABLE IF NOT EXISTS ai_knowledge_base_files (
+      id SERIAL PRIMARY KEY,
+      knowledge_base_id INT NOT NULL REFERENCES ai_knowledge_base(id) ON DELETE CASCADE,
+      file_name TEXT NOT NULL,
+      original_name TEXT,
+      mime_type TEXT,
+      file_size INT,
+      uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
 export function getMigrationDefinitions() {
   return [
     { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
@@ -1028,7 +1042,8 @@ export function getMigrationDefinitions() {
     { ...ADD_AI_ASSISTANT_SETTINGS_MIGRATION, up: addAiAssistantSettingsTable },
     { ...ADD_AI_KNOWLEDGE_BASE_MIGRATION, up: addAiKnowledgeBaseTable },
     { ...ADD_AI_EQUIPMENT_TYPES_MIGRATION, up: addAiEquipmentTypesTable },
-    { ...ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, up: addAiKnowledgeSolutionColumn }
+    { ...ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, up: addAiKnowledgeSolutionColumn },
+    { ...ADD_AI_KNOWLEDGE_FILES_MIGRATION, up: addAiKnowledgeFilesTable }
   ];
 }
 

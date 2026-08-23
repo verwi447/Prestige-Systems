@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Check, Pencil, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
-import { aiAssistant } from "../api";
+import { BookOpen, Check, Paperclip, Pencil, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
+import { aiAssistant, protectedFiles } from "../api";
 import AppState from "../components/AppState";
 import BarrierCheckbox from "../components/BarrierCheckbox";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -93,9 +93,19 @@ export default function AiAssistantSettings() {
 
   const defaultEquipmentName = () => (equipment.find((item) => item.isActive) || equipment[0])?.name || "";
 
-  const openNewEntryForm = () => setForm({ ...emptyForm, category: selectedCategory === "ALL" ? defaultEquipmentName() : selectedCategory });
-  const openEditEntryForm = (entry) => setForm({ id: entry.id, title: entry.title, category: entry.category, content: entry.content, solution: entry.solution || "" });
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+
+  const openNewEntryForm = () => setForm({ ...emptyForm, category: selectedCategory === "ALL" ? defaultEquipmentName() : selectedCategory, files: [] });
+  const openEditEntryForm = (entry) => setForm({ id: entry.id, title: entry.title, category: entry.category, content: entry.content, solution: entry.solution || "", files: entry.files || [] });
   const closeForm = () => setForm(null);
+
+  const refreshKnowledgeAndForm = async (entryId) => {
+    const response = await aiAssistant.getKnowledge();
+    const entries = Array.isArray(response.data) ? response.data : [];
+    setKnowledgeEntries(entries);
+    const updated = entries.find((item) => item.id === entryId);
+    if (updated) setForm((current) => (current && current.id === entryId ? { ...current, files: updated.files || [] } : current));
+  };
 
   const submitForm = async (event) => {
     event.preventDefault();
@@ -106,16 +116,52 @@ export default function AiAssistantSettings() {
     setFormSaving(true);
     try {
       const payload = { title: form.title.trim(), category: form.category || defaultEquipmentName(), content: form.content.trim(), solution: form.solution.trim() };
-      if (form.id) await aiAssistant.updateKnowledge(form.id, payload);
-      else await aiAssistant.createKnowledge(payload);
-      showSuccess(form.id ? "Wpis zostal zaktualizowany." : "Wpis zostal dodany do bazy wiedzy.");
-      setForm(null);
-      await loadKnowledge();
+      if (form.id) {
+        await aiAssistant.updateKnowledge(form.id, payload);
+        showSuccess("Wpis zostal zaktualizowany.");
+        setForm(null);
+        await loadKnowledge();
+      } else {
+        const response = await aiAssistant.createKnowledge(payload);
+        showSuccess("Wpis zostal dodany do bazy wiedzy. Mozesz teraz dolaczyc pliki dla asystenta AI.");
+        setForm({ ...form, id: response.data.id, files: [] });
+        await loadKnowledge();
+      }
     } catch (requestError) {
       showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie zapisac wpisu."), type: "error" });
     } finally {
       setFormSaving(false);
     }
+  };
+
+  const handleUploadFiles = async (fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length || !form?.id) return;
+    setUploadingFiles(true);
+    try {
+      await aiAssistant.uploadKnowledgeFiles(form.id, files);
+      await refreshKnowledgeAndForm(form.id);
+      showSuccess("Plik zostal dodany.");
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie dodac pliku."), type: "error" });
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
+  const handleDeleteFile = async (fileId) => {
+    try {
+      await aiAssistant.deleteKnowledgeFile(form.id, fileId);
+      await refreshKnowledgeAndForm(form.id);
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie usunac pliku."), type: "error" });
+    }
+  };
+
+  const handleViewFile = (file) => {
+    protectedFiles.open(aiAssistant.knowledgeFileUrl(form.id, file.id)).catch(() => {
+      showFeedback({ message: "Nie udalo sie otworzyc pliku.", type: "error" });
+    });
   };
 
   const confirmDelete = async () => {
@@ -298,6 +344,30 @@ export default function AiAssistantSettings() {
                   <span>Rozwiazanie</span>
                   <textarea rows="6" value={form.solution} onChange={(event) => setForm({ ...form, solution: event.target.value })} placeholder="Opisz krok po kroku jak rozwiazac ten problem." />
                 </label>
+                <div className="ai-knowledge-form-content ai-knowledge-files-field">
+                  <span>Pliki dla asystenta AI</span>
+                  {form.id ? (
+                    <>
+                      <label className="ai-knowledge-upload-zone">
+                        <Paperclip size={16} aria-hidden="true" />
+                        <span>{uploadingFiles ? "Wysylanie..." : "Dodaj zdjecie lub PDF (np. instrukcje, schematy) - asystent AI bedzie je odczytywal"}</span>
+                        <input type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" disabled={uploadingFiles} onChange={(event) => { handleUploadFiles(event.target.files); event.target.value = ""; }} />
+                      </label>
+                      {form.files?.length > 0 && (
+                        <div className="ai-knowledge-files-list">
+                          {form.files.map((file) => (
+                            <div key={file.id}>
+                              <button type="button" onClick={() => handleViewFile(file)}><Paperclip size={13} aria-hidden="true" /> {file.originalName}</button>
+                              <button type="button" onClick={() => handleDeleteFile(file.id)} aria-label={`Usun ${file.originalName}`}><X size={13} /></button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <small>Zapisz wpis, aby moc dolaczyc pliki dla asystenta AI.</small>
+                  )}
+                </div>
                 <div className="ai-knowledge-form-actions">
                   <button type="button" className="ai-knowledge-cancel" onClick={closeForm}><X aria-hidden="true" /> Anuluj</button>
                   <button type="submit" className="ai-settings-save" disabled={formSaving}>
@@ -322,7 +392,10 @@ export default function AiAssistantSettings() {
                       <p className="ai-knowledge-entry-solution"><strong>Rozwiazanie:</strong> {entry.solution}</p>
                     )}
                     <footer>
-                      <small>{entry.authorName} • {formatDate(entry.updatedAt)}</small>
+                      <small>
+                        {entry.authorName} • {formatDate(entry.updatedAt)}
+                        {entry.files?.length > 0 && <> • <Paperclip size={12} aria-hidden="true" /> {entry.files.length}</>}
+                      </small>
                       <div className="ai-knowledge-entry-actions">
                         <button type="button" onClick={() => openEditEntryForm(entry)}><Pencil aria-hidden="true" /> Edytuj</button>
                         <button type="button" className="danger" onClick={() => setDeleteTarget(entry)}><Trash2 aria-hidden="true" /> Usun</button>

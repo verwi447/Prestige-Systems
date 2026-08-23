@@ -8,11 +8,13 @@ import { notifyAdmins } from "../utils/notifications.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ticketUploadDir = path.join(__dirname, "../../uploads/tickets");
+const knowledgeUploadDir = path.join(__dirname, "../../uploads/knowledge");
 
 const GEMINI_MODEL = "gemini-3.6-flash";
 const MAX_SIMILAR_TICKETS = 3;
 const MAX_KNOWLEDGE_ENTRIES = 20;
 const MAX_PHOTOS = 4;
+const MAX_KNOWLEDGE_FILES = 3;
 const MAX_OUTPUT_TOKENS = 2048;
 
 const extensionMimeTypes = {
@@ -24,6 +26,22 @@ const extensionMimeTypes = {
 
 function guessMimeType(fileName) {
   return extensionMimeTypes[path.extname(fileName || "").toLowerCase()] || null;
+}
+
+function isInlineableMimeType(mimeType) {
+  return Boolean(mimeType) && (mimeType.startsWith("image/") || mimeType === "application/pdf");
+}
+
+function loadInlineFiles(rows, directory) {
+  const files = [];
+  for (const row of rows) {
+    const mimeType = row.mime_type || guessMimeType(row.file_name);
+    if (!isInlineableMimeType(mimeType)) continue;
+    const filePath = path.join(directory, row.file_name);
+    if (!fs.existsSync(filePath)) continue;
+    files.push({ mimeType, data: fs.readFileSync(filePath).toString("base64") });
+  }
+  return files;
 }
 
 async function fetchTicket(ticketId) {
@@ -42,16 +60,18 @@ async function fetchTicketImages(ticketId) {
      LIMIT $2`,
     [ticketId, MAX_PHOTOS]
   );
+  return loadInlineFiles(result.rows, ticketUploadDir).filter((file) => file.mimeType.startsWith("image/"));
+}
 
-  const images = [];
-  for (const row of result.rows) {
-    const mimeType = row.mime_type || guessMimeType(row.file_name);
-    if (!mimeType || !mimeType.startsWith("image/")) continue;
-    const filePath = path.join(ticketUploadDir, row.file_name);
-    if (!fs.existsSync(filePath)) continue;
-    images.push({ mimeType, data: fs.readFileSync(filePath).toString("base64") });
-  }
-  return images;
+async function fetchNewTicketImages(ticketId, sinceTimestamp) {
+  const result = await db.query(
+    `SELECT file_name, mime_type FROM ticket_photos
+     WHERE ticket_id=$1 AND uploaded_at > $2
+     ORDER BY uploaded_at ASC
+     LIMIT $3`,
+    [ticketId, sinceTimestamp, MAX_PHOTOS]
+  );
+  return loadInlineFiles(result.rows, ticketUploadDir).filter((file) => file.mimeType.startsWith("image/"));
 }
 
 async function fetchKnowledgeEntries(category) {
@@ -62,6 +82,19 @@ async function fetchKnowledgeEntries(category) {
     [category || "", MAX_KNOWLEDGE_ENTRIES]
   );
   return result.rows;
+}
+
+async function fetchKnowledgeFiles(category) {
+  const result = await db.query(
+    `SELECT f.file_name, f.mime_type
+     FROM ai_knowledge_base_files f
+     JOIN ai_knowledge_base kb ON kb.id = f.knowledge_base_id
+     WHERE kb.category = $1
+     ORDER BY kb.updated_at DESC, f.uploaded_at ASC
+     LIMIT $2`,
+    [category || "", MAX_KNOWLEDGE_FILES]
+  );
+  return loadInlineFiles(result.rows, knowledgeUploadDir);
 }
 
 async function fetchSimilarResolvedTickets(ticket) {
@@ -79,7 +112,7 @@ async function fetchSimilarResolvedTickets(ticket) {
   return result.rows.filter((row) => row.resolution);
 }
 
-function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSend) {
+function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSend, hasKnowledgeFiles) {
   const typeLabel = ticket.type === "HARDWARE_FAILURE"
     ? "awaria sprzetu (szlaban parkingowy lub kamera ANPR)"
     : "awaria systemu / problem z dzialaniem uslugi";
@@ -92,10 +125,13 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSe
     .map((row, index) => `Przyklad ${index + 1}:\nZgloszenie: "${row.subject}. ${row.description || ""}"\nRozwiazanie admina: "${row.resolution}"`)
     .join("\n\n");
 
+  const attachmentsNote = [hasImages && "zdjecia zgloszenia", hasKnowledgeFiles && "pliki z bazy wiedzy (instrukcje, schematy)"].filter(Boolean).join(" oraz ");
+
   return [
     "Jestes asystentem technicznym firmy instalujacej i serwisujacej szlabany parkingowe oraz kamery ANPR.",
-    "Dostales nowe zgloszenie serwisowe od klienta. Przeanalizuj opis" + (hasImages ? " i dolaczone zdjecia" : "") + " i napisz krotka, konkretna wstepna diagnoze PO POLSKU.",
-    hasImages ? "Jesli na zdjeciu widac uszkodzenie, wskaz KONKRETNIE ktore elementy wygladaja na uszkodzone (np. ramie szlabanu, fotokomorka, obudowa, kamera, uszczelka)." : "",
+    "Dostales nowe zgloszenie serwisowe od klienta. Przeanalizuj opis" + (attachmentsNote ? ` i dolaczone ${attachmentsNote}` : "") + " i napisz krotka, konkretna wstepna diagnoze PO POLSKU.",
+    hasImages ? "Jesli na zdjeciu zgloszenia widac uszkodzenie, wskaz KONKRETNIE ktore elementy wygladaja na uszkodzone (np. ramie szlabanu, fotokomorka, obudowa, kamera, uszczelka)." : "",
+    hasKnowledgeFiles ? "Dolaczone zostaly rowniez pliki z wewnetrznej bazy wiedzy (np. instrukcja serwisowa, schemat, zdjecie referencyjne) dla pasujacego urzadzenia - wykorzystaj je jako dodatkowe, wiarygodne zrodlo przy stawianiu diagnozy." : "",
     "Jesli opis sugeruje typowy przypadek (np. pojazd nie wjechal na petle indukcyjna, brak zasilania, awaria czujnika, zablokowany wjazd), zaproponuj najbardziej prawdopodobna przyczyne i, jesli to bezpieczne, prosty krok do samodzielnego sprawdzenia.",
     "Odpowiadaj rzeczowo, 2-5 zdan, bez wstepow typu 'Oczywiscie' czy 'Na podstawie zdjecia widze'.",
     autoSend
@@ -202,13 +238,15 @@ export async function analyzeTicketWithAi(ticketId) {
     if (!ticket || !analyzableTypes.has(ticket.type)) return;
 
     const autoSend = await isAutoSendEnabled();
-    const [images, similarTickets, knowledgeEntries] = await Promise.all([
+    const [ticketImages, similarTickets, knowledgeEntries, knowledgeFiles] = await Promise.all([
       fetchTicketImages(ticketId),
       fetchSimilarResolvedTickets(ticket),
-      fetchKnowledgeEntries(ticket.category)
+      fetchKnowledgeEntries(ticket.category),
+      fetchKnowledgeFiles(ticket.category)
     ]);
 
-    const prompt = buildPrompt(ticket, knowledgeEntries, similarTickets, images.length > 0, autoSend);
+    const images = [...ticketImages, ...knowledgeFiles];
+    const prompt = buildPrompt(ticket, knowledgeEntries, similarTickets, ticketImages.length > 0, autoSend, knowledgeFiles.length > 0);
     const suggestion = await callGemini(prompt, images);
     if (!suggestion) return;
 
@@ -239,7 +277,7 @@ async function countAiPublicReplies(ticketId) {
 
 async function fetchPublicConversation(ticketId) {
   const result = await db.query(
-    `SELECT tc.content, tc.is_ai_generated, u.role
+    `SELECT tc.content, tc.is_ai_generated, tc.created_at, u.role
      FROM ticket_comments tc
      LEFT JOIN users u ON u.id = tc.author_id
      WHERE tc.ticket_id=$1 AND tc.is_internal=FALSE
@@ -248,7 +286,8 @@ async function fetchPublicConversation(ticketId) {
   );
   return result.rows.map((row) => ({
     role: row.is_ai_generated ? "Asystent AI" : row.role === "ADMIN" ? "Administrator" : "Klient",
-    content: row.content
+    content: row.content,
+    createdAt: row.created_at
   }));
 }
 
@@ -276,7 +315,7 @@ async function escalateToAdmin(ticket, closingMessage) {
   }).catch(() => {});
 }
 
-function buildConversationPrompt(ticket, knowledgeEntries, conversation) {
+function buildConversationPrompt(ticket, knowledgeEntries, conversation, hasNewImages, hasKnowledgeFiles) {
   const typeLabel = ticket.type === "HARDWARE_FAILURE"
     ? "awaria sprzetu (szlaban parkingowy lub kamera ANPR)"
     : "awaria systemu / problem z dzialaniem uslugi";
@@ -290,6 +329,8 @@ function buildConversationPrompt(ticket, knowledgeEntries, conversation) {
   return [
     "Jestes asystentem AI prowadzacym czat pomocy technicznej dla klienta firmy instalujacej i serwisujacej szlabany parkingowe oraz kamery ANPR.",
     "Ponizej masz pelna historie rozmowy w tym zgloszeniu (od najstarszej do najnowszej wiadomosci). Odpowiedz na OSTATNIA wiadomosc klienta.",
+    hasNewImages ? "Klient dolaczyl do swojej ostatniej wiadomosci nowe zdjecie (dolaczone do tego zapytania) - przeanalizuj je i uwzglednij w odpowiedzi." : "",
+    hasKnowledgeFiles ? "Dolaczone zostaly rowniez pliki z wewnetrznej bazy wiedzy (np. instrukcja, schemat) dla pasujacego urzadzenia - wykorzystaj je jako dodatkowe, wiarygodne zrodlo." : "",
     "Zasady:",
     "- Jesli klient napisal, ze problem zostal rozwiazany albo juz dziala - podziekuj i cieplo zakoncz rozmowe.",
     "- Jesli masz kolejny sensowny, bezpieczny krok do zaproponowania (pasujacy do opisu, niewymagajacy otwierania obudowy ani ingerencji mechanicznej) - zaproponuj go.",
@@ -343,9 +384,14 @@ export async function continueAiConversation(ticketId) {
       return;
     }
 
-    const knowledgeEntries = await fetchKnowledgeEntries(ticket.category);
-    const prompt = buildConversationPrompt(ticket, knowledgeEntries, conversation);
-    const raw = await callGemini(prompt, []);
+    const [knowledgeEntries, knowledgeFiles, newImages] = await Promise.all([
+      fetchKnowledgeEntries(ticket.category),
+      fetchKnowledgeFiles(ticket.category),
+      fetchNewTicketImages(ticketId, conversation[lastAiIndex].createdAt)
+    ]);
+    const images = [...newImages, ...knowledgeFiles];
+    const prompt = buildConversationPrompt(ticket, knowledgeEntries, conversation, newImages.length > 0, knowledgeFiles.length > 0);
+    const raw = await callGemini(prompt, images);
     if (!raw) return;
 
     const parsed = parseConversationReply(raw);

@@ -130,7 +130,16 @@ export const aiAssistant = {
   deleteKnowledge: (id) => api.delete(`/api/ai-assistant/knowledge/${id}`),
   getEquipment: () => api.get("/api/ai-assistant/equipment"),
   createEquipment: (data) => api.post("/api/ai-assistant/equipment", data),
-  updateEquipment: (id, data) => api.put(`/api/ai-assistant/equipment/${id}`, data)
+  updateEquipment: (id, data) => api.put(`/api/ai-assistant/equipment/${id}`, data),
+  uploadKnowledgeFiles: (id, files) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files", file));
+    return api.post(`/api/ai-assistant/knowledge/${id}/files`, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+  },
+  deleteKnowledgeFile: (id, fileId) => api.delete(`/api/ai-assistant/knowledge/${id}/files/${fileId}`),
+  knowledgeFileUrl: (id, fileId) => `/api/ai-assistant/knowledge/${id}/files/${fileId}`
 };
 
 export const auditLog = {
