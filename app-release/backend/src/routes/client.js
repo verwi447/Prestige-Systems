@@ -10,7 +10,7 @@ import { auth } from "../middleware/auth.js";
 import { canAccessSite, getEffectivePermissions, loadCurrentUser, requireAnyPermission, requireClient, requireClientOwner, requirePermission } from "../middleware/access.js";
 import { notifyAdmins } from "../utils/notifications.js";
 import { markOfferLifecycle, synchronizeLinkedOrderStatus } from "../services/orderOfferWorkflow.js";
-import { analyzeTicketWithAi } from "../services/aiAssistant.js";
+import { analyzeTicketWithAi, continueAiConversation } from "../services/aiAssistant.js";
 import { writeAuditLog } from "../utils/auditLog.js";
 
 const router = express.Router();
@@ -2075,6 +2075,8 @@ router.post("/tickets/:id/comments", requirePermission("COMMENT_TICKET"), async 
       );
     }
     await client.query("COMMIT");
+
+    continueAiConversation(ticket.rows[0].id).catch(() => {});
 
     res.status(201).json({
       id: result.rows[0].id,
