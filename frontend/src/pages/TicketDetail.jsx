@@ -522,21 +522,23 @@ export default function TicketDetail() {
                 </div>
 
                 <div className="ticket-admin-comments">
-                  {comments.map((comment) => (
-                    <article key={comment.id} className={`ticket-admin-comment ${comment.isInternal ? "internal" : ""} ${comment.isAiGenerated ? "ai" : ""}`}>
+                  {comments.map((comment) => {
+                    const isPendingAiSuggestion = comment.isAiGenerated && comment.isInternal;
+                    return (
+                    <article key={comment.id} className={`ticket-admin-comment ${comment.isInternal ? "internal" : ""} ${isPendingAiSuggestion ? "ai" : ""}`}>
                       {comment.isAiGenerated
                         ? <span className="ticket-admin-ai-avatar" aria-hidden="true"><Sparkles size={18} /></span>
                         : <Avatar name={comment.authorName} tone={comment.authorRole?.startsWith("CLIENT") ? "client" : "admin"} online={!comment.authorRole?.startsWith("CLIENT")} />}
                       <div>
                         <header>
                           <strong>{comment.authorName}</strong>
-                          <span className={comment.isAiGenerated ? "ai" : comment.isInternal ? "note" : ""}>
-                            {comment.isAiGenerated ? "Sugestia AI" : comment.isInternal ? "Notatka wewnetrzna" : comment.authorRole?.startsWith("CLIENT") ? "Klient" : "Prestige Systems"}
+                          <span className={isPendingAiSuggestion ? "ai" : comment.isInternal ? "note" : ""}>
+                            {isPendingAiSuggestion ? "Sugestia AI" : comment.isInternal ? "Notatka wewnetrzna" : comment.authorRole?.startsWith("CLIENT") ? "Klient" : "Prestige Systems"}
                           </span>
                           <time>• {formatDate(comment.createdAt || comment.created_at)}</time>
                         </header>
                         <p>{comment.content || comment.body}</p>
-                        {isAdmin && comment.isAiGenerated && (
+                        {isAdmin && isPendingAiSuggestion && (
                           <button type="button" className="ticket-admin-ai-send" onClick={() => prefillAiSuggestion(comment)}>
                             <Send size={14} /> Wyslij do klienta
                           </button>
@@ -548,7 +550,8 @@ export default function TicketDetail() {
                         />
                       </div>
                     </article>
-                  ))}
+                    );
+                  })}
                   {unlinkedAttachments.length > 0 && (
                     <section className="ticket-admin-legacy-attachments">
                       <h3>Pozostale zalaczniki</h3>
