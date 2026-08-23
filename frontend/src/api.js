@@ -120,6 +120,11 @@ export const system = {
   updateNetworkSettings: (data) => api.put("/api/system/network", data)
 };
 
+export const aiAssistant = {
+  getSettings: () => api.get("/api/ai-assistant/settings"),
+  updateSettings: (data) => api.put("/api/ai-assistant/settings", data)
+};
+
 export const auditLog = {
   getAll: (params = {}) => api.get("/api/audit", { params }),
   getUsers: () => api.get("/api/audit/users")

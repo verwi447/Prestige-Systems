@@ -781,6 +781,45 @@ router.post("/:id/comments", auth, requireAdmin, handleCommentAttachments, async
   }
 });
 
+export async function postAiCommentAsPublic(ticketId, content) {
+  const existing = await getTicketPayload(ticketId, { id: null, role: "ADMIN" });
+  if (!existing) return false;
+
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const current = await client.query("SELECT type, status FROM tickets WHERE id=$1 FOR UPDATE", [ticketId]);
+    if (!current.rows[0]) {
+      await client.query("ROLLBACK");
+      return false;
+    }
+    const currentStatus = normalizeTicketStatus(current.rows[0].status);
+    const nextStatus = serviceTicketTypes.has(current.rows[0].type) && !terminalTicketStatuses.has(currentStatus)
+      ? "WAITING_FOR_CLIENT"
+      : current.rows[0].status;
+    const statusChanged = currentStatus !== normalizeTicketStatus(nextStatus);
+
+    await client.query(
+      `INSERT INTO ticket_comments (ticket_id, author_id, content, is_internal, is_ai_generated)
+       VALUES ($1,NULL,$2,FALSE,TRUE)`,
+      [ticketId, content]
+    );
+    await client.query("UPDATE tickets SET status=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [nextStatus, ticketId]);
+    await addHistory(client, ticketId, null, "TICKET_COMMENT_ADDED", null, null, { source: "AI" });
+    if (statusChanged) {
+      await addHistory(client, ticketId, null, "TICKET_STATUS_CHANGED", currentStatus, normalizeTicketStatus(nextStatus), { automatic: true, trigger: "AI_COMMENT" });
+    }
+    await client.query("COMMIT");
+    await notifyTicketCustomer(existing, "TICKET_COMMENT_ADDED", "Dodano komentarz do zgloszenia");
+    return true;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    return false;
+  } finally {
+    client.release();
+  }
+}
+
 router.get("/:id/attachments", auth, requireAdmin, async (req, res) => {
   const ticket = await getTicketPayload(req.params.id, req.user);
   if (!ticket) return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });

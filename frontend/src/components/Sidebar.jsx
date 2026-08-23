@@ -22,6 +22,7 @@ const adminSettings = [
 const adminSystemMenu = [
   { to: "/settings/email", label: "Poczta", icon: "mail" },
   { to: "/settings/network", label: "Siec", icon: "network" },
+  { to: "/settings/ai-assistant", label: "Asystent AI", icon: "sparkle" },
   { to: "/settings/system-status", label: "Stan systemu", icon: "pulse" },
   { to: "/settings/audit-log", label: "Audit Log", icon: "history" },
   { to: "/settings/backups", label: "Backup systemu", icon: "backup" }
@@ -172,6 +173,12 @@ const iconPaths = {
     </>
   ),
   chevron: <path d="m7 10 5 5 5-5" />,
+  sparkle: (
+    <>
+      <path d="M12 3.5c.6 3 2 4.4 5 5-3 .6-4.4 2-5 5-.6-3-2-4.4-5-5 3-.6 4.4-2 5-5z" />
+      <path d="M19 3.5c.25 1.1.75 1.6 1.85 1.85-1.1.25-1.6.75-1.85 1.85-.25-1.1-.75-1.6-1.85-1.85 1.1-.25 1.6-.75 1.85-1.85z" />
+    </>
+  ),
 };
 
 function SidebarIcon({ name }) {

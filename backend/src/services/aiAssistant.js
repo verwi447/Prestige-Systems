@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { db } from "../db.js";
+import { postAiCommentAsPublic } from "../routes/tickets.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -153,7 +154,17 @@ async function callGemini(promptText, images) {
   throw lastError;
 }
 
+async function isAutoSendEnabled() {
+  const result = await db.query("SELECT auto_send_enabled FROM ai_assistant_settings WHERE id='default'");
+  return Boolean(result.rows[0]?.auto_send_enabled);
+}
+
 async function saveSuggestionComment(ticketId, content) {
+  if (await isAutoSendEnabled()) {
+    const sent = await postAiCommentAsPublic(ticketId, content);
+    if (sent) return;
+  }
+
   await db.query(
     `INSERT INTO ticket_comments (ticket_id, author_id, content, is_internal, is_ai_generated)
      VALUES ($1,NULL,$2,TRUE,TRUE)`,

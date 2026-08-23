@@ -38,6 +38,7 @@ import fileRoutes from "./routes/files.js";
 import systemRoutes from "./routes/system.js";
 import auditRoutes from "./routes/audit.js";
 import searchRoutes from "./routes/search.js";
+import aiAssistantRoutes from "./routes/aiAssistant.js";
 import { migrate } from "./migrate.js";
 import { setRealtimeServer } from "./realtime.js";
 import { db } from "./db.js";
@@ -255,6 +256,7 @@ app.use("/api/audit", auditRoutes);
 app.use("/api/admin-orders", adminOrderRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/ai-assistant", aiAssistantRoutes);
 app.use(notFoundApi);
 app.use(safeErrorHandler);
 

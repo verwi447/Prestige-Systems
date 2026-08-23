@@ -35,6 +35,7 @@ const AdminOrderDetail = lazy(() => import("./pages/AdminOrderDetail"));
 const SystemStatus = lazy(() => import("./pages/SystemStatus"));
 const NetworkSettings = lazy(() => import("./pages/NetworkSettings"));
 const AuditLog = lazy(() => import("./pages/AuditLog"));
+const AiAssistantSettings = lazy(() => import("./pages/AiAssistantSettings"));
 
 const THEME_STORAGE_KEY = "ps-hub-theme";
 const IDLE_ACTIVITY_STORAGE_KEY = "ps-hub-last-activity";
@@ -261,6 +262,7 @@ function App() {
           <Route path="/settings/network" element={<AdminOnly user={user}><NetworkSettings /></AdminOnly>} />
           <Route path="/settings/system-status" element={<AdminOnly user={user}><SystemStatus /></AdminOnly>} />
           <Route path="/settings/audit-log" element={<AdminOnly user={user}><AuditLog /></AdminOnly>} />
+          <Route path="/settings/ai-assistant" element={<AdminOnly user={user}><AiAssistantSettings /></AdminOnly>} />
           
           {/* Client */}
           <Route path="/client/dashboard" element={<ClientOnly user={user}><Dashboard /></ClientOnly>} />

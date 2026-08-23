@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -967,11 +967,27 @@ async function addAiTicketCommentColumn({ query }) {
   await query("ALTER TABLE ticket_comments ADD COLUMN IF NOT EXISTS is_ai_generated BOOLEAN NOT NULL DEFAULT FALSE");
 }
 
+async function addAiAssistantSettingsTable({ query }) {
+  await query(`
+    CREATE TABLE IF NOT EXISTS ai_assistant_settings (
+      id TEXT PRIMARY KEY DEFAULT 'default',
+      auto_send_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await query(`
+    INSERT INTO ai_assistant_settings (id)
+    SELECT 'default'
+    WHERE NOT EXISTS (SELECT 1 FROM ai_assistant_settings WHERE id='default')
+  `);
+}
+
 export function getMigrationDefinitions() {
   return [
     { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
     { ...ADD_PASSWORD_CHANGED_AT_MIGRATION, up: addPasswordChangedAtColumn },
-    { ...ADD_AI_TICKET_COMMENT_MIGRATION, up: addAiTicketCommentColumn }
+    { ...ADD_AI_TICKET_COMMENT_MIGRATION, up: addAiTicketCommentColumn },
+    { ...ADD_AI_ASSISTANT_SETTINGS_MIGRATION, up: addAiAssistantSettingsTable }
   ];
 }
 
