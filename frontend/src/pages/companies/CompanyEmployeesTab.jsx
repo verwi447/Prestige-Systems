@@ -63,7 +63,6 @@ const pageSize = 6;
 
 function EmployeeIcon({ type }) {
   const paths = {
-    search: <path d="m20 20-4.2-4.2M10.8 17a6.2 6.2 0 1 1 0-12.4 6.2 6.2 0 0 1 0 12.4z" />,
     edit: (
       <>
         <path d="M4 20h4.2L19.1 9.1a2.4 2.4 0 0 0-3.4-3.4L4.8 16.6z" />
@@ -322,7 +321,6 @@ export default function CompanyEmployeesTab({ companyId }) {
 
       <div className="employees-toolbar">
         <label className="employees-search">
-          <EmployeeIcon type="search" />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Szukaj pracownika..." />
         </label>
         <label>

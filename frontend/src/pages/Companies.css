@@ -800,7 +800,6 @@ html[data-theme="dark"] .company-view-button.active {
 }
 
 .employees-add-button svg,
-.employees-search svg,
 .employee-actions svg,
 .permission-icon svg {
   width: 17px;
@@ -845,17 +844,6 @@ html[data-theme="dark"] .company-view-button.active {
 .employees-search {
   position: relative;
   align-self: end;
-}
-
-.employees-search svg {
-  position: absolute;
-  left: 0.85rem;
-  bottom: 12px;
-  color: #0b4d7a;
-}
-
-.employees-search input {
-  padding-left: 2.35rem;
 }
 
 .employees-table-shell {
