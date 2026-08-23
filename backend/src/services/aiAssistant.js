@@ -326,8 +326,16 @@ export async function continueAiConversation(ticketId) {
     if (await hasConversationEnded(ticketId)) return;
 
     const conversation = await fetchPublicConversation(ticketId);
-    const previousEntry = conversation[conversation.length - 2];
-    if (!previousEntry || previousEntry.role !== "Asystent AI") return;
+    if (!conversation.length) return;
+
+    const lastEntry = conversation[conversation.length - 1];
+    if (lastEntry.role !== "Klient") return;
+
+    const lastAiIndex = conversation.map((entry) => entry.role).lastIndexOf("Asystent AI");
+    if (lastAiIndex === -1) return;
+
+    const tookOverByAdmin = conversation.slice(lastAiIndex + 1).some((entry) => entry.role === "Administrator");
+    if (tookOverByAdmin) return;
 
     const aiReplyCount = await countAiPublicReplies(ticketId);
     if (aiReplyCount >= MAX_AI_CONVERSATION_TURNS) {
