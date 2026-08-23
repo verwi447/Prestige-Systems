@@ -538,7 +538,8 @@
 .sites-search svg {
   position: absolute;
   left: 0.85rem;
-  bottom: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
   color: #31506f;
 }
 
@@ -800,7 +801,8 @@
 .employees-search svg {
   position: absolute;
   left: 0.85rem;
-  bottom: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
   color: #31506f;
 }
 

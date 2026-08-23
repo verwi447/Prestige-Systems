@@ -389,10 +389,12 @@ export default function AdminTicketsView() {
             </button>
             {filtersOpen && (
               <div className="admin-ticket-filter-panel">
-            <label className="admin-ticket-search">
+            <label>
               <span>Szukaj</span>
-              <Search size={18} />
-              <input value={filters.query} onChange={(event) => setFilters({ ...filters, query: event.target.value })} placeholder="Nr, temat, klient" />
+              <span className="admin-ticket-search">
+                <Search size={18} />
+                <input value={filters.query} onChange={(event) => setFilters({ ...filters, query: event.target.value })} placeholder="Nr, temat, klient" />
+              </span>
             </label>
             <label><span>Status</span><select value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>{Object.entries(statusFilterLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
             <label><span>Priorytet</span><select value={filters.priority} onChange={(event) => setFilters({ ...filters, priority: event.target.value })}>{Object.entries(priorityFilterLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>

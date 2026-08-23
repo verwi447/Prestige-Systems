@@ -34,7 +34,7 @@
 .audit-search-control { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: center; min-height: 38px; padding: 0 10px; border: 1px solid #cfdceb; border-radius: 6px; }
 .audit-search-control:focus-within { border-color: #0b72df; box-shadow: 0 0 0 3px rgba(11,114,223,.1); }
 .audit-search-control svg { width: 16px; height: 16px; color: #60748f; }
-.audit-search input { min-height: 36px; border: 0; padding: 0; box-shadow: none !important; }
+.audit-search input { min-height: 36px; border: 0; margin: 0; padding: 0; box-shadow: none !important; }
 .audit-filter-actions { display: grid; grid-template-rows: 13px 38px; gap: 5px; align-self: stretch; }
 .audit-filter-buttons { display: flex; gap: 7px; }
 .audit-filter-buttons .audit-filter-button, .audit-filter-buttons .audit-clear-button { min-height: 38px; }

@@ -183,6 +183,7 @@
 .tickets-filter-card .tickets-search input {
   min-height: 40px;
   border: 0;
+  margin: 0;
   padding: 0;
   flex: 1 1 auto;
   min-width: 0;
@@ -725,17 +726,20 @@
 
 .admin-ticket-search {
   position: relative;
+  display: flex;
 }
 
 .admin-ticket-search svg {
   position: absolute;
   left: 0.78rem;
-  bottom: 0.72rem;
+  top: 50%;
+  transform: translateY(-50%);
   color: #31506f;
   pointer-events: none;
 }
 
 .admin-ticket-search input {
+  margin: 0;
   padding-left: 2.25rem;
 }
 

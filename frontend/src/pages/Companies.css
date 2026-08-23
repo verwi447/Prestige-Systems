@@ -1327,7 +1327,7 @@ html[data-theme="dark"] .company-view-button.active {
 
 .sites-search {
   position: relative;
-  display: block;
+  display: flex;
 }
 
 .sites-search svg {
@@ -1355,6 +1355,7 @@ html[data-theme="dark"] .company-view-button.active {
 }
 
 .sites-search input {
+  margin: 0;
   padding-left: 2.35rem;
 }
 

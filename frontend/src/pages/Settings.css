@@ -787,6 +787,7 @@
 
 .admin-search {
   position: relative;
+  display: flex;
   width: min(280px, 34vw);
 }
 
@@ -804,6 +805,7 @@
 }
 
 .admin-search input {
+  margin: 0;
   padding-right: 2.45rem;
 }
 

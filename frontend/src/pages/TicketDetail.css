@@ -1262,6 +1262,7 @@
 
 .ticket-admin-search input {
   border: 0;
+  margin: 0;
 }
 
 .ticket-admin-admin-list {
