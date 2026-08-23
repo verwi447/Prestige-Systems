@@ -241,16 +241,12 @@ export default function AiAssistantSettings() {
                     </button>
                     <div className="ai-equipment-row-actions">
                       <button type="button" title="Edytuj nazwe" onClick={() => startEditEquipment(item)}><Pencil size={13} /></button>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={item.isActive}
-                        className={item.isActive ? "ai-equipment-toggle on" : "ai-equipment-toggle"}
+                      <BarrierCheckbox
+                        className="ai-equipment-toggle"
+                        checked={item.isActive}
+                        onChange={() => toggleEquipmentActive(item)}
                         title={item.isActive ? "Aktywne - widoczne dla klienta w zgloszeniach" : "Nieaktywne - ukryte dla klienta"}
-                        onClick={() => toggleEquipmentActive(item)}
-                      >
-                        <i />
-                      </button>
+                      />
                     </div>
                   </>
                 )}
