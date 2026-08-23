@@ -36,6 +36,7 @@ export default function AiAssistantSettings() {
   const [form, setForm] = useState(null);
   const [formSaving, setFormSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
 
   const loadSettings = useCallback(async () => {
     setLoading(true);
@@ -83,7 +84,7 @@ export default function AiAssistantSettings() {
     }
   };
 
-  const openNewEntryForm = () => setForm(emptyForm);
+  const openNewEntryForm = () => setForm({ ...emptyForm, category: selectedCategory === "ALL" ? "Ogólne" : selectedCategory });
   const openEditEntryForm = (entry) => setForm({ id: entry.id, title: entry.title, category: entry.category, content: entry.content });
   const closeForm = () => setForm(null);
 
@@ -130,6 +131,11 @@ export default function AiAssistantSettings() {
 
   const hasChanges = autoSendEnabled !== Boolean(settings.auto_send_enabled);
   const categorySuggestions = [...new Set([...defaultCategorySuggestions, ...knowledgeEntries.map((entry) => entry.category)])];
+  const categoryCounts = knowledgeEntries.reduce((counts, entry) => {
+    counts[entry.category] = (counts[entry.category] || 0) + 1;
+    return counts;
+  }, {});
+  const filteredEntries = selectedCategory === "ALL" ? knowledgeEntries : knowledgeEntries.filter((entry) => entry.category === selectedCategory);
 
   return (
     <div className="page ai-settings-page">
@@ -177,62 +183,85 @@ export default function AiAssistantSettings() {
             <h2>Baza wiedzy o sprzecie i naprawach</h2>
             <p>Wpisy sa dolaczane do kazdej analizy AI jako najbardziej wiarygodne zrodlo wiedzy.</p>
           </div>
-          {!form && (
-            <button type="button" className="ai-knowledge-add" onClick={openNewEntryForm}>
-              <Plus aria-hidden="true" /> Dodaj wpis
-            </button>
-          )}
         </header>
 
-        {form && (
-          <form className="ai-knowledge-form" onSubmit={submitForm}>
-            <label>
-              <span>Tytul</span>
-              <input type="text" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Np. Szlaban CAME Gard 4 - typowe usterki" maxLength={200} required />
-            </label>
-            <label>
-              <span>Kategoria (urzadzenie)</span>
-              <input type="text" list="ai-knowledge-categories" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Np. Terminal wjazdowy" maxLength={80} />
-              <datalist id="ai-knowledge-categories">
-                {categorySuggestions.map((value) => <option key={value} value={value} />)}
-              </datalist>
-            </label>
-            <label className="ai-knowledge-form-content">
-              <span>Tresc</span>
-              <textarea rows="6" value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder="Opisz sprzet, typowe usterki i sposob ich rozwiazywania - im konkretniej, tym lepsze sugestie AI." required />
-            </label>
-            <div className="ai-knowledge-form-actions">
-              <button type="button" className="ai-knowledge-cancel" onClick={closeForm}><X aria-hidden="true" /> Anuluj</button>
-              <button type="submit" className="ai-settings-save" disabled={formSaving}>
-                <Save aria-hidden="true" /> {formSaving ? "Zapisywanie..." : "Zapisz wpis"}
+        <div className="ai-knowledge-layout">
+          <nav className="ai-knowledge-categories" aria-label="Kategorie bazy wiedzy">
+            <button type="button" className={selectedCategory === "ALL" ? "active" : ""} onClick={() => setSelectedCategory("ALL")}>
+              <span>Wszystkie</span>
+              <b>{knowledgeEntries.length}</b>
+            </button>
+            {categorySuggestions.map((cat) => (
+              <button type="button" key={cat} className={selectedCategory === cat ? "active" : ""} onClick={() => setSelectedCategory(cat)}>
+                <span>{cat}</span>
+                <b>{categoryCounts[cat] || 0}</b>
               </button>
-            </div>
-          </form>
-        )}
+            ))}
+          </nav>
 
-        <div className="ai-knowledge-list">
-          {knowledgeLoading ? (
-            <AppState compact variant="loading" title="Ladowanie bazy wiedzy" />
-          ) : knowledgeEntries.length ? (
-            knowledgeEntries.map((entry) => (
-              <article className="ai-knowledge-entry" key={entry.id}>
-                <header>
-                  <strong>{entry.title}</strong>
-                  <span className="ai-knowledge-badge">{entry.category}</span>
-                </header>
-                <p>{entry.content}</p>
-                <footer>
-                  <small>{entry.authorName} • {formatDate(entry.updatedAt)}</small>
-                  <div className="ai-knowledge-entry-actions">
-                    <button type="button" onClick={() => openEditEntryForm(entry)}><Pencil aria-hidden="true" /> Edytuj</button>
-                    <button type="button" className="danger" onClick={() => setDeleteTarget(entry)}><Trash2 aria-hidden="true" /> Usun</button>
-                  </div>
-                </footer>
-              </article>
-            ))
-          ) : (
-            <AppState compact variant="empty" title="Baza wiedzy jest pusta" description="Dodaj pierwszy wpis o sprzecie lub typowej naprawie, aby AI mogl z niego korzystac." />
-          )}
+          <div className="ai-knowledge-main">
+            <div className="ai-knowledge-main-header">
+              <h3>{selectedCategory === "ALL" ? "Wszystkie wpisy" : selectedCategory}</h3>
+              {!form && (
+                <button type="button" className="ai-knowledge-add" onClick={openNewEntryForm}>
+                  <Plus aria-hidden="true" /> Dodaj wpis
+                </button>
+              )}
+            </div>
+
+            {form && (
+              <form className="ai-knowledge-form" onSubmit={submitForm}>
+                <label>
+                  <span>Tytul</span>
+                  <input type="text" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Np. Szlaban CAME Gard 4 - typowe usterki" maxLength={200} required />
+                </label>
+                <label>
+                  <span>Kategoria (urzadzenie)</span>
+                  <input type="text" list="ai-knowledge-categories" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Np. Terminal wjazdowy" maxLength={80} />
+                  <datalist id="ai-knowledge-categories">
+                    {categorySuggestions.map((value) => <option key={value} value={value} />)}
+                  </datalist>
+                </label>
+                <label className="ai-knowledge-form-content">
+                  <span>Tresc</span>
+                  <textarea rows="6" value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder="Opisz sprzet, typowe usterki i sposob ich rozwiazywania - im konkretniej, tym lepsze sugestie AI." required />
+                </label>
+                <div className="ai-knowledge-form-actions">
+                  <button type="button" className="ai-knowledge-cancel" onClick={closeForm}><X aria-hidden="true" /> Anuluj</button>
+                  <button type="submit" className="ai-settings-save" disabled={formSaving}>
+                    <Save aria-hidden="true" /> {formSaving ? "Zapisywanie..." : "Zapisz wpis"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className="ai-knowledge-list">
+              {knowledgeLoading ? (
+                <AppState compact variant="loading" title="Ladowanie bazy wiedzy" />
+              ) : filteredEntries.length ? (
+                filteredEntries.map((entry) => (
+                  <article className="ai-knowledge-entry" key={entry.id}>
+                    <header>
+                      <strong>{entry.title}</strong>
+                      {selectedCategory === "ALL" && <span className="ai-knowledge-badge">{entry.category}</span>}
+                    </header>
+                    <p>{entry.content}</p>
+                    <footer>
+                      <small>{entry.authorName} • {formatDate(entry.updatedAt)}</small>
+                      <div className="ai-knowledge-entry-actions">
+                        <button type="button" onClick={() => openEditEntryForm(entry)}><Pencil aria-hidden="true" /> Edytuj</button>
+                        <button type="button" className="danger" onClick={() => setDeleteTarget(entry)}><Trash2 aria-hidden="true" /> Usun</button>
+                      </div>
+                    </footer>
+                  </article>
+                ))
+              ) : selectedCategory === "ALL" ? (
+                <AppState compact variant="empty" title="Baza wiedzy jest pusta" description="Dodaj pierwszy wpis o sprzecie lub typowej naprawie, aby AI mogl z niego korzystac." />
+              ) : (
+                <AppState compact variant="empty" title="Brak wpisow w tej kategorii" description={`Dodaj pierwszy wpis dla kategorii "${selectedCategory}".`} />
+              )}
+            </div>
+          </div>
         </div>
       </section>
 

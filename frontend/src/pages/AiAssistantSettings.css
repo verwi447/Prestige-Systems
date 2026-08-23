@@ -2,10 +2,8 @@
   display: grid;
   gap: 16px;
   color: #071b3b;
-  max-width: 880px;
+  max-width: 1040px;
 }
-
-.ai-settings-panel-header > button { margin-left: auto; }
 
 .ai-settings-header h1,
 .ai-settings-header p,
@@ -98,6 +96,76 @@
 .ai-settings-save:hover { background: #078b46; }
 .ai-settings-save:disabled { cursor: default; opacity: 0.55; }
 .ai-settings-save svg { width: 17px; height: 17px; }
+
+.ai-knowledge-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: start;
+}
+
+.ai-knowledge-categories {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border-right: 1px solid #e5ebf3;
+  background: #fbfcfe;
+  align-self: stretch;
+}
+
+.ai-knowledge-categories button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #354a67;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ai-knowledge-categories button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-knowledge-categories button b {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 1px 7px;
+  background: #eef2f7;
+  color: #7c8ba3;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ai-knowledge-categories button:hover { background: #eef2f7; }
+.ai-knowledge-categories button.active { background: #eaf1ff; color: #0b56b3; }
+.ai-knowledge-categories button.active b { background: #d7e6ff; color: #0b56b3; }
+
+.ai-knowledge-main { min-width: 0; }
+
+.ai-knowledge-main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5ebf3;
+}
+
+.ai-knowledge-main-header h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #071b3b;
+}
 
 .ai-knowledge-add {
   display: flex;
@@ -256,6 +324,8 @@
 @media (max-width: 760px) {
   .ai-settings-panel-footer { align-items: stretch; flex-direction: column; }
   .ai-settings-save { width: 100%; }
+  .ai-knowledge-layout { grid-template-columns: 1fr; }
+  .ai-knowledge-categories { display: flex; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid #e5ebf3; }
   .ai-knowledge-form { grid-template-columns: 1fr; }
   .ai-knowledge-entry footer { align-items: flex-start; flex-direction: column; }
 }
@@ -301,6 +371,42 @@ html[data-theme="dark"] .ai-settings-message {
   background: #3a1414;
   border-color: #6b2020;
   color: #ff9d9d;
+}
+
+html[data-theme="dark"] .ai-knowledge-categories {
+  background: #0d1928;
+  border-color: #29435d;
+}
+
+html[data-theme="dark"] .ai-knowledge-categories button {
+  color: #c7d7e8;
+}
+
+html[data-theme="dark"] .ai-knowledge-categories button b {
+  background: #1c3550;
+  color: #8ea0b8;
+}
+
+html[data-theme="dark"] .ai-knowledge-categories button:hover {
+  background: #16324e;
+}
+
+html[data-theme="dark"] .ai-knowledge-categories button.active {
+  background: #16324e;
+  color: #70baff;
+}
+
+html[data-theme="dark"] .ai-knowledge-categories button.active b {
+  background: #1c3550;
+  color: #70baff;
+}
+
+html[data-theme="dark"] .ai-knowledge-main-header {
+  border-bottom-color: #29435d;
+}
+
+html[data-theme="dark"] .ai-knowledge-main-header h3 {
+  color: #edf5ff;
 }
 
 html[data-theme="dark"] .ai-knowledge-add {
