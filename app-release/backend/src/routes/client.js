@@ -1781,7 +1781,7 @@ router.get("/tickets/:id", requirePermission("VIEW_TICKETS"), async (req, res) =
       [req.params.id]
     ),
     db.query(
-      `SELECT tc.id, tc.content, tc.created_at,
+      `SELECT tc.id, tc.content, tc.created_at, COALESCE(tc.is_ai_generated, FALSE) AS is_ai_generated,
               u.id AS author_id, u.role AS author_role, u.first_name, u.last_name, u.email
        FROM ticket_comments tc
        LEFT JOIN users u ON u.id=tc.author_id
@@ -1813,8 +1813,11 @@ router.get("/tickets/:id", requirePermission("VIEW_TICKETS"), async (req, res) =
     content: comment.content,
     createdAt: comment.created_at,
     authorId: comment.author_id,
-    authorRole: comment.author_role,
-    authorName: [comment.first_name, comment.last_name].filter(Boolean).join(" ") || comment.email || "-"
+    isAiGenerated: Boolean(comment.is_ai_generated),
+    authorRole: comment.is_ai_generated ? "AI" : comment.author_role,
+    authorName: comment.is_ai_generated
+      ? "Prestige Systems"
+      : [comment.first_name, comment.last_name].filter(Boolean).join(" ") || comment.email || "-"
   }));
   const history = [
     {
