@@ -27,7 +27,7 @@ function guessMimeType(fileName) {
 
 async function fetchTicket(ticketId) {
   const result = await db.query(
-    "SELECT id, type, subject, description, object_id FROM tickets WHERE id=$1",
+    "SELECT id, type, subject, description, object_id, category FROM tickets WHERE id=$1",
     [ticketId]
   );
   return result.rows[0] || null;
@@ -53,12 +53,12 @@ async function fetchTicketImages(ticketId) {
   return images;
 }
 
-async function fetchKnowledgeEntries() {
+async function fetchKnowledgeEntries(ticket) {
   const result = await db.query(
     `SELECT title, content, category FROM ai_knowledge_base
-     ORDER BY updated_at DESC
-     LIMIT $1`,
-    [MAX_KNOWLEDGE_ENTRIES]
+     ORDER BY (category = $1) DESC, updated_at DESC
+     LIMIT $2`,
+    [ticket.category || "", MAX_KNOWLEDGE_ENTRIES]
   );
   return result.rows;
 }
@@ -101,6 +101,7 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages) {
     knowledge ? `Ponizej znajduje sie WEWNETRZNA BAZA WIEDZY firmy o konkretnych urzadzeniach (np. terminal wjazdowy, terminal wyjazdowy, terminal wyjazdowy z terminalem platniczym, szlaban, kamera) i procedurach napraw, wpisana recznie przez administratorow. Kazdy wpis ma etykiete urzadzenia w nawiasach kwadratowych. Traktuj pasujace wpisy jako NAJBARDZIEJ WIARYGODNE zrodlo - jesli urzadzenie lub objaw ze zgloszenia pasuje do ktoregos wpisu, oprzyj diagnoze na nim zamiast na ogolnych domyslach. Wpisy dla innych urzadzen ignoruj:\n\n${knowledge}` : "",
     examples ? `Oto podobne wczesniej rozwiazane zgloszenia - trzymaj sie podobnego stylu i sposobu rozwiazywania, jesli pasuja do obecnego przypadku:\n\n${examples}` : "",
     `Typ zgloszenia: ${typeLabel}`,
+    ticket.category ? `Urzadzenie wskazane przez klienta: ${ticket.category}` : "",
     `Temat: ${ticket.subject}`,
     `Opis klienta: ${ticket.description || "(brak opisu)"}`
   ].filter(Boolean).join("\n\n");
@@ -200,7 +201,7 @@ export async function analyzeTicketWithAi(ticketId) {
     const [images, similarTickets, knowledgeEntries] = await Promise.all([
       fetchTicketImages(ticketId),
       fetchSimilarResolvedTickets(ticket),
-      fetchKnowledgeEntries()
+      fetchKnowledgeEntries(ticket)
     ]);
 
     const prompt = buildPrompt(ticket, knowledgeEntries, similarTickets, images.length > 0);

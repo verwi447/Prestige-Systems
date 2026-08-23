@@ -1860,12 +1860,25 @@ router.get("/tickets/:id", requirePermission("VIEW_TICKETS"), async (req, res) =
   });
 });
 
+const defaultTicketCategories = ["Ogólne", "Terminal wjazdowy", "Terminal wyjazdowy", "Terminal wyjazdowy z terminalem płatniczym", "Szlaban", "Kamera ANPR"];
+
+router.get("/ticket-categories", requirePermission("CREATE_TICKET"), async (_req, res) => {
+  try {
+    const result = await db.query("SELECT DISTINCT category FROM ai_knowledge_base ORDER BY category");
+    const merged = [...new Set([...defaultTicketCategories, ...result.rows.map((row) => row.category)])];
+    res.json(merged);
+  } catch (error) {
+    res.json(defaultTicketCategories);
+  }
+});
+
 router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => {
   const companyId = companyIdFromUser(req);
   const type = normalizeTicketType(req.body.type);
   const siteId = Number(req.body.siteId ?? req.body.object_id);
   const title = String(req.body.title ?? req.body.subject ?? "").trim();
   const description = String(req.body.description ?? "").trim();
+  const category = String(req.body.category ?? "").trim() || null;
   const priority = normalizeTicketPriority(req.body.priority, type);
   const blocksWork = Boolean(req.body.blocksWork ?? req.body.blocks_work);
   const contactName = String(req.body.contactName ?? req.body.contact_name ?? "").trim() || null;
@@ -1901,11 +1914,11 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
     const ticket = await client.query(
       `INSERT INTO tickets (
         ticket_number, type, object_id, subject, description, customer_id, created_by, status,
-        priority, blocks_work, contact_name, contact_phone, updated_at
+        priority, blocks_work, contact_name, contact_phone, category, updated_at
       )
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'NEW',$8,$9,$10,$11,CURRENT_TIMESTAMP)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'NEW',$8,$9,$10,$11,$12,CURRENT_TIMESTAMP)
        RETURNING *`,
-      [ticketNumber, type, siteId, title, description || null, customerId, req.currentUser.id, priority, blocksWork, contactName, contactPhone]
+      [ticketNumber, type, siteId, title, description || null, customerId, req.currentUser.id, priority, blocksWork, contactName, contactPhone, category]
     );
 
     if (type === "ORDER") {

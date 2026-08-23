@@ -39,8 +39,8 @@ const typeLabels = {
 };
 
 const typeDescriptions = {
-  SYSTEM_FAILURE: "Problem z dzialaniem aplikacji, konfiguracji, dostepem lub systemem.",
-  HARDWARE_FAILURE: "Problem z urzadzeniem, czytnikiem, kontrolerem, zamkiem lub innym sprzetem.",
+  SYSTEM_FAILURE: "Bledne dzialanie urzadzenia, brak dostepu lub problem z konfiguracja systemu.",
+  HARDWARE_FAILURE: "Mechaniczne uszkodzenie urzadzenia - szlabanu, czytnika, kontrolera lub innego sprzetu.",
   ORDER: "Wybierz artykuly z katalogu i okresl ilosci."
 };
 
@@ -131,6 +131,7 @@ export default function NewTicket({ mode = "ticket" }) {
   const [activeStep, setActiveStep] = useState(firstStep);
   const [sites, setSites] = useState([]);
   const [catalog, setCatalog] = useState([]);
+  const [ticketCategories, setTicketCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -144,6 +145,7 @@ export default function NewTicket({ mode = "ticket" }) {
     type: orderFlow ? "ORDER" : "",
     siteId: "",
     title: orderFlow ? "Zamowienie artykulow" : "",
+    category: "Ogólne",
     description: "",
     priority: "NORMAL",
     blocksWork: false,
@@ -156,13 +158,15 @@ export default function NewTicket({ mode = "ticket" }) {
     let mounted = true;
     const load = async () => {
       try {
-        const [sitesRes, catalogRes] = await Promise.all([
+        const [sitesRes, catalogRes, categoriesRes] = await Promise.all([
           clientAPI.companySites(),
-          canViewCatalog ? clientAPI.catalog() : Promise.resolve({ data: [] })
+          canViewCatalog ? clientAPI.catalog() : Promise.resolve({ data: [] }),
+          orderFlow ? Promise.resolve({ data: [] }) : clientAPI.ticketCategories().catch(() => ({ data: [] }))
         ]);
         if (!mounted) return;
         setSites(Array.isArray(sitesRes.data) ? sitesRes.data : []);
         setCatalog(Array.isArray(catalogRes.data) ? catalogRes.data : []);
+        setTicketCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
       } catch (err) {
         if (mounted) setError(err.response?.status === 403 ? "Brak dostepu do tworzenia zgloszen." : "Nie udalo sie pobrac danych kreatora.");
       } finally {
@@ -173,7 +177,11 @@ export default function NewTicket({ mode = "ticket" }) {
     return () => {
       mounted = false;
     };
-  }, [canViewCatalog]);
+  }, [canViewCatalog, orderFlow]);
+
+  const step1Complete = Boolean(form.siteId) && form.title.trim().length > 0;
+  const step2Complete = step1Complete && form.description.trim().length > 0;
+  const step4Complete = step2Complete && form.contactName.trim().length > 0 && form.contactPhone.trim().length > 0;
 
   const selectedSite = sites.find((site) => String(site.id) === String(form.siteId));
   const selectedSiteAddress = selectedSite ? [selectedSite.address, selectedSite.postalCode || selectedSite.postal_code, selectedSite.city].filter(Boolean).join(", ") : "";
@@ -277,6 +285,7 @@ export default function NewTicket({ mode = "ticket" }) {
         type: form.type,
         siteId: Number(form.siteId),
         title: form.title,
+        category: isFailure ? form.category : undefined,
         description: form.description,
         priority: form.priority,
         blocksWork: form.blocksWork,
@@ -327,8 +336,8 @@ export default function NewTicket({ mode = "ticket" }) {
               </div>
               {form.group === "failure" && (
                 <div className="ticket-subtype-grid">
-                  <ChoiceCard icon={MonitorCog} title="Awaria systemu" description="Problem z dzialaniem systemu, aplikacji, konfiguracji lub dostepem." selected={form.type === "SYSTEM_FAILURE"} onClick={() => chooseFailureType("SYSTEM_FAILURE")} />
-                  <ChoiceCard icon={Cpu} title="Awaria sprzetu" description="Problem z urzadzeniem, czytnikiem, kontrolerem, zamkiem lub innym sprzetem." selected={form.type === "HARDWARE_FAILURE"} onClick={() => chooseFailureType("HARDWARE_FAILURE")} />
+                  <ChoiceCard icon={MonitorCog} title="Awaria systemu" description="Bledne dzialanie urzadzenia, brak dostepu lub problem z konfiguracja systemu." selected={form.type === "SYSTEM_FAILURE"} onClick={() => chooseFailureType("SYSTEM_FAILURE")} />
+                  <ChoiceCard icon={Cpu} title="Awaria sprzetu" description="Mechaniczne uszkodzenie urzadzenia - szlabanu, czytnika, kontrolera lub innego sprzetu." selected={form.type === "HARDWARE_FAILURE"} onClick={() => chooseFailureType("HARDWARE_FAILURE")} />
                 </div>
               )}
               {errors.type && <p className="ticket-inline-error">{errors.type}</p>}
@@ -361,57 +370,79 @@ export default function NewTicket({ mode = "ticket" }) {
                     <Field label="Tytul zgloszenia" error={errors.title} required>
                       <input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Np. Nie dziala rejestracja czasu pracy" />
                     </Field>
+                    <Field label="Kategoria sprzetu" className="full">
+                      <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
+                        {ticketCategories.map((item) => <option key={item} value={item}>{item}</option>)}
+                      </select>
+                      <small>Pomaga serwisowi i asystentowi AI szybciej rozpoznac, ktorego urzadzenia dotyczy zgloszenie.</small>
+                    </Field>
                   </div>
 
-                  <SectionTitle number="2" title="Opis problemu" />
-                  <Field label="Opis" error={errors.description} required>
-                    <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={6} placeholder="Opisz problem, kiedy wystepuje i czego dotyczy." />
-                    <small>Im dokladniejszy opis, tym szybciej serwis bedzie mogl zareagowac.</small>
-                  </Field>
-
-                  <SectionTitle number="3" title="Priorytet i wplyw na prace" />
-                  <div className="ticket-priority-grid">
-                    {priorityOptions.map((option) => <PriorityCard key={option.value} option={option} selected={form.priority === option.value} onClick={() => setForm({ ...form, priority: option.value })} />)}
-                  </div>
-                  {errors.priority && <p className="ticket-inline-error">{errors.priority}</p>}
-                  <div className={form.blocksWork ? "ticket-block-card active" : "ticket-block-card"}>
-                    <span><Info size={22} /></span>
-                    <div>
-                      <strong>Czy sprawa blokuje prace?</strong>
-                      <small>Zaznacz, jesli problem uniemozliwia normalne korzystanie z systemu lub obiektu.</small>
+                  {step1Complete && (
+                    <div className="ticket-reveal">
+                      <SectionTitle number="2" title="Opis problemu" />
+                      <Field label="Opis" error={errors.description} required>
+                        <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={6} placeholder="Opisz problem, kiedy wystepuje i czego dotyczy." autoFocus />
+                        <small>Im dokladniejszy opis, tym szybciej serwis bedzie mogl zareagowac.</small>
+                      </Field>
                     </div>
-                    {form.blocksWork && <em>Blokuje prace</em>}
-                    <button type="button" className={form.blocksWork ? "ticket-switch on" : "ticket-switch"} onClick={() => setForm({ ...form, blocksWork: !form.blocksWork })} aria-label="Czy sprawa blokuje prace"><i /></button>
-                  </div>
+                  )}
 
-                  <SectionTitle number="4" title="Kontakt" />
-                  <div className="ticket-form-grid">
-                    <Field label="Osoba kontaktowa" required>
-                      <input value={form.contactName} onChange={(event) => setForm({ ...form, contactName: event.target.value })} />
-                    </Field>
-                    <Field label="Telefon kontaktowy" required>
-                      <input value={form.contactPhone} onChange={(event) => setForm({ ...form, contactPhone: event.target.value })} />
-                    </Field>
-                  </div>
-
-                  <SectionTitle number="5" title="Zalaczniki" />
-                  <p className="ticket-section-note">Dodaj zdjecia, zrzuty ekranu lub dokumenty, ktore pomoga w rozwiazaniu zgloszenia.</p>
-                  <label className="ticket-upload-zone" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); addFiles(event.dataTransfer.files); }}>
-                    <UploadCloud size={30} />
-                    <strong>Przeciagnij pliki tutaj lub kliknij, aby wybrac</strong>
-                    <span>JPG, JPEG, PNG, WEBP, PDF, DOC, DOCX. Maksymalnie 20 MB na plik.</span>
-                    <input type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" onChange={(event) => addFiles(event.target.files)} />
-                  </label>
-                  {fileError && <p className="ticket-inline-error">{fileError}</p>}
-                  <div className="ticket-files-list">
-                    {files.map((file, index) => (
-                      <div key={`${file.name}-${index}`}>
-                        <Paperclip size={16} />
-                        <span>{file.name}<small>{fileSize(file.size)}</small></span>
-                        <button type="button" onClick={() => setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={15} /></button>
+                  {step2Complete && (
+                    <div className="ticket-reveal">
+                      <SectionTitle number="3" title="Priorytet i wplyw na prace" />
+                      <div className="ticket-priority-grid">
+                        {priorityOptions.map((option) => <PriorityCard key={option.value} option={option} selected={form.priority === option.value} onClick={() => setForm({ ...form, priority: option.value })} />)}
                       </div>
-                    ))}
-                  </div>
+                      {errors.priority && <p className="ticket-inline-error">{errors.priority}</p>}
+                      <div className={form.blocksWork ? "ticket-block-card active" : "ticket-block-card"}>
+                        <span><Info size={22} /></span>
+                        <div>
+                          <strong>Czy sprawa blokuje prace?</strong>
+                          <small>Zaznacz, jesli problem uniemozliwia normalne korzystanie z systemu lub obiektu.</small>
+                        </div>
+                        {form.blocksWork && <em>Blokuje prace</em>}
+                        <button type="button" className={form.blocksWork ? "ticket-switch on" : "ticket-switch"} onClick={() => setForm({ ...form, blocksWork: !form.blocksWork })} aria-label="Czy sprawa blokuje prace"><i /></button>
+                      </div>
+                    </div>
+                  )}
+
+                  {step2Complete && (
+                    <div className="ticket-reveal">
+                      <SectionTitle number="4" title="Kontakt" />
+                      <div className="ticket-form-grid">
+                        <Field label="Osoba kontaktowa" required>
+                          <input value={form.contactName} onChange={(event) => setForm({ ...form, contactName: event.target.value })} />
+                        </Field>
+                        <Field label="Telefon kontaktowy" required>
+                          <input value={form.contactPhone} onChange={(event) => setForm({ ...form, contactPhone: event.target.value })} />
+                        </Field>
+                      </div>
+                    </div>
+                  )}
+
+                  {step4Complete && (
+                    <div className="ticket-reveal">
+                      <SectionTitle number="5" title="Zalaczniki" />
+                      <p className="ticket-section-note">Dodaj zdjecia, zrzuty ekranu lub dokumenty, ktore pomoga w rozwiazaniu zgloszenia.</p>
+                      <label className="ticket-upload-zone" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); addFiles(event.dataTransfer.files); }}>
+                        <UploadCloud size={30} />
+                        <strong>Przeciagnij pliki tutaj lub kliknij, aby wybrac</strong>
+                        <span>JPG, JPEG, PNG, WEBP, PDF, DOC, DOCX. Maksymalnie 20 MB na plik.</span>
+                        <input type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" onChange={(event) => addFiles(event.target.files)} />
+                      </label>
+                      {fileError && <p className="ticket-inline-error">{fileError}</p>}
+                      <div className="ticket-files-list">
+                        {files.map((file, index) => (
+                          <div key={`${file.name}-${index}`}>
+                            <Paperclip size={16} />
+                            <span>{file.name}<small>{fileSize(file.size)}</small></span>
+                            <button type="button" onClick={() => setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={15} /></button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 

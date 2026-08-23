@@ -66,6 +66,7 @@ export const client = {
     });
   },
   requestTicketAiAnalysis: (id) => api.post(`/api/client/tickets/${id}/ai-analysis`, null, { skipGlobalFeedback: true }),
+  ticketCategories: () => api.get("/api/client/ticket-categories"),
   catalog: () => api.get("/api/client/catalog"),
   sites: () => api.get("/api/client/sites"),
   employees: () => api.get("/api/client/employees")
