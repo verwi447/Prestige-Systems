@@ -10,6 +10,7 @@ const ticketUploadDir = path.join(__dirname, "../../uploads/tickets");
 
 const GEMINI_MODEL = "gemini-3.6-flash";
 const MAX_SIMILAR_TICKETS = 3;
+const MAX_KNOWLEDGE_ENTRIES = 20;
 const MAX_PHOTOS = 4;
 const MAX_OUTPUT_TOKENS = 2048;
 
@@ -52,6 +53,17 @@ async function fetchTicketImages(ticketId) {
   return images;
 }
 
+async function fetchKnowledgeEntries(ticket) {
+  const result = await db.query(
+    `SELECT title, content FROM ai_knowledge_base
+     WHERE category='GENERAL' OR category=$1
+     ORDER BY updated_at DESC
+     LIMIT $2`,
+    [ticket.type, MAX_KNOWLEDGE_ENTRIES]
+  );
+  return result.rows;
+}
+
 async function fetchSimilarResolvedTickets(ticket) {
   const result = await db.query(
     `SELECT t.id, t.subject, t.description,
@@ -67,10 +79,14 @@ async function fetchSimilarResolvedTickets(ticket) {
   return result.rows.filter((row) => row.resolution);
 }
 
-function buildPrompt(ticket, similarTickets, hasImages) {
+function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages) {
   const typeLabel = ticket.type === "HARDWARE_FAILURE"
     ? "awaria sprzetu (szlaban parkingowy lub kamera ANPR)"
     : "awaria systemu / problem z dzialaniem uslugi";
+
+  const knowledge = knowledgeEntries
+    .map((row, index) => `Wpis ${index + 1} - ${row.title}:\n${row.content}`)
+    .join("\n\n");
 
   const examples = similarTickets
     .map((row, index) => `Przyklad ${index + 1}:\nZgloszenie: "${row.subject}. ${row.description || ""}"\nRozwiazanie admina: "${row.resolution}"`)
@@ -83,6 +99,7 @@ function buildPrompt(ticket, similarTickets, hasImages) {
     "Jesli opis sugeruje typowy przypadek (np. pojazd nie wjechal na petle indukcyjna, brak zasilania, awaria czujnika, zablokowany wjazd), zaproponuj najbardziej prawdopodobna przyczyne.",
     "Odpowiadaj rzeczowo, 2-5 zdan, bez wstepow typu 'Oczywiscie' czy 'Na podstawie zdjecia widze'. Pisz od razu tresc gotowa do przejrzenia przez admina.",
     "To jest TYLKO sugestia dla admina - nie jest jeszcze widoczna dla klienta, wiec nie pisz 'Szanowny Kliencie' ani formalnych powitan.",
+    knowledge ? `Ponizej znajduje sie WEWNETRZNA BAZA WIEDZY firmy o sprzecie i procedurach napraw, wpisana recznie przez administratorow. Traktuj ja jako NAJBARDZIEJ WIARYGODNE zrodlo - jesli cos w niej pasuje do zgloszenia, oprzyj diagnoze na niej zamiast na ogolnych domyslach:\n\n${knowledge}` : "",
     examples ? `Oto podobne wczesniej rozwiazane zgloszenia - trzymaj sie podobnego stylu i sposobu rozwiazywania, jesli pasuja do obecnego przypadku:\n\n${examples}` : "",
     `Typ zgloszenia: ${typeLabel}`,
     `Temat: ${ticket.subject}`,
@@ -181,12 +198,13 @@ export async function analyzeTicketWithAi(ticketId) {
     const ticket = await fetchTicket(ticketId);
     if (!ticket || !analyzableTypes.has(ticket.type)) return;
 
-    const [images, similarTickets] = await Promise.all([
+    const [images, similarTickets, knowledgeEntries] = await Promise.all([
       fetchTicketImages(ticketId),
-      fetchSimilarResolvedTickets(ticket)
+      fetchSimilarResolvedTickets(ticket),
+      fetchKnowledgeEntries(ticket)
     ]);
 
-    const prompt = buildPrompt(ticket, similarTickets, images.length > 0);
+    const prompt = buildPrompt(ticket, knowledgeEntries, similarTickets, images.length > 0);
     const suggestion = await callGemini(prompt, images);
     if (!suggestion) return;
 

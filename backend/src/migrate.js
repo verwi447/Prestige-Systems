@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -982,12 +982,27 @@ async function addAiAssistantSettingsTable({ query }) {
   `);
 }
 
+async function addAiKnowledgeBaseTable({ query }) {
+  await query(`
+    CREATE TABLE IF NOT EXISTS ai_knowledge_base (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'GENERAL',
+      created_by INT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
 export function getMigrationDefinitions() {
   return [
     { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
     { ...ADD_PASSWORD_CHANGED_AT_MIGRATION, up: addPasswordChangedAtColumn },
     { ...ADD_AI_TICKET_COMMENT_MIGRATION, up: addAiTicketCommentColumn },
-    { ...ADD_AI_ASSISTANT_SETTINGS_MIGRATION, up: addAiAssistantSettingsTable }
+    { ...ADD_AI_ASSISTANT_SETTINGS_MIGRATION, up: addAiAssistantSettingsTable },
+    { ...ADD_AI_KNOWLEDGE_BASE_MIGRATION, up: addAiKnowledgeBaseTable }
   ];
 }
 

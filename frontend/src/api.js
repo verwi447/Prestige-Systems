@@ -122,7 +122,11 @@ export const system = {
 
 export const aiAssistant = {
   getSettings: () => api.get("/api/ai-assistant/settings"),
-  updateSettings: (data) => api.put("/api/ai-assistant/settings", data)
+  updateSettings: (data) => api.put("/api/ai-assistant/settings", data),
+  getKnowledge: () => api.get("/api/ai-assistant/knowledge"),
+  createKnowledge: (data) => api.post("/api/ai-assistant/knowledge", data),
+  updateKnowledge: (id, data) => api.put(`/api/ai-assistant/knowledge/${id}`, data),
+  deleteKnowledge: (id) => api.delete(`/api/ai-assistant/knowledge/${id}`)
 };
 
 export const auditLog = {

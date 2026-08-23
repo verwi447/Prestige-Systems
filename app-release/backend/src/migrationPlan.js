@@ -26,4 +26,11 @@ export const ADD_AI_ASSISTANT_SETTINGS_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_AI_ASSISTANT_SETTINGS_MIGRATION.id;
+export const ADD_AI_KNOWLEDGE_BASE_MIGRATION = Object.freeze({
+  id: "2026.08.23.002",
+  checksum: "add-ai-knowledge-base-v1",
+  description: "Dodaje baze wiedzy asystenta AI (sprzet i procedury napraw)",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_AI_KNOWLEDGE_BASE_MIGRATION.id;

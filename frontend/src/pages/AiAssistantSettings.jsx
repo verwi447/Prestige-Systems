@@ -1,10 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
-import { Save, Sparkles } from "lucide-react";
+import { BookOpen, Pencil, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
 import { aiAssistant } from "../api";
 import AppState from "../components/AppState";
 import BarrierCheckbox from "../components/BarrierCheckbox";
-import { getRequestErrorMessage, showSuccess } from "../lib/feedback";
+import ConfirmationModal from "../components/ConfirmationModal";
+import { getRequestErrorMessage, showFeedback, showSuccess } from "../lib/feedback";
 import "./AiAssistantSettings.css";
+
+const categoryLabels = {
+  GENERAL: "Ogólne",
+  HARDWARE_FAILURE: "Awaria sprzętu",
+  SYSTEM_FAILURE: "Awaria systemu"
+};
+
+const emptyForm = { id: null, title: "", category: "GENERAL", content: "" };
+
+function formatDate(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleDateString("pl-PL");
+}
 
 export default function AiAssistantSettings() {
   const [settings, setSettings] = useState(null);
@@ -12,6 +27,12 @@ export default function AiAssistantSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const [knowledgeEntries, setKnowledgeEntries] = useState([]);
+  const [knowledgeLoading, setKnowledgeLoading] = useState(true);
+  const [form, setForm] = useState(null);
+  const [formSaving, setFormSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const loadSettings = useCallback(async () => {
     setLoading(true);
@@ -27,9 +48,22 @@ export default function AiAssistantSettings() {
     }
   }, []);
 
+  const loadKnowledge = useCallback(async () => {
+    setKnowledgeLoading(true);
+    try {
+      const response = await aiAssistant.getKnowledge();
+      setKnowledgeEntries(Array.isArray(response.data) ? response.data : []);
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie pobrac bazy wiedzy."), type: "error" });
+    } finally {
+      setKnowledgeLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadSettings();
-  }, [loadSettings]);
+    loadKnowledge();
+  }, [loadSettings, loadKnowledge]);
 
   const saveSettings = async () => {
     setSaving(true);
@@ -43,6 +77,43 @@ export default function AiAssistantSettings() {
       setError(getRequestErrorMessage(requestError, "Nie udalo sie zapisac ustawien asystenta AI."));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openNewEntryForm = () => setForm(emptyForm);
+  const openEditEntryForm = (entry) => setForm({ id: entry.id, title: entry.title, category: entry.category, content: entry.content });
+  const closeForm = () => setForm(null);
+
+  const submitForm = async (event) => {
+    event.preventDefault();
+    if (!form.title.trim() || !form.content.trim()) {
+      showFeedback({ message: "Podaj tytul i tresc wpisu.", type: "error" });
+      return;
+    }
+    setFormSaving(true);
+    try {
+      const payload = { title: form.title.trim(), category: form.category, content: form.content.trim() };
+      if (form.id) await aiAssistant.updateKnowledge(form.id, payload);
+      else await aiAssistant.createKnowledge(payload);
+      showSuccess(form.id ? "Wpis zostal zaktualizowany." : "Wpis zostal dodany do bazy wiedzy.");
+      setForm(null);
+      await loadKnowledge();
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie zapisac wpisu."), type: "error" });
+    } finally {
+      setFormSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    const entry = deleteTarget;
+    setDeleteTarget(null);
+    try {
+      await aiAssistant.deleteKnowledge(entry.id);
+      showSuccess("Wpis zostal usuniety.");
+      await loadKnowledge();
+    } catch (requestError) {
+      showFeedback({ message: getRequestErrorMessage(requestError, "Nie udalo sie usunac wpisu."), type: "error" });
     }
   };
 
@@ -62,7 +133,7 @@ export default function AiAssistantSettings() {
         <div>
           <div className="ai-settings-breadcrumb">Ustawienia <span>&rsaquo;</span> System <span>&rsaquo;</span> Asystent AI</div>
           <h1>Asystent AI</h1>
-          <p>Steruj tym, jak asystent AI reaguje na nowe zgloszenia serwisowe.</p>
+          <p>Steruj tym, jak asystent AI reaguje na nowe zgloszenia serwisowe i czego sie uczy.</p>
         </div>
       </header>
 
@@ -94,6 +165,81 @@ export default function AiAssistantSettings() {
           </button>
         </footer>
       </section>
+
+      <section className="ai-settings-panel">
+        <header className="ai-settings-panel-header">
+          <span><BookOpen aria-hidden="true" /></span>
+          <div>
+            <h2>Baza wiedzy o sprzecie i naprawach</h2>
+            <p>Wpisy sa dolaczane do kazdej analizy AI jako najbardziej wiarygodne zrodlo wiedzy.</p>
+          </div>
+          {!form && (
+            <button type="button" className="ai-knowledge-add" onClick={openNewEntryForm}>
+              <Plus aria-hidden="true" /> Dodaj wpis
+            </button>
+          )}
+        </header>
+
+        {form && (
+          <form className="ai-knowledge-form" onSubmit={submitForm}>
+            <label>
+              <span>Tytul</span>
+              <input type="text" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Np. Szlaban CAME Gard 4 - typowe usterki" maxLength={200} required />
+            </label>
+            <label>
+              <span>Kategoria</span>
+              <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
+                {Object.entries(categoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <label className="ai-knowledge-form-content">
+              <span>Tresc</span>
+              <textarea rows="6" value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder="Opisz sprzet, typowe usterki i sposob ich rozwiazywania - im konkretniej, tym lepsze sugestie AI." required />
+            </label>
+            <div className="ai-knowledge-form-actions">
+              <button type="button" className="ai-knowledge-cancel" onClick={closeForm}><X aria-hidden="true" /> Anuluj</button>
+              <button type="submit" className="ai-settings-save" disabled={formSaving}>
+                <Save aria-hidden="true" /> {formSaving ? "Zapisywanie..." : "Zapisz wpis"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="ai-knowledge-list">
+          {knowledgeLoading ? (
+            <AppState compact variant="loading" title="Ladowanie bazy wiedzy" />
+          ) : knowledgeEntries.length ? (
+            knowledgeEntries.map((entry) => (
+              <article className="ai-knowledge-entry" key={entry.id}>
+                <header>
+                  <strong>{entry.title}</strong>
+                  <span className={`ai-knowledge-badge ${entry.category}`}>{categoryLabels[entry.category] || entry.category}</span>
+                </header>
+                <p>{entry.content}</p>
+                <footer>
+                  <small>{entry.authorName} • {formatDate(entry.updatedAt)}</small>
+                  <div className="ai-knowledge-entry-actions">
+                    <button type="button" onClick={() => openEditEntryForm(entry)}><Pencil aria-hidden="true" /> Edytuj</button>
+                    <button type="button" className="danger" onClick={() => setDeleteTarget(entry)}><Trash2 aria-hidden="true" /> Usun</button>
+                  </div>
+                </footer>
+              </article>
+            ))
+          ) : (
+            <AppState compact variant="empty" title="Baza wiedzy jest pusta" description="Dodaj pierwszy wpis o sprzecie lub typowej naprawie, aby AI mogl z niego korzystac." />
+          )}
+        </div>
+      </section>
+
+      <ConfirmationModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Usun wpis z bazy wiedzy"
+        confirmText="Usun"
+      >
+        <p>Usunac wpis <strong>{deleteTarget?.title}</strong>? Tej operacji nie mozna cofnac.</p>
+      </ConfirmationModal>
     </div>
   );
 }

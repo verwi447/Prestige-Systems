@@ -2,8 +2,10 @@
   display: grid;
   gap: 16px;
   color: #071b3b;
-  max-width: 760px;
+  max-width: 880px;
 }
+
+.ai-settings-panel-header > button { margin-left: auto; }
 
 .ai-settings-header h1,
 .ai-settings-header p,
@@ -97,9 +99,168 @@
 .ai-settings-save:disabled { cursor: default; opacity: 0.55; }
 .ai-settings-save svg { width: 17px; height: 17px; }
 
+.ai-knowledge-add {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #cbd9e9;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #092c59;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.ai-knowledge-add:hover { border-color: #0b72df; background: #f7fbff; }
+.ai-knowledge-add svg { width: 16px; height: 16px; }
+
+.ai-knowledge-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 14px;
+  padding: 18px;
+  border-bottom: 1px solid #e5ebf3;
+  background: #fbfaff;
+}
+
+.ai-knowledge-form label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ai-knowledge-form label > span {
+  color: #294362;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.ai-knowledge-form input,
+.ai-knowledge-form select,
+.ai-knowledge-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #cbd9e9;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #071b3b;
+  font: inherit;
+  font-size: 14px;
+  outline: 0;
+}
+
+.ai-knowledge-form input,
+.ai-knowledge-form select { min-height: 40px; padding: 0 11px; }
+.ai-knowledge-form textarea { display: block; padding: 10px 11px; resize: vertical; }
+.ai-knowledge-form input:focus,
+.ai-knowledge-form select:focus,
+.ai-knowledge-form textarea:focus { border-color: #0b72df; box-shadow: 0 0 0 3px rgba(11, 114, 223, .13); }
+
+.ai-knowledge-form-content { grid-column: 1 / -1; }
+
+.ai-knowledge-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ai-knowledge-cancel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #cbd9e9;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #4a5b73;
+  font: inherit;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.ai-knowledge-cancel:hover { border-color: #b42332; color: #b42332; }
+.ai-knowledge-cancel svg { width: 16px; height: 16px; }
+
+.ai-knowledge-list { display: grid; }
+
+.ai-knowledge-entry {
+  padding: 15px 18px;
+  border-bottom: 1px solid #e7edf5;
+}
+
+.ai-knowledge-entry:last-child { border-bottom: 0; }
+
+.ai-knowledge-entry header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-knowledge-entry header strong { font-size: 14px; color: #071b3b; }
+
+.ai-knowledge-badge {
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #eef2f7;
+  color: #526173;
+}
+
+.ai-knowledge-badge.HARDWARE_FAILURE { background: #fff1d7; color: #d97706; }
+.ai-knowledge-badge.SYSTEM_FAILURE { background: #e8f2ff; color: #1473e6; }
+
+.ai-knowledge-entry p {
+  margin: 8px 0 0;
+  color: #354a67;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ai-knowledge-entry footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ai-knowledge-entry footer small { color: #7c8ba3; font-size: 11px; font-weight: 600; }
+
+.ai-knowledge-entry-actions { display: flex; gap: 8px; }
+
+.ai-knowledge-entry-actions button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: #4a5b73;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.ai-knowledge-entry-actions button:hover { background: #f0f3f8; }
+.ai-knowledge-entry-actions button.danger:hover { background: #fee2e2; color: #b42332; }
+.ai-knowledge-entry-actions button svg { width: 14px; height: 14px; }
+
 @media (max-width: 760px) {
   .ai-settings-panel-footer { align-items: stretch; flex-direction: column; }
   .ai-settings-save { width: 100%; }
+  .ai-knowledge-form { grid-template-columns: 1fr; }
+  .ai-knowledge-entry footer { align-items: flex-start; flex-direction: column; }
 }
 
 /* Dark theme */
@@ -142,5 +303,83 @@ html[data-theme="dark"] .ai-settings-panel-footer > span {
 html[data-theme="dark"] .ai-settings-message {
   background: #3a1414;
   border-color: #6b2020;
+  color: #ff9d9d;
+}
+
+html[data-theme="dark"] .ai-knowledge-add {
+  background: #101e2e;
+  border-color: #304b66;
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .ai-knowledge-add:hover {
+  border-color: #5da9ea;
+  background: #16324e;
+}
+
+html[data-theme="dark"] .ai-knowledge-form {
+  background: #16324e;
+  border-bottom-color: #29435d;
+}
+
+html[data-theme="dark"] .ai-knowledge-form label > span {
+  color: #c7d7e8;
+}
+
+html[data-theme="dark"] .ai-knowledge-form input,
+html[data-theme="dark"] .ai-knowledge-form select,
+html[data-theme="dark"] .ai-knowledge-form textarea {
+  background: #0d1928;
+  border-color: #35516c;
+  color: #dce9f6;
+}
+
+html[data-theme="dark"] .ai-knowledge-cancel {
+  background: #101e2e;
+  border-color: #304b66;
+  color: #dce9f6;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry {
+  border-bottom-color: #29435d;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry header strong {
+  color: #edf5ff;
+}
+
+html[data-theme="dark"] .ai-knowledge-badge {
+  background: #1c3550;
+  color: #68baff;
+}
+
+html[data-theme="dark"] .ai-knowledge-badge.HARDWARE_FAILURE {
+  background: #3a2a10;
+  color: #e0ac5c;
+}
+
+html[data-theme="dark"] .ai-knowledge-badge.SYSTEM_FAILURE {
+  background: #16324e;
+  color: #70baff;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry p {
+  color: #c7d7e8;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry footer small {
+  color: #8ea0b8;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry-actions button {
+  color: #c7d7e8;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry-actions button:hover {
+  background: #1a324a;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry-actions button.danger:hover {
+  background: #3a1414;
   color: #ff9d9d;
 }
