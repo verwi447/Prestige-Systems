@@ -7,7 +7,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import { getRequestErrorMessage, showFeedback, showSuccess } from "../lib/feedback";
 import "./AiAssistantSettings.css";
 
-const emptyForm = { id: null, title: "", category: "", content: "" };
+const emptyForm = { id: null, title: "", category: "", content: "", solution: "" };
 
 function formatDate(value) {
   if (!value) return "-";
@@ -94,7 +94,7 @@ export default function AiAssistantSettings() {
   const defaultEquipmentName = () => (equipment.find((item) => item.isActive) || equipment[0])?.name || "";
 
   const openNewEntryForm = () => setForm({ ...emptyForm, category: selectedCategory === "ALL" ? defaultEquipmentName() : selectedCategory });
-  const openEditEntryForm = (entry) => setForm({ id: entry.id, title: entry.title, category: entry.category, content: entry.content });
+  const openEditEntryForm = (entry) => setForm({ id: entry.id, title: entry.title, category: entry.category, content: entry.content, solution: entry.solution || "" });
   const closeForm = () => setForm(null);
 
   const submitForm = async (event) => {
@@ -105,7 +105,7 @@ export default function AiAssistantSettings() {
     }
     setFormSaving(true);
     try {
-      const payload = { title: form.title.trim(), category: form.category || defaultEquipmentName(), content: form.content.trim() };
+      const payload = { title: form.title.trim(), category: form.category || defaultEquipmentName(), content: form.content.trim(), solution: form.solution.trim() };
       if (form.id) await aiAssistant.updateKnowledge(form.id, payload);
       else await aiAssistant.createKnowledge(payload);
       showSuccess(form.id ? "Wpis zostal zaktualizowany." : "Wpis zostal dodany do bazy wiedzy.");
@@ -292,7 +292,11 @@ export default function AiAssistantSettings() {
                 </label>
                 <label className="ai-knowledge-form-content">
                   <span>Tresc</span>
-                  <textarea rows="6" value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder="Opisz sprzet, typowe usterki i sposob ich rozwiazywania - im konkretniej, tym lepsze sugestie AI." required />
+                  <textarea rows="6" value={form.content} onChange={(event) => setForm({ ...form, content: event.target.value })} placeholder="Opisz sprzet i typowe usterki - im konkretniej, tym lepsze sugestie AI." required />
+                </label>
+                <label className="ai-knowledge-form-content">
+                  <span>Rozwiazanie</span>
+                  <textarea rows="6" value={form.solution} onChange={(event) => setForm({ ...form, solution: event.target.value })} placeholder="Opisz krok po kroku jak rozwiazac ten problem." />
                 </label>
                 <div className="ai-knowledge-form-actions">
                   <button type="button" className="ai-knowledge-cancel" onClick={closeForm}><X aria-hidden="true" /> Anuluj</button>
@@ -314,6 +318,9 @@ export default function AiAssistantSettings() {
                       {selectedCategory === "ALL" && <span className="ai-knowledge-badge">{entry.category}</span>}
                     </header>
                     <p>{entry.content}</p>
+                    {entry.solution && (
+                      <p className="ai-knowledge-entry-solution"><strong>Rozwiazanie:</strong> {entry.solution}</p>
+                    )}
                     <footer>
                       <small>{entry.authorName} • {formatDate(entry.updatedAt)}</small>
                       <div className="ai-knowledge-entry-actions">

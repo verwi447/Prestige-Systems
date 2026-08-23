@@ -55,7 +55,7 @@ async function fetchTicketImages(ticketId) {
 
 async function fetchKnowledgeEntries(ticket) {
   const result = await db.query(
-    `SELECT title, content, category FROM ai_knowledge_base
+    `SELECT title, content, solution, category FROM ai_knowledge_base
      ORDER BY (category = $1) DESC, updated_at DESC
      LIMIT $2`,
     [ticket.category || "", MAX_KNOWLEDGE_ENTRIES]
@@ -84,7 +84,7 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages) {
     : "awaria systemu / problem z dzialaniem uslugi";
 
   const knowledge = knowledgeEntries
-    .map((row, index) => `Wpis ${index + 1} - [${row.category}] ${row.title}:\n${row.content}`)
+    .map((row, index) => `Wpis ${index + 1} - [${row.category}] ${row.title}:\n${row.content}${row.solution ? `\nRozwiazanie:\n${row.solution}` : ""}`)
     .join("\n\n");
 
   const examples = similarTickets

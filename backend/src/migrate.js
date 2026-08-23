@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -1016,6 +1016,10 @@ async function addAiEquipmentTypesTable({ query }) {
   `);
 }
 
+async function addAiKnowledgeSolutionColumn({ query }) {
+  await query(`ALTER TABLE ai_knowledge_base ADD COLUMN IF NOT EXISTS solution TEXT`);
+}
+
 export function getMigrationDefinitions() {
   return [
     { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
@@ -1023,7 +1027,8 @@ export function getMigrationDefinitions() {
     { ...ADD_AI_TICKET_COMMENT_MIGRATION, up: addAiTicketCommentColumn },
     { ...ADD_AI_ASSISTANT_SETTINGS_MIGRATION, up: addAiAssistantSettingsTable },
     { ...ADD_AI_KNOWLEDGE_BASE_MIGRATION, up: addAiKnowledgeBaseTable },
-    { ...ADD_AI_EQUIPMENT_TYPES_MIGRATION, up: addAiEquipmentTypesTable }
+    { ...ADD_AI_EQUIPMENT_TYPES_MIGRATION, up: addAiEquipmentTypesTable },
+    { ...ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, up: addAiKnowledgeSolutionColumn }
   ];
 }
 

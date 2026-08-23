@@ -51,7 +51,7 @@ function normalizeCategory(value) {
 router.get("/knowledge", async (_req, res) => {
   try {
     const result = await db.query(
-      `SELECT kb.id, kb.title, kb.content, kb.category, kb.created_at, kb.updated_at,
+      `SELECT kb.id, kb.title, kb.content, kb.solution, kb.category, kb.created_at, kb.updated_at,
               u.first_name, u.last_name, u.email
        FROM ai_knowledge_base kb
        LEFT JOIN users u ON u.id=kb.created_by
@@ -61,6 +61,7 @@ router.get("/knowledge", async (_req, res) => {
       id: row.id,
       title: row.title,
       content: row.content,
+      solution: row.solution,
       category: row.category,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -74,15 +75,16 @@ router.get("/knowledge", async (_req, res) => {
 router.post("/knowledge", async (req, res) => {
   const title = String(req.body.title || "").trim();
   const content = String(req.body.content || "").trim();
+  const solution = String(req.body.solution || "").trim() || null;
   const category = normalizeCategory(req.body.category);
 
   if (!title || !content) return res.status(400).json({ error: "Tytul i tresc sa wymagane." });
 
   try {
     const result = await db.query(
-      `INSERT INTO ai_knowledge_base (title, content, category, created_by)
-       VALUES ($1,$2,$3,$4) RETURNING id`,
-      [title, content, category, req.user.id]
+      `INSERT INTO ai_knowledge_base (title, content, solution, category, created_by)
+       VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+      [title, content, solution, category, req.user.id]
     );
     await writeAuditLog({
       category: "SYSTEM",
@@ -101,15 +103,16 @@ router.post("/knowledge", async (req, res) => {
 router.put("/knowledge/:id", async (req, res) => {
   const title = String(req.body.title || "").trim();
   const content = String(req.body.content || "").trim();
+  const solution = String(req.body.solution || "").trim() || null;
   const category = normalizeCategory(req.body.category);
 
   if (!title || !content) return res.status(400).json({ error: "Tytul i tresc sa wymagane." });
 
   try {
     const result = await db.query(
-      `UPDATE ai_knowledge_base SET title=$1, content=$2, category=$3, updated_at=CURRENT_TIMESTAMP
-       WHERE id=$4 RETURNING id`,
-      [title, content, category, req.params.id]
+      `UPDATE ai_knowledge_base SET title=$1, content=$2, solution=$3, category=$4, updated_at=CURRENT_TIMESTAMP
+       WHERE id=$5 RETURNING id`,
+      [title, content, solution, category, req.params.id]
     );
     if (!result.rows[0]) return res.status(404).json({ error: "Wpis nie istnieje." });
     await writeAuditLog({

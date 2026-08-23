@@ -40,4 +40,11 @@ export const ADD_AI_EQUIPMENT_TYPES_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_AI_EQUIPMENT_TYPES_MIGRATION.id;
+export const ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION = Object.freeze({
+  id: "2026.08.23.004",
+  checksum: "add-ai-knowledge-solution-v1",
+  description: "Dodaje osobne pole rozwiazania do wpisow bazy wiedzy asystenta AI",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION.id;

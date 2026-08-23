@@ -462,6 +462,18 @@
   overflow-wrap: anywhere;
 }
 
+.ai-knowledge-entry-solution {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-left: 3px solid #0aa653;
+  border-radius: 0 6px 6px 0;
+  background: #f2faf5;
+}
+
+.ai-knowledge-entry-solution strong {
+  color: #067a41;
+}
+
 .ai-knowledge-entry footer {
   display: flex;
   align-items: center;
@@ -690,6 +702,15 @@ html[data-theme="dark"] .ai-knowledge-badge {
 
 html[data-theme="dark"] .ai-knowledge-entry p {
   color: #c7d7e8;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry-solution {
+  border-left-color: #17c164;
+  background: #10231a;
+}
+
+html[data-theme="dark"] .ai-knowledge-entry-solution strong {
+  color: #4fe197;
 }
 
 html[data-theme="dark"] .ai-knowledge-entry footer small {
