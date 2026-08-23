@@ -286,6 +286,11 @@ export default function TicketDetail() {
     setModal("assign");
   };
 
+  const openAiCloseModal = () => {
+    setCloseForm({ summary: "Problem zostal rozwiazany przez asystenta AI w rozmowie z klientem.", notifyClient: true, addHistory: true });
+    setModal("close");
+  };
+
   const openEditModal = () => {
     setEditForm({
       title: ticket.title || ticket.subject || "",
@@ -371,6 +376,11 @@ export default function TicketDetail() {
         <div className="ticket-admin-actions">
           {isAdmin && (
             <>
+              {ticket.aiConversationStatus === "RESOLVED" && !["COMPLETED", "CANCELLED", "REJECTED"].includes(status) && (
+                <button type="button" className="ticket-admin-button primary" onClick={openAiCloseModal}>
+                  <CheckCircle2 size={17} /> Zamknij zgloszenie
+                </button>
+              )}
               {!isCommentsTab && <button type="button" className="ticket-admin-button ghost" onClick={() => setModal("status")}>
                 <UserCog size={17} /> Zmien status <ChevronDown size={15} />
               </button>}
