@@ -16,3 +16,10 @@ tmp/
 Thumbs.db
 
 .claude/
+
+# Source lives locally only; the GitHub repo tracks the built app-release/ package.
+/backend/
+/frontend/
+/release-template/
+/scripts/
+/service/
