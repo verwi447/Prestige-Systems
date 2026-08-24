@@ -4,7 +4,10 @@ import { auth } from "../middleware/auth.js";
 import { loadCurrentUser, requireRole } from "../middleware/access.js";
 import { AUDIT_CATEGORIES } from "../utils/auditLog.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 router.use(auth, loadCurrentUser, requireRole("ADMIN"));
 

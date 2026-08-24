@@ -2,6 +2,7 @@ import express from "express";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
 import { loadCurrentUser, requireRole } from "../middleware/access.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = express.Router();
 
@@ -65,11 +66,11 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-router.get("/", async (_req, res) => {
+router.get("/", asyncHandler(async (_req, res) => {
   res.json(await ensureOwnCompany());
-});
+}));
 
-router.put("/", async (req, res) => {
+router.put("/", asyncHandler(async (req, res) => {
   const { logoUrl, name, nip, regon, address, email, phone, website, additionalInfo } = req.body;
   if (!name?.trim()) return res.status(400).json({ error: "Nazwa naszej firmy jest wymagana." });
   if (!nip?.trim()) return res.status(400).json({ error: "NIP jest wymagany." });
@@ -98,6 +99,6 @@ router.put("/", async (req, res) => {
     ]
   );
   res.json(result.rows[0]);
-});
+}));
 
 export default router;

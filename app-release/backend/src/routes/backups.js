@@ -25,7 +25,10 @@ import {
   verifyAdminPassword
 } from "../utils/backupService.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

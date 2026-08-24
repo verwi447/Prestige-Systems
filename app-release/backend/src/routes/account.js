@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
 import { loadCurrentUser } from "../middleware/access.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ const normalizeAccount = (row) => ({
   passwordChangedAt: row.password_changed_at
 });
 
-router.get("/", async (req, res) => {
+router.get("/", asyncHandler(async (req, res) => {
   const result = await db.query(
     `SELECT u.id, u.username, u.role, u.company_id, u.first_name, u.last_name, u.email, u.phone,
             u.is_active, u.last_login_at, u.created_at, u.password_changed_at, c.name AS company_name
@@ -34,9 +35,9 @@ router.get("/", async (req, res) => {
   );
   if (!result.rows[0]) return res.status(404).json({ error: "Konto nie istnieje." });
   res.json(normalizeAccount(result.rows[0]));
-});
+}));
 
-router.patch("/", async (req, res) => {
+router.patch("/", asyncHandler(async (req, res) => {
   const firstName = String(req.body.firstName ?? req.body.first_name ?? "").trim();
   const lastName = String(req.body.lastName ?? req.body.last_name ?? "").trim();
   const phone = String(req.body.phone ?? "").trim() || null;
@@ -54,7 +55,7 @@ router.patch("/", async (req, res) => {
     [firstName, lastName, phone, req.currentUser.id]
   );
   res.json(normalizeAccount(result.rows[0]));
-});
+}));
 
 const passwordRules = (password) => ({
   minLength: String(password || "").length >= 8,
@@ -64,7 +65,7 @@ const passwordRules = (password) => ({
   special: /[^A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż0-9]/.test(password || "")
 });
 
-router.post("/change-password", async (req, res) => {
+router.post("/change-password", asyncHandler(async (req, res) => {
   const currentPassword = String(req.body.currentPassword || "");
   const newPassword = String(req.body.newPassword || "");
   const confirmPassword = String(req.body.confirmPassword || "");
@@ -95,9 +96,9 @@ router.post("/change-password", async (req, res) => {
   const newHash = await bcrypt.hash(newPassword, 10);
   await db.query("UPDATE users SET password=$1, password_hash=$1, password_changed_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [newHash, req.currentUser.id]);
   res.json({ message: "Haslo zostalo zmienione." });
-});
+}));
 
-router.get("/notification-preferences", async (req, res) => {
+router.get("/notification-preferences", asyncHandler(async (req, res) => {
   const result = await db.query(
     `INSERT INTO account_notification_preferences (user_id)
      VALUES ($1)
@@ -107,9 +108,9 @@ router.get("/notification-preferences", async (req, res) => {
   );
   const preferences = result.rows[0] || (await db.query("SELECT * FROM account_notification_preferences WHERE user_id=$1", [req.currentUser.id])).rows[0];
   res.json(preferences);
-});
+}));
 
-router.put("/notification-preferences", async (req, res) => {
+router.put("/notification-preferences", asyncHandler(async (req, res) => {
   const values = {
     inApp: req.body.inApp !== false,
     email: req.body.email === true,
@@ -143,7 +144,7 @@ router.put("/notification-preferences", async (req, res) => {
   )));
 
   res.json(result.rows[0]);
-});
+}));
 
 router.get("/sessions", (_req, res) => {
   res.json([]);
@@ -153,7 +154,7 @@ router.delete("/sessions/:id", (_req, res) => {
   res.status(404).json({ error: "Zarzadzanie sesjami nie jest jeszcze dostepne." });
 });
 
-router.get("/activity", async (req, res) => {
+router.get("/activity", asyncHandler(async (req, res) => {
   const userId = req.currentUser.id;
   const [comments, ticketComments, offers] = await Promise.all([
     db.query("SELECT id, created_at FROM comments WHERE author_id=$1 ORDER BY created_at DESC LIMIT 5", [userId]),
@@ -167,6 +168,6 @@ router.get("/activity", async (req, res) => {
     ...offers.rows.map((row) => ({ id: `offer-${row.id}`, type: "OFFER", label: `Zmieniono status oferty ${row.offer_number || row.id}: ${row.status}`, createdAt: row.updated_at }))
   ].filter((item) => item.createdAt).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
   res.json(activity);
-});
+}));
 
 export default router;

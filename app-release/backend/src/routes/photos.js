@@ -34,7 +34,10 @@ const upload = multer({
   }
 });
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 router.use(auth, loadCurrentUser, requireRole("ADMIN"));
 
 // Get photos for offer

@@ -12,8 +12,10 @@ import { notifyAdmins } from "../utils/notifications.js";
 import { markOfferLifecycle, synchronizeLinkedOrderStatus } from "../services/orderOfferWorkflow.js";
 import { analyzeTicketWithAi, continueAiConversation } from "../services/aiAssistant.js";
 import { writeAuditLog } from "../utils/auditLog.js";
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
 
 const router = express.Router();
+autoAsyncRoutes(router);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -366,9 +368,12 @@ const normalizeLegacyStatus = (status) => {
   return "NEW";
 };
 
-const generateClientTicketNumber = async () => {
+const generateClientTicketNumber = async (client) => {
   const year = new Date().getFullYear();
-  const count = await db.query("SELECT COUNT(*)::int AS count FROM tickets WHERE EXTRACT(YEAR FROM created_at)=$1", [year]);
+  // Scoped to this transaction so two concurrent submissions can't both COUNT
+  // the same rows before either commits; the lock releases on commit/rollback.
+  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`ticket_number_${year}`]);
+  const count = await client.query("SELECT COUNT(*)::int AS count FROM tickets WHERE EXTRACT(YEAR FROM created_at)=$1", [year]);
   return `ZS/${year}/${String((count.rows[0]?.count || 0) + 1).padStart(5, "0")}`;
 };
 
@@ -1910,7 +1915,7 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
       return res.status(403).json({ error: "Firma nie ma profilu klienta wymaganego do utworzenia zgloszenia." });
     }
 
-    const ticketNumber = await generateClientTicketNumber();
+    const ticketNumber = await generateClientTicketNumber(client);
     const ticket = await client.query(
       `INSERT INTO tickets (
         ticket_number, type, object_id, subject, description, customer_id, created_by, status,
@@ -1960,6 +1965,11 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
       }
     }
 
+    await client.query(
+      `INSERT INTO ticket_history (ticket_id, user_id, action, old_value, new_value, metadata)
+       VALUES ($1,$2,'TICKET_CREATED',NULL,$3,$4::jsonb)`,
+      [ticket.rows[0].id, req.currentUser.id, ticketNumber, JSON.stringify({ source: "Portal klienta" })]
+    );
     await client.query("COMMIT");
     await notifyAdmins({
       category: "TICKETS",

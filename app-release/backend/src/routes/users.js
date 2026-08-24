@@ -5,7 +5,10 @@ import { auth } from "../middleware/auth.js";
 import { loadCurrentUser, PERMISSIONS, requireRole } from "../middleware/access.js";
 import { writeAuditLog } from "../utils/auditLog.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 const clientEmployeePermissionKeys = new Set(PERMISSIONS.filter((key) => key !== "MANAGE_EMPLOYEES"));
 
 // Change user password

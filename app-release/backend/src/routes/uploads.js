@@ -55,14 +55,19 @@ router.post("/company-logo", (req, res) => {
     if (error) return res.status(400).json({ error: error.message || "Nie udało się wysłać logo." });
     if (!req.file) return res.status(400).json({ error: "Wybierz plik logo." });
 
-    const logoUrl = `/uploads/company/${req.file.filename}`;
-    let existing = await db.query("SELECT id FROM own_company ORDER BY id ASC LIMIT 1");
-    if (!existing.rows[0]) {
-      existing = await db.query("INSERT INTO own_company (name) VALUES ($1) RETURNING id", ["Prestige Systems"]);
-    }
-    await db.query("UPDATE own_company SET logo_url=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [logoUrl, existing.rows[0].id]);
+    try {
+      const logoUrl = `/uploads/company/${req.file.filename}`;
+      let existing = await db.query("SELECT id FROM own_company ORDER BY id ASC LIMIT 1");
+      if (!existing.rows[0]) {
+        existing = await db.query("INSERT INTO own_company (name) VALUES ($1) RETURNING id", ["Prestige Systems"]);
+      }
+      await db.query("UPDATE own_company SET logo_url=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [logoUrl, existing.rows[0].id]);
 
-    res.json({ logoUrl });
+      res.json({ logoUrl });
+    } catch (dbError) {
+      console.error("Failed to save company logo:", dbError);
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
+    }
   });
 });
 

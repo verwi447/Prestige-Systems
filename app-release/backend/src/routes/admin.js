@@ -5,7 +5,10 @@ import { auth } from "../middleware/auth.js";
 import { isPermanentAccount } from "../permanentAccount.js";
 import { logError } from "../logger.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 async function requireAdmin(req, res) {
   const user = await db.query("SELECT * FROM users WHERE id=$1", [req.user.id]);

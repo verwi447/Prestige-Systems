@@ -3,7 +3,10 @@ import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
 import { loadCurrentUser, requireRole } from "../middleware/access.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 router.use(auth, loadCurrentUser, requireRole("ADMIN"));
 
 // Get rejections for offer

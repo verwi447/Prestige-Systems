@@ -10,6 +10,7 @@ import { auth } from "../middleware/auth.js";
 import { loadCurrentUser, requireRole } from "../middleware/access.js";
 import { encryptText } from "../utils/emailCrypto.js";
 import { createTransporter, isValidEmail, sendEmail } from "../services/emailService.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const footerHtmlOptions = {
   allowedTags: ["p", "br", "strong", "b", "em", "i", "u", "span", "div", "a", "img", "ul", "ol", "li", "small", "hr", "table", "tbody", "tr", "td"],
@@ -61,17 +62,17 @@ const safeSettings = (settings) => {
   return { ...safe, hasPassword: Boolean(smtp_password_enc) };
 };
 
-router.get("/settings", async (_req, res) => {
+router.get("/settings", asyncHandler(async (_req, res) => {
   const result = await db.query("SELECT * FROM email_settings ORDER BY updated_at DESC LIMIT 1");
   res.json(safeSettings(result.rows[0]));
-});
+}));
 
-router.get("/footer", async (_req, res) => {
+router.get("/footer", asyncHandler(async (_req, res) => {
   const result = await db.query("SELECT * FROM email_footer_settings WHERE id='default'");
   res.json(result.rows[0] || null);
-});
+}));
 
-router.put("/footer", async (req, res) => {
+router.put("/footer", asyncHandler(async (req, res) => {
   const { footerEnabled = true, footerHtml = "", footerLogoUrl = "" } = req.body;
   const result = await db.query(
     `INSERT INTO email_footer_settings (id, footer_enabled, footer_html, footer_logo_url, updated_at)
@@ -82,9 +83,9 @@ router.put("/footer", async (req, res) => {
     [Boolean(footerEnabled), sanitizeFooterHtml(footerHtml), footerLogoUrl]
   );
   res.json(result.rows[0]);
-});
+}));
 
-router.put("/settings", async (req, res) => {
+router.put("/settings", asyncHandler(async (req, res) => {
   const {
     smtpHost,
     smtpPort,
@@ -164,7 +165,7 @@ router.put("/settings", async (req, res) => {
   }
 
   res.json(safeSettings(result.rows[0]));
-});
+}));
 
 router.post("/footer-logo", (req, res) => {
   imageUpload.single("logo")(req, res, async (error) => {
@@ -179,7 +180,7 @@ router.post("/footer-logo", (req, res) => {
   });
 });
 
-router.post("/test-connection", async (_req, res) => {
+router.post("/test-connection", asyncHandler(async (_req, res) => {
   const settings = (await db.query("SELECT * FROM email_settings ORDER BY updated_at DESC LIMIT 1")).rows[0];
   if (!settings) return res.status(400).json({ error: "SMTP nie jest skonfigurowany." });
 
@@ -198,9 +199,9 @@ router.post("/test-connection", async (_req, res) => {
     );
     res.status(400).json({ status: "FAILED", error: error.message });
   }
-});
+}));
 
-router.post("/test-send", async (req, res) => {
+router.post("/test-send", asyncHandler(async (req, res) => {
   const { to, subject, html } = req.body;
   try {
     const log = await sendEmail({
@@ -216,14 +217,14 @@ router.post("/test-send", async (req, res) => {
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
-});
+}));
 
-router.get("/templates", async (_req, res) => {
+router.get("/templates", asyncHandler(async (_req, res) => {
   const result = await db.query("SELECT * FROM email_templates ORDER BY created_at DESC");
   res.json(result.rows);
-});
+}));
 
-router.post("/templates", async (req, res) => {
+router.post("/templates", asyncHandler(async (req, res) => {
   const { key, name, subject, bodyHtml, bodyText, variables } = req.body;
   if (!key || !name || !subject || !bodyHtml) return res.status(400).json({ error: "Klucz, nazwa, temat i HTML są wymagane." });
   const result = await db.query(
@@ -232,9 +233,9 @@ router.post("/templates", async (req, res) => {
     [crypto.randomUUID(), key, name, subject, bodyHtml, bodyText || null, variables || {}]
   );
   res.status(201).json(result.rows[0]);
-});
+}));
 
-router.put("/templates/:id", async (req, res) => {
+router.put("/templates/:id", asyncHandler(async (req, res) => {
   const { name, subject, bodyHtml, bodyText, variables, isActive = true } = req.body;
   const result = await db.query(
     `UPDATE email_templates SET name=$1, subject=$2, body_html=$3, body_text=$4, variables=$5, is_active=$6, updated_at=CURRENT_TIMESTAMP
@@ -243,15 +244,15 @@ router.put("/templates/:id", async (req, res) => {
   );
   if (!result.rows[0]) return res.status(404).json({ error: "Szablon nie istnieje." });
   res.json(result.rows[0]);
-});
+}));
 
-router.delete("/templates/:id", async (req, res) => {
+router.delete("/templates/:id", asyncHandler(async (req, res) => {
   const result = await db.query("UPDATE email_templates SET is_active=FALSE, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *", [req.params.id]);
   if (!result.rows[0]) return res.status(404).json({ error: "Szablon nie istnieje." });
   res.json(result.rows[0]);
-});
+}));
 
-router.get("/logs", async (req, res) => {
+router.get("/logs", asyncHandler(async (req, res) => {
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
   const where = [];
@@ -271,12 +272,12 @@ router.get("/logs", async (req, res) => {
     params
   );
   res.json({ items: items.rows, total: count.rows[0]?.total || 0, page, limit });
-});
+}));
 
-router.get("/logs/:id", async (req, res) => {
+router.get("/logs/:id", asyncHandler(async (req, res) => {
   const result = await db.query("SELECT * FROM email_logs WHERE id=$1", [req.params.id]);
   if (!result.rows[0]) return res.status(404).json({ error: "Log e-mail nie istnieje." });
   res.json(result.rows[0]);
-});
+}));
 
 export default router;

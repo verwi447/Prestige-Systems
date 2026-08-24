@@ -10,7 +10,10 @@ import { numberToWords } from "../utils/numberToWords.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 const money = (value, currency = "PLN") =>
   `${Number(value || 0).toLocaleString("pl-PL", {

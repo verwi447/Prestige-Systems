@@ -8,7 +8,10 @@ import { ensureDefaultBackupData, getDefaultLocation, getFreeSpaceBytes } from "
 import { getNetworkSettings, updateNetworkSettings } from "../utils/networkSettings.js";
 import { writeAuditLog } from "../utils/auditLog.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 router.use(auth, loadCurrentUser, requireRole("ADMIN"));
 

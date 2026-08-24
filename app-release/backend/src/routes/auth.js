@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { db } from "../db.js";
 import { auth as authMiddleware } from "../middleware/auth.js";
 import { getEffectivePermissions, normalizeRole } from "../middleware/access.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = express.Router();
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("invalid-login-placeholder", 12);
@@ -91,7 +92,7 @@ router.post("/logout", (_req, res) => {
   res.json({ message: "Wylogowano." });
 });
 
-router.get("/me", authMiddleware, async (req, res) => {
+router.get("/me", authMiddleware, asyncHandler(async (req, res) => {
   const result = await db.query(
     `SELECT id, username, first_name, last_name, email, phone, role, company_id, is_active
      FROM users
@@ -112,6 +113,6 @@ router.get("/me", authMiddleware, async (req, res) => {
     companyId: user.company_id || null,
     permissions
   });
-});
+}));
 
 export default router;

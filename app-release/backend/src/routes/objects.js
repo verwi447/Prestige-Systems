@@ -2,6 +2,7 @@ import express from "express";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
 import { loadCurrentUser, requireCompanyAccess, requirePermission, requireRole } from "../middleware/access.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = express.Router();
 
@@ -47,21 +48,17 @@ async function visibleSites(req, companyId = null) {
   return db.query(sql, params);
 }
 
-router.get("/", async (req, res) => {
-  try {
-    const result = await visibleSites(req);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: "Wewnętrzny błąd serwera." });
-  }
-});
+router.get("/", asyncHandler(async (req, res) => {
+  const result = await visibleSites(req);
+  res.json(result.rows);
+}));
 
-router.get("/company/:companyId", requireCompanyAccess("companyId"), async (req, res) => {
+router.get("/company/:companyId", requireCompanyAccess("companyId"), asyncHandler(async (req, res) => {
   const result = await visibleSites(req, req.params.companyId);
   res.json(result.rows);
-});
+}));
 
-router.post("/", requirePermission("MANAGE_SITES"), async (req, res) => {
+router.post("/", requirePermission("MANAGE_SITES"), asyncHandler(async (req, res) => {
   const companyId = Number(req.body.company_id || req.body.companyId || req.currentUser.company_id);
   if (req.currentUser.role !== "ADMIN" && Number(req.currentUser.company_id) !== companyId) {
     return res.status(403).json({ error: "Brak dostępu do tej firmy." });
@@ -89,9 +86,9 @@ router.post("/", requirePermission("MANAGE_SITES"), async (req, res) => {
     ]
   );
   res.status(201).json(result.rows[0]);
-});
+}));
 
-router.put("/:siteId", requirePermission("MANAGE_SITES"), async (req, res) => {
+router.put("/:siteId", requirePermission("MANAGE_SITES"), asyncHandler(async (req, res) => {
   const existing = await db.query("SELECT company_id FROM objects WHERE id=$1", [req.params.siteId]);
   if (!existing.rows[0]) return res.status(404).json({ error: "Obiekt nie znaleziony." });
   if (req.currentUser.role !== "ADMIN" && Number(existing.rows[0].company_id) !== Number(req.currentUser.company_id)) {
@@ -110,9 +107,9 @@ router.put("/:siteId", requirePermission("MANAGE_SITES"), async (req, res) => {
     [name.trim(), address || null, postal_code || postalCode || null, city || null, description || null, is_active ?? isActive ?? true, req.params.siteId]
   );
   res.json(result.rows[0]);
-});
+}));
 
-router.get("/:siteId/users", async (req, res) => {
+router.get("/:siteId/users", asyncHandler(async (req, res) => {
   const existing = await db.query("SELECT company_id FROM objects WHERE id=$1", [req.params.siteId]);
   if (!existing.rows[0]) return res.status(404).json({ error: "Obiekt nie znaleziony." });
   if (req.currentUser.role !== "ADMIN" && Number(existing.rows[0].company_id) !== Number(req.currentUser.company_id)) {
@@ -136,9 +133,9 @@ router.get("/:siteId/users", async (req, res) => {
     [req.params.siteId]
   );
   res.json(result.rows);
-});
+}));
 
-router.put("/:siteId/users", requireRole("ADMIN", "CLIENT_OWNER"), async (req, res) => {
+router.put("/:siteId/users", requireRole("ADMIN", "CLIENT_OWNER"), asyncHandler(async (req, res) => {
   const existing = await db.query("SELECT company_id FROM objects WHERE id=$1", [req.params.siteId]);
   if (!existing.rows[0]) return res.status(404).json({ error: "Obiekt nie znaleziony." });
   if (req.currentUser.role !== "ADMIN" && Number(existing.rows[0].company_id) !== Number(req.currentUser.company_id)) {
@@ -184,9 +181,9 @@ router.put("/:siteId/users", requireRole("ADMIN", "CLIENT_OWNER"), async (req, r
   } finally {
     client.release();
   }
-});
+}));
 
-router.delete("/:siteId", requirePermission("MANAGE_SITES"), async (req, res) => {
+router.delete("/:siteId", requirePermission("MANAGE_SITES"), asyncHandler(async (req, res) => {
   const existing = await db.query("SELECT company_id FROM objects WHERE id=$1", [req.params.siteId]);
   if (!existing.rows[0]) return res.status(404).json({ error: "Obiekt nie znaleziony." });
   if (req.currentUser.role !== "ADMIN" && Number(existing.rows[0].company_id) !== Number(req.currentUser.company_id)) {
@@ -195,6 +192,6 @@ router.delete("/:siteId", requirePermission("MANAGE_SITES"), async (req, res) =>
 
   await db.query("DELETE FROM objects WHERE id=$1", [req.params.siteId]);
   res.status(204).send();
-});
+}));
 
 export default router;

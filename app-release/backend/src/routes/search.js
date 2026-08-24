@@ -3,7 +3,10 @@ import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
 import { getEffectivePermissions, loadCurrentUser, normalizeRole } from "../middleware/access.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 router.use(auth, loadCurrentUser);
 

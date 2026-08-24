@@ -4,7 +4,10 @@ import { auth } from "../middleware/auth.js";
 import { normalizeRole } from "../middleware/access.js";
 import { getAdminActionItems } from "../services/dashboardActions.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 const requireAdmin = (req, res) => {
     if (normalizeRole(req.user?.role) !== "ADMIN") {

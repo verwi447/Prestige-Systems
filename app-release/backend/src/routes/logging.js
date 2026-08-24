@@ -1,7 +1,10 @@
 import express from "express";
 import { logError } from "../logger.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 // POST log a web error
 router.post("/web-error", (req, res) => {

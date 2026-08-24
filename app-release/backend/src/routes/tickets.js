@@ -8,7 +8,10 @@ import { auth } from "../middleware/auth.js";
 import { normalizeRole } from "../middleware/access.js";
 import { createNotification, notifyAdmins } from "../utils/notifications.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 const uploadDir = "uploads/tickets/";
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -117,13 +120,18 @@ async function addHistory(client, ticketId, userId, action, oldValue = null, new
   );
 }
 
-async function auditTicket(_client, _action, _userId, _ticketId, _metadata = {}) {
-  // TODO: wire to a global audit log when the app exposes a shared audit table.
-}
+// Every addHistory() insert into ticket_history is already mirrored into
+// system_audit_log by the ticket_history_to_system_audit DB trigger (see
+// migrate.js), so this stays a no-op to avoid double-logging the same event.
+async function auditTicket(_client, _action, _userId, _ticketId, _metadata = {}) {}
 
-async function generateTicketNumber() {
+async function generateTicketNumber(client) {
   const year = new Date().getFullYear();
-  const result = await db.query("SELECT COUNT(*) FROM tickets WHERE EXTRACT(YEAR FROM created_at) = $1", [year]);
+  // Concurrent requests could otherwise COUNT the same rows before either
+  // commits its INSERT, producing duplicate ticket numbers; the advisory
+  // lock is scoped to this transaction and releases automatically on commit/rollback.
+  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`ticket_number_${year}`]);
+  const result = await client.query("SELECT COUNT(*) FROM tickets WHERE EXTRACT(YEAR FROM created_at) = $1", [year]);
   return `ZG/${year}/${String(parseInt(result.rows[0].count, 10) + 1).padStart(3, "0")}`;
 }
 
@@ -416,7 +424,7 @@ router.post("/", auth, upload.array("photos", 10), async (req, res) => {
       return res.status(400).json({ error: "Wybrany obiekt nie istnieje albo nie nalezy do Twojej firmy." });
     }
 
-    const ticketNumber = await generateTicketNumber();
+    const ticketNumber = await generateTicketNumber(client);
     const ticket = await client.query(
       `INSERT INTO tickets (ticket_number, type, object_id, subject, description, customer_id, created_by, status, priority, source, updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,'NEW',$8,'Portal klienta',CURRENT_TIMESTAMP)

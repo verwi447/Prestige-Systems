@@ -12,7 +12,10 @@ import {
 } from "../services/orderOfferWorkflow.js";
 import { writeAuditLog } from "../utils/auditLog.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 function requireAdmin(req, res, next) {
   if (normalizeRole(req.user?.role) !== "ADMIN") return res.status(403).json({ error: "Brak uprawnień." });
@@ -21,6 +24,10 @@ function requireAdmin(req, res, next) {
 
 async function generateOfferNumber(sql = db) {
   const year = new Date().getFullYear();
+  // Scoped to the caller's transaction so two concurrent offer creations
+  // can't both read the same "last offer" before either commits; the lock
+  // releases automatically on commit/rollback.
+  await sql.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`offer_number_${year}`]);
   const lastOffer = await sql.query(
     "SELECT offer_number FROM offers WHERE offer_number LIKE $1 ORDER BY id DESC LIMIT 1",
     [`PS/${year}/%`]

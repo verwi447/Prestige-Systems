@@ -9,7 +9,10 @@ import { auth } from "../middleware/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 
 const uploadDir = path.join(__dirname, "../../uploads/articles");
 fs.mkdirSync(uploadDir, { recursive: true });

@@ -5,7 +5,10 @@ import { loadCurrentUser } from "../middleware/access.js";
 import { emitToUser } from "../realtime.js";
 import { NOTIFICATION_CATEGORIES } from "../utils/notifications.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 const DEFAULT_LIMIT = 20;
 
 router.use(auth, loadCurrentUser);

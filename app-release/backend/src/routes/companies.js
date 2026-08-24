@@ -5,6 +5,7 @@ import { auth } from "../middleware/auth.js";
 import { loadCurrentUser, requireCompanyAccess, requirePermission, requireRole, normalizeRole } from "../middleware/access.js";
 import { notifyAdmins } from "../utils/notifications.js";
 import { writeAuditLog } from "../utils/auditLog.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = express.Router();
 
@@ -57,21 +58,17 @@ async function createPrimaryCustomer(company, createdBy, sql = db) {
   );
 }
 
-router.get("/", async (req, res) => {
-  try {
-    if (req.currentUser.role === "ADMIN") {
-      const result = await db.query(`${companySelect} ORDER BY created_at DESC`);
-      return res.json(result.rows);
-    }
-    if (!req.currentUser.company_id) return res.json([]);
-    const result = await db.query(`${companySelect} AND companies.id=$1`, [req.currentUser.company_id]);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: "Wewnętrzny błąd serwera." });
+router.get("/", asyncHandler(async (req, res) => {
+  if (req.currentUser.role === "ADMIN") {
+    const result = await db.query(`${companySelect} ORDER BY created_at DESC`);
+    return res.json(result.rows);
   }
-});
+  if (!req.currentUser.company_id) return res.json([]);
+  const result = await db.query(`${companySelect} AND companies.id=$1`, [req.currentUser.company_id]);
+  res.json(result.rows);
+}));
 
-router.get("/own", requireRole("ADMIN"), async (_req, res) => {
+router.get("/own", requireRole("ADMIN"), asyncHandler(async (_req, res) => {
   let result = await db.query("SELECT * FROM companies WHERE is_own_company = TRUE ORDER BY id ASC LIMIT 1");
   if (!result.rows[0]) {
     result = await db.query(
@@ -82,9 +79,9 @@ router.get("/own", requireRole("ADMIN"), async (_req, res) => {
     );
   }
   res.json(result.rows[0]);
-});
+}));
 
-router.put("/own", requireRole("ADMIN"), async (req, res) => {
+router.put("/own", requireRole("ADMIN"), asyncHandler(async (req, res) => {
   const { name, address, nip, postal_code, city, country, email } = req.body;
   if (!name?.trim()) return res.status(400).json({ error: "Nazwa naszej firmy jest wymagana." });
 
@@ -103,9 +100,9 @@ router.put("/own", requireRole("ADMIN"), async (req, res) => {
     [name.trim(), address || null, nip || null, postal_code || null, city || null, country || "Polska", email || null, existing.rows[0].id]
   );
   res.json(result.rows[0]);
-});
+}));
 
-router.get("/my-company", async (req, res) => {
+router.get("/my-company", asyncHandler(async (req, res) => {
   if (!req.currentUser.company_id) return res.json({ company: null, contacts: [] });
   const companyResult = await db.query(`${companySelect} AND companies.id=$1`, [req.currentUser.company_id]);
   const contactsResult = await db.query(
@@ -116,18 +113,18 @@ router.get("/my-company", async (req, res) => {
     [req.currentUser.company_id]
   );
   res.json({ company: companyResult.rows[0] || null, contacts: contactsResult.rows });
-});
+}));
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", asyncHandler(async (req, res) => {
   if (req.currentUser.role !== "ADMIN" && Number(req.currentUser.company_id) !== Number(req.params.id)) {
     return res.status(403).json({ error: "Brak dostępu do tej firmy." });
   }
   const result = await db.query(`${companySelect} AND companies.id=$1`, [req.params.id]);
   if (!result.rows[0]) return res.status(404).json({ error: "Firma nie znaleziona." });
   res.json(result.rows[0]);
-});
+}));
 
-router.post("/", requireRole("ADMIN"), async (req, res) => {
+router.post("/", requireRole("ADMIN"), asyncHandler(async (req, res) => {
   const company = mapCompanyBody(req.body);
   if (!company.name) return res.status(400).json({ error: "Nazwa firmy jest wymagana." });
 
@@ -177,9 +174,9 @@ router.post("/", requireRole("ADMIN"), async (req, res) => {
     message: `Dodano firme ${createdCompany.name}`
   }).catch((error) => console.error("Global audit log failed:", error));
   res.status(201).json(createdCompany);
-});
+}));
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", asyncHandler(async (req, res) => {
   const role = normalizeRole(req.currentUser.role);
   const isAdmin = role === "ADMIN";
   const isOwnerOfCompany = role === "CLIENT_OWNER" && Number(req.currentUser.company_id) === Number(req.params.id);
@@ -211,9 +208,9 @@ router.put("/:id", async (req, res) => {
     message: `Zaktualizowano firme ${result.rows[0].name}`
   }).catch((error) => console.error("Global audit log failed:", error));
   res.json(result.rows[0]);
-});
+}));
 
-router.delete("/:id", requireRole("ADMIN"), async (req, res) => {
+router.delete("/:id", requireRole("ADMIN"), asyncHandler(async (req, res) => {
   const companyId = Number(req.params.id);
   const client = await db.connect();
 
@@ -287,9 +284,9 @@ router.delete("/:id", requireRole("ADMIN"), async (req, res) => {
   } finally {
     client.release();
   }
-});
+}));
 
-router.get("/:companyId/customers", requireCompanyAccess("companyId"), async (req, res) => {
+router.get("/:companyId/customers", requireCompanyAccess("companyId"), asyncHandler(async (req, res) => {
   const result = await db.query(
     `SELECT id, name, email, phone, company_role, contact_person
      FROM customers
@@ -298,9 +295,9 @@ router.get("/:companyId/customers", requireCompanyAccess("companyId"), async (re
     [req.params.companyId]
   );
   res.json(result.rows);
-});
+}));
 
-router.get("/:companyId/users", requireCompanyAccess("companyId"), requireRole("ADMIN", "CLIENT_OWNER"), async (req, res) => {
+router.get("/:companyId/users", requireCompanyAccess("companyId"), requireRole("ADMIN", "CLIENT_OWNER"), asyncHandler(async (req, res) => {
   const result = await db.query(
     `SELECT id, company_id, role, first_name, last_name, email, phone, is_active, created_at, updated_at
      FROM users
@@ -309,9 +306,9 @@ router.get("/:companyId/users", requireCompanyAccess("companyId"), requireRole("
     [req.params.companyId]
   );
   res.json(result.rows);
-});
+}));
 
-router.post("/:companyId/users", requireCompanyAccess("companyId"), requireRole("ADMIN", "CLIENT_OWNER"), async (req, res) => {
+router.post("/:companyId/users", requireCompanyAccess("companyId"), requireRole("ADMIN", "CLIENT_OWNER"), asyncHandler(async (req, res) => {
   const role = normalizeRole(req.body.role || "CLIENT_EMPLOYEE");
   const { firstName, lastName, email, phone, password, isActive = true } = req.body;
 
@@ -349,9 +346,9 @@ router.post("/:companyId/users", requireCompanyAccess("companyId"), requireRole(
     if (err.code === "23505") return res.status(400).json({ error: "Użytkownik z takim e-mailem już istnieje." });
     res.status(500).json({ error: "Wewnętrzny błąd serwera." });
   }
-});
+}));
 
-router.put("/:companyId/users/:userId", requireCompanyAccess("companyId"), requireRole("ADMIN", "CLIENT_OWNER"), async (req, res) => {
+router.put("/:companyId/users/:userId", requireCompanyAccess("companyId"), requireRole("ADMIN", "CLIENT_OWNER"), asyncHandler(async (req, res) => {
   const role = normalizeRole(req.body.role || "CLIENT_EMPLOYEE");
   const { firstName, lastName, email, phone, password, isActive = true } = req.body;
   if (!["CLIENT_OWNER", "CLIENT_EMPLOYEE"].includes(role)) {
@@ -376,18 +373,18 @@ router.put("/:companyId/users/:userId", requireCompanyAccess("companyId"), requi
   );
   if (!result.rows[0]) return res.status(404).json({ error: "Pracownik nie znaleziony." });
   res.json(result.rows[0]);
-});
+}));
 
-router.delete("/:companyId/users/:userId", requireCompanyAccess("companyId"), requireRole("ADMIN", "CLIENT_OWNER"), async (req, res) => {
+router.delete("/:companyId/users/:userId", requireCompanyAccess("companyId"), requireRole("ADMIN", "CLIENT_OWNER"), asyncHandler(async (req, res) => {
   const result = await db.query(
     "DELETE FROM users WHERE company_id=$1 AND id=$2 AND role IN ('CLIENT_OWNER', 'CLIENT_EMPLOYEE')",
     [req.params.companyId, req.params.userId]
   );
   if (result.rowCount === 0) return res.status(404).json({ error: "Pracownik nie znaleziony." });
   res.status(204).send();
-});
+}));
 
-router.get("/:companyId/sites", requireCompanyAccess("companyId"), async (req, res) => {
+router.get("/:companyId/sites", requireCompanyAccess("companyId"), asyncHandler(async (req, res) => {
   const params = [req.params.companyId];
   let accessSql = "";
   if (req.currentUser.role === "CLIENT_EMPLOYEE") {
@@ -410,9 +407,9 @@ router.get("/:companyId/sites", requireCompanyAccess("companyId"), async (req, r
     params
   );
   res.json(result.rows.map((site) => ({ ...site, imageUrl: site.image_url })));
-});
+}));
 
-router.post("/:companyId/sites", requireCompanyAccess("companyId"), requirePermission("MANAGE_SITES"), async (req, res) => {
+router.post("/:companyId/sites", requireCompanyAccess("companyId"), requirePermission("MANAGE_SITES"), asyncHandler(async (req, res) => {
   const { name, address, postal_code, postalCode, city, description, is_active, isActive } = req.body;
   if (!name?.trim()) return res.status(400).json({ error: "Nazwa obiektu jest wymagana." });
 
@@ -448,9 +445,9 @@ router.post("/:companyId/sites", requireCompanyAccess("companyId"), requirePermi
     console.error("Błąd przy tworzeniu obiektu firmy:", err);
     res.status(500).json({ error: "Wewnętrzny błąd serwera." });
   }
-});
+}));
 
-router.get("/:companyId/offers", requireCompanyAccess("companyId"), async (req, res) => {
+router.get("/:companyId/offers", requireCompanyAccess("companyId"), asyncHandler(async (req, res) => {
   const result = await db.query(
      `SELECT
        o.id,
@@ -487,9 +484,9 @@ router.get("/:companyId/offers", requireCompanyAccess("companyId"), async (req, 
     [req.params.companyId]
   );
   res.json(result.rows);
-});
+}));
 
-router.get("/:companyId/tickets", requireCompanyAccess("companyId"), async (req, res) => {
+router.get("/:companyId/tickets", requireCompanyAccess("companyId"), asyncHandler(async (req, res) => {
   const result = await db.query(
     `SELECT
        t.id,
@@ -506,6 +503,6 @@ router.get("/:companyId/tickets", requireCompanyAccess("companyId"), async (req,
     [req.params.companyId]
   );
   res.json(result.rows);
-});
+}));
 
 export default router;

@@ -44,6 +44,13 @@ import { setRealtimeServer } from "./realtime.js";
 import { db } from "./db.js";
 import { apiLimiter, loginLimiter, notFoundApi, requestGuard, safeErrorHandler } from "./middleware/security.js";
 
+// Express 4 does not route rejections thrown inside async route handlers to
+// safeErrorHandler; left unhandled, Node terminates the whole process on the
+// next tick. This is the last-resort net for any handler that slips through.
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const appVersionPath = path.resolve(__dirname, "../../app-version.json");

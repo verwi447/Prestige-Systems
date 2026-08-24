@@ -4,7 +4,10 @@ import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
 import { logError } from "../logger.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 const requireAdmin = (req, res, next) => req.user?.role === "ADMIN" ? next() : res.status(403).json({ error: "Brak uprawnień." });
 
 // GET all customers

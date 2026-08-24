@@ -6,7 +6,10 @@ import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
 import { canAccessSite, getEffectivePermissions, normalizeRole } from "../middleware/access.js";
 
+import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+
 const router = express.Router();
+autoAsyncRoutes(router);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadsRoot = path.resolve(__dirname, "../../uploads");
