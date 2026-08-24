@@ -1,7 +1,7 @@
 import express from "express";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
-import { normalizeRole } from "../middleware/access.js";
+import { loadCurrentUser, normalizeRole, requireAnyPermission } from "../middleware/access.js";
 import { notifyAdmins } from "../utils/notifications.js";
 import { renderEmailTemplate, sendEmail } from "../services/emailService.js";
 import {
@@ -11,11 +11,25 @@ import {
   synchronizeLinkedOrderStatus
 } from "../services/orderOfferWorkflow.js";
 import { writeAuditLog } from "../utils/auditLog.js";
+import { generateOfferPdfInternal } from "./pdf.js";
 
 import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
 
 const router = express.Router();
 autoAsyncRoutes(router);
+
+const terminalOfferStatuses = new Set(["ZAAKCEPTOWANA", "ODRZUCONA", "ZAKOŃCZONA"]);
+const publishTriggeringOfferStatuses = new Set(["WYSŁANA", "DO AKCEPTACJI"]);
+
+// A closed-out offer (accepted/rejected/completed) moving back into a status
+// that triggers a fresh client notification + email would silently re-send
+// a "final" offer to the client as if it were new. Every other transition
+// stays unrestricted since the exact intended workflow beyond that is
+// admin-driven and not otherwise state-machine-enforced.
+function isOfferStatusTransitionAllowed(currentStatus, nextStatus) {
+  if (currentStatus === nextStatus) return true;
+  return !(terminalOfferStatuses.has(currentStatus) && publishTriggeringOfferStatuses.has(nextStatus));
+}
 
 function requireAdmin(req, res, next) {
   if (normalizeRole(req.user?.role) !== "ADMIN") return res.status(403).json({ error: "Brak uprawnień." });
@@ -179,7 +193,7 @@ async function applyLinkedOrderWorkflow(sql, offer, actorId) {
   });
 }
 
-async function deliverOfferEmail(offerId, authorization, createdById) {
+async function deliverOfferEmail(offerId, createdById) {
   const offerResult = await db.query(
     `SELECT o.*, c.name AS customer_name, c.email AS customer_email, co.name AS company_name
      FROM offers o
@@ -199,11 +213,10 @@ async function deliverOfferEmail(offerId, authorization, createdById) {
     offerValue: String(offer.total_price || "")
   };
   const rendered = await renderEmailTemplate("OFFER_SEND", variables);
-  const pdfUrl = `http://127.0.0.1:${process.env.PORT || 5000}/pdf/${offer.id}`;
-  const pdfResponse = await fetch(pdfUrl, { headers: { Authorization: authorization || "" } });
-  if (!pdfResponse.ok) throw new Error("Nie udało się wygenerować PDF do załącznika.");
+  const pdfResult = await generateOfferPdfInternal(offer.id);
+  if (!pdfResult) throw new Error("Nie udało się wygenerować PDF do załącznika.");
 
-  const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
+  const pdfBuffer = pdfResult.buffer;
   const log = await sendEmail({
     to: recipient,
     toName: offer.client_contact_person || offer.customer_name,
@@ -244,7 +257,7 @@ async function publishOfferToClient(offer, req) {
   }
 
   try {
-    const emailDelivery = await deliverOfferEmail(offer.id, req.headers.authorization, req.user.id);
+    const emailDelivery = await deliverOfferEmail(offer.id, req.user.id);
     delivery.emailSent = true;
     delivery.emailRecipient = emailDelivery.recipient;
   } catch (error) {
@@ -255,7 +268,7 @@ async function publishOfferToClient(offer, req) {
   return delivery;
 }
 
-router.get("/", auth, async (req, res) => {
+router.get("/", auth, loadCurrentUser, requireAnyPermission("VIEW_OFFERS"), async (req, res) => {
   try {
     const role = normalizeRole(req.user.role);
     const params = [];
@@ -291,7 +304,7 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
-router.get("/:id", auth, async (req, res) => {
+router.get("/:id", auth, loadCurrentUser, requireAnyPermission("VIEW_OFFERS"), async (req, res) => {
   try {
     const role = normalizeRole(req.user.role);
     const params = [req.params.id];
@@ -623,6 +636,10 @@ router.patch("/:id/status", auth, requireAdmin, async (req, res) => {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Oferta nie znaleziona" });
     }
+    if (!isOfferStatusTransitionAllowed(current.rows[0].status, status)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Nie można ponownie wysłać klientowi zamkniętej oferty. Cofnij ją najpierw do szkicu." });
+    }
 
     const offer = await client.query(
       "UPDATE offers SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *",
@@ -689,6 +706,11 @@ router.patch("/bulk-status", auth, requireAdmin, async (req, res) => {
       if (!current.rows[0]) {
         await client.query("ROLLBACK");
         failed.push({ id, error: "Oferta nie znaleziona" });
+        continue;
+      }
+      if (!isOfferStatusTransitionAllowed(current.rows[0].status, status)) {
+        await client.query("ROLLBACK");
+        failed.push({ id, error: "Nie można ponownie wysłać klientowi zamkniętej oferty." });
         continue;
       }
 
@@ -758,6 +780,9 @@ router.post("/:id/send-email", auth, requireAdmin, async (req, res) => {
     );
     const offer = offerResult.rows[0];
     if (!offer) return res.status(404).json({ error: "Oferta nie znaleziona." });
+    if (!isOfferStatusTransitionAllowed(offer.status, "WYSŁANA")) {
+      return res.status(400).json({ error: "Nie można ponownie wysłać klientowi zamkniętej oferty." });
+    }
 
     const variables = {
       companyName: offer.company_name || offer.customer_name || "",
@@ -772,33 +797,18 @@ router.post("/:id/send-email", auth, requireAdmin, async (req, res) => {
     const recipient = to || offer.client_email || offer.customer_email;
     const attachments = [];
     if (attachPdf) {
-      const pdfUrl = `http://127.0.0.1:${process.env.PORT || 5000}/pdf/${offer.id}`;
-      const pdfResponse = await fetch(pdfUrl, {
-        headers: { Authorization: req.headers.authorization || "" }
-      });
-      if (!pdfResponse.ok) throw new Error("Nie udało się wygenerować PDF do załącznika.");
-      const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
+      const pdfResult = await generateOfferPdfInternal(offer.id);
+      if (!pdfResult) throw new Error("Nie udało się wygenerować PDF do załącznika.");
       attachments.push({
         filename: `oferta_${String(offer.offer_number || offer.id).replace(/\//g, "_")}.pdf`,
-        content: pdfBuffer,
+        content: pdfResult.buffer,
         contentType: "application/pdf"
       });
     }
 
-    const log = await sendEmail({
-      to: recipient,
-      toName: toName || offer.client_contact_person || offer.customer_name,
-      subject: finalSubject,
-      html: finalHtml,
-      cc,
-      text: text || String(finalHtml || "").replace(/<[^>]*>?/gm, ""),
-      attachments,
-      templateKey: "OFFER_SEND",
-      entityType: "OFFER",
-      entityId: offer.id,
-      createdById: req.user.id
-    });
-
+    // The status transition (and its linked-order sync) commits before the
+    // email send is attempted, so a failed send doesn't leave the client
+    // holding an email for an offer whose status/order never actually moved.
     const workflowClient = await db.connect();
     let savedOffer;
     try {
@@ -817,6 +827,27 @@ router.post("/:id/send-email", auth, requireAdmin, async (req, res) => {
       workflowClient.release();
     }
 
+    let log = null;
+    let emailError = null;
+    try {
+      log = await sendEmail({
+        to: recipient,
+        toName: toName || offer.client_contact_person || offer.customer_name,
+        subject: finalSubject,
+        html: finalHtml,
+        cc,
+        text: text || String(finalHtml || "").replace(/<[^>]*>?/gm, ""),
+        attachments,
+        templateKey: "OFFER_SEND",
+        entityType: "OFFER",
+        entityId: offer.id,
+        createdById: req.user.id
+      });
+    } catch (error) {
+      emailError = error.message;
+      console.error("Offer status was updated but the email failed to send:", error);
+    }
+
     if (shouldPublishOffer(offer.status, savedOffer.status)) {
       await notifyClientUsersAboutOffer({
         offerId: savedOffer.id,
@@ -825,16 +856,18 @@ router.post("/:id/send-email", auth, requireAdmin, async (req, res) => {
       }).catch((error) => console.error("Failed to notify client about sent offer:", error));
     }
 
-    await notifyAdmins({
-      category: "OFFERS",
-      type: "OFFER_SENT",
-      priority: "SUCCESS",
-      title: "Oferta wysłana e-mailem",
-      message: `${offer.offer_number || "oferta #" + offer.id} wysłana do ${recipient}`,
-      entityType: "offer",
-      entityId: offer.id,
-      link: `/offers/${offer.id}`
-    }).catch(() => {});
+    if (!emailError) {
+      await notifyAdmins({
+        category: "OFFERS",
+        type: "OFFER_SENT",
+        priority: "SUCCESS",
+        title: "Oferta wysłana e-mailem",
+        message: `${offer.offer_number || "oferta #" + offer.id} wysłana do ${recipient}`,
+        entityType: "offer",
+        entityId: offer.id,
+        link: `/offers/${offer.id}`
+      }).catch(() => {});
+    }
     await writeAuditLog({
       category: "OFFER",
       action: "OFFER_EMAIL_SENT",
@@ -842,9 +875,17 @@ router.post("/:id/send-email", auth, requireAdmin, async (req, res) => {
       entityType: "offer",
       entityId: offer.id,
       message: `Wyslano oferte ${offer.offer_number || `#${offer.id}`} e-mailem.`,
-      metadata: { hasPdfAttachment: Boolean(attachPdf) }
+      metadata: { hasPdfAttachment: Boolean(attachPdf), emailError }
     }).catch((error) => console.error("Global audit log failed:", error));
 
+    if (emailError) {
+      return res.json({
+        message: "Status oferty zaktualizowano, ale wysyłka e-maila nie powiodła się.",
+        emailError,
+        log,
+        offer: savedOffer
+      });
+    }
     res.json({ message: "Oferta została wysłana e-mailem.", log, offer: savedOffer });
   } catch (error) {
     res.status(400).json({ error: error.message });

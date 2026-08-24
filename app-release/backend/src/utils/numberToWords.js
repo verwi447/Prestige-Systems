@@ -54,7 +54,8 @@ function getVariety(number, forms) {
 export function numberToWords(number, currency = "PLN") {
   if (typeof number !== "number" || Number.isNaN(number)) return "";
 
-  const [integerPartStr, fractionalPartStr = "00"] = number.toFixed(2).split(".");
+  const isNegative = number < 0;
+  const [integerPartStr, fractionalPartStr = "00"] = Math.abs(number).toFixed(2).split(".");
   let integerPart = parseInt(integerPartStr, 10);
   const originalInteger = integerPart;
   const words = [];
@@ -103,5 +104,5 @@ export function numberToWords(number, currency = "PLN") {
       ? getVariety(originalInteger, ["złoty", "złote", "złotych"])
       : currency;
 
-  return `${words.join(" ").trim()} ${currencyWord} ${fractionalPartStr.padEnd(2, "0")}/100`;
+  return `${isNegative ? "minus " : ""}${words.join(" ").trim()} ${currencyWord} ${fractionalPartStr.padEnd(2, "0")}/100`;
 }

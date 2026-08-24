@@ -417,7 +417,7 @@ async function createMetadata({ jobId, type, user, settings, files, sizeBytes = 
   };
 }
 
-export async function createBackupJob({ type = "MANUAL", user = null, ipAddress = null } = {}) {
+export async function createBackupJob({ type = "MANUAL", user = null, ipAddress = null, awaitCompletion = false } = {}) {
   await ensureDefaultBackupData();
   const settings = await getSettings();
   const location = await getDefaultLocation();
@@ -430,9 +430,19 @@ export async function createBackupJob({ type = "MANUAL", user = null, ipAddress 
     [jobId, type, location.id, user?.id || null]
   );
 
-  runBackup(jobId, { type, user, ipAddress, settings, location }).catch((error) => {
+  // runBackup catches its own errors internally (marks the job FAILED, never
+  // rejects), so callers that need to know the outcome (e.g. a safety backup
+  // taken before a destructive restore) must await it and check the row's
+  // status - the promise resolving is not itself a success signal.
+  const backupPromise = runBackup(jobId, { type, user, ipAddress, settings, location }).catch((error) => {
     console.error("Backup job failed:", error);
   });
+
+  if (awaitCompletion) {
+    await backupPromise;
+  } else {
+    backupPromise.catch(() => {});
+  }
 
   const created = await db.query("SELECT * FROM backup_jobs WHERE id=$1", [jobId]);
   return normalizeBackupRow(created.rows[0]);
@@ -681,7 +691,10 @@ export async function restoreBackup(job, { user, ipAddress, forced = false }) {
   if (!job?.file_path || !(await exists(job.file_path))) throw new Error("Plik backupu nie istnieje.");
 
   const tempDir = path.join(tempRoot, `restore-${job.id}-${Date.now()}`);
-  await createBackupJob({ type: forced ? "FORCED_RESTORE" : "SAFETY", user, ipAddress });
+  const safetyBackup = await createBackupJob({ type: forced ? "FORCED_RESTORE" : "SAFETY", user, ipAddress, awaitCompletion: true });
+  if (safetyBackup.status !== "COMPLETED") {
+    throw new Error("Backup bezpieczeństwa przed przywróceniem nie powiódł się - przywracanie zostało przerwane.");
+  }
 
   try {
     await extractArchive(job.file_path, tempDir);

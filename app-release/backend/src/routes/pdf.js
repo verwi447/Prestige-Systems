@@ -94,50 +94,52 @@ function getOwnCompanyLogoPath(logoUrl) {
   return fs.existsSync(logoPath) ? logoPath : "";
 }
 
-router.get("/:offer_id", auth, loadCurrentUser, async (req, res) => {
-  try {
-    const role = normalizeRole(req.currentUser?.role);
-    const isClient = ["CLIENT_OWNER", "CLIENT_EMPLOYEE"].includes(role);
-    const params = [req.params.offer_id];
-    let accessSql = "WHERE o.id=$1";
-    if (isClient) {
-      params.push(req.currentUser.company_id);
-      accessSql += " AND c.company_id=$2 AND UPPER(COALESCE(o.status, '')) <> ALL(ARRAY['SZKIC','DRAFT']::text[])";
-    }
-    const offerRes = await db.query(
-      `SELECT
-        o.*,
-        c.name as customer_name,
-        c.address as customer_address,
-        c.email as customer_email,
-        c.phone as customer_phone,
-        c.nip as customer_nip,
-        co.name as company_name,
-        u.username as creator_name,
-        u.first_name as creator_first_name,
-        u.last_name as creator_last_name,
-        u.email as creator_email,
-        u.phone as creator_phone
-       FROM offers o
-       LEFT JOIN customers c ON o.customer_id = c.id
-       LEFT JOIN companies co ON c.company_id = co.id
-       LEFT JOIN users u ON o.created_by = u.id
-       ${accessSql}`,
-      params
-    );
+export async function loadOfferPdfData(offerId, { isClient = false, companyId = null } = {}) {
+  const params = [offerId];
+  let accessSql = "WHERE o.id=$1";
+  if (isClient) {
+    params.push(companyId);
+    accessSql += " AND c.company_id=$2 AND UPPER(COALESCE(o.status, '')) <> ALL(ARRAY['SZKIC','DRAFT']::text[])";
+  }
+  const offerRes = await db.query(
+    `SELECT
+      o.*,
+      c.name as customer_name,
+      c.address as customer_address,
+      c.email as customer_email,
+      c.phone as customer_phone,
+      c.nip as customer_nip,
+      co.name as company_name,
+      u.username as creator_name,
+      u.first_name as creator_first_name,
+      u.last_name as creator_last_name,
+      u.email as creator_email,
+      u.phone as creator_phone
+     FROM offers o
+     LEFT JOIN customers c ON o.customer_id = c.id
+     LEFT JOIN companies co ON c.company_id = co.id
+     LEFT JOIN users u ON o.created_by = u.id
+     ${accessSql}`,
+    params
+  );
 
-    if (!offerRes.rows[0]) return res.status(404).json({ error: "Oferta nie znaleziona" });
-    const offer = offerRes.rows[0];
+  if (!offerRes.rows[0]) return null;
+  const offer = offerRes.rows[0];
 
-    const itemsRes = await db.query("SELECT * FROM offer_items WHERE offer_id=$1 ORDER BY item_number ASC", [req.params.offer_id]);
-    const items = itemsRes.rows;
-    const ownCompanyRes = await db.query("SELECT * FROM own_company ORDER BY id ASC LIMIT 1");
-    let ownCompany = ownCompanyRes.rows[0] || null;
-    if (!ownCompany) {
-      const legacyOwnCompanyRes = await db.query("SELECT * FROM companies WHERE is_own_company = TRUE ORDER BY id ASC LIMIT 1");
-      ownCompany = legacyOwnCompanyRes.rows[0] || null;
-    }
+  const itemsRes = await db.query("SELECT * FROM offer_items WHERE offer_id=$1 ORDER BY item_number ASC", [offerId]);
+  const items = itemsRes.rows;
+  const ownCompanyRes = await db.query("SELECT * FROM own_company ORDER BY id ASC LIMIT 1");
+  let ownCompany = ownCompanyRes.rows[0] || null;
+  if (!ownCompany) {
+    const legacyOwnCompanyRes = await db.query("SELECT * FROM companies WHERE is_own_company = TRUE ORDER BY id ASC LIMIT 1");
+    ownCompany = legacyOwnCompanyRes.rows[0] || null;
+  }
 
+  return { offer, items, ownCompany };
+}
+
+export async function renderOfferPdfBuffer({ offer, items, ownCompany }) {
+  {
     const currency = offer.currency || "PLN";
     const totalNet = items.reduce((sum, item) => sum + Number(item.net_total ?? item.total ?? 0), 0);
 
@@ -363,13 +365,34 @@ router.get("/:offer_id", auth, loadCurrentUser, async (req, res) => {
     doc.end();
     await pdfFinished;
     const pdfBuffer = Buffer.concat(pdfChunks);
+    return { buffer: pdfBuffer, fileName };
+  }
+}
+
+router.get("/:offer_id", auth, loadCurrentUser, async (req, res) => {
+  try {
+    const role = normalizeRole(req.currentUser?.role);
+    const isClient = ["CLIENT_OWNER", "CLIENT_EMPLOYEE"].includes(role);
+    const data = await loadOfferPdfData(req.params.offer_id, { isClient, companyId: req.currentUser?.company_id });
+    if (!data) return res.status(404).json({ error: "Oferta nie znaleziona" });
+
+    const { buffer, fileName } = await renderOfferPdfBuffer(data);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}"`);
-    res.send(pdfBuffer);
+    res.send(buffer);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Wewnętrzny błąd serwera." });
   }
 });
+
+// Used by offers.js to attach the offer PDF to outgoing emails without an
+// internal HTTP round-trip (which previously always 401'd - auth only reads
+// the session cookie, and a server-to-server fetch() carries none).
+export async function generateOfferPdfInternal(offerId) {
+  const data = await loadOfferPdfData(offerId);
+  if (!data) return null;
+  return renderOfferPdfBuffer(data);
+}
 
 export default router;
