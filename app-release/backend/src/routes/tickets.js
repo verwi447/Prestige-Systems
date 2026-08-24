@@ -305,9 +305,11 @@ async function getTicketPayload(ticketId, user) {
       }))
     : fallbackHistory.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-  const aiConversationStatus = normalizedHistory.some((entry) => entry.action === "AI_ESCALATED_TO_ADMIN")
+  const lastEscalation = normalizedHistory.findLast((entry) => entry.action === "AI_ESCALATED_TO_ADMIN");
+  const lastResolution = normalizedHistory.findLast((entry) => entry.action === "AI_CONVERSATION_RESOLVED");
+  const aiConversationStatus = lastEscalation && (!lastResolution || new Date(lastEscalation.createdAt) > new Date(lastResolution.createdAt))
     ? "ESCALATED"
-    : normalizedHistory.some((entry) => entry.action === "AI_CONVERSATION_RESOLVED")
+    : lastResolution
       ? "RESOLVED"
       : normalizedComments.some((comment) => comment.isAiGenerated && !comment.isInternal)
         ? "ACTIVE"
@@ -484,7 +486,9 @@ router.get("/", auth, requireAdmin, async (req, res) => {
               (SELECT COUNT(*)::int FROM ticket_comments tc WHERE tc.ticket_id=t.id) AS comment_count,
               (SELECT COUNT(*)::int FROM ticket_photos tp WHERE tp.ticket_id=t.id) AS attachment_count,
               (CASE
-                WHEN EXISTS (SELECT 1 FROM ticket_history th WHERE th.ticket_id=t.id AND th.action='AI_ESCALATED_TO_ADMIN') THEN 'ESCALATED'
+                WHEN (SELECT MAX(th.created_at) FROM ticket_history th WHERE th.ticket_id=t.id AND th.action='AI_ESCALATED_TO_ADMIN')
+                     > COALESCE((SELECT MAX(th2.created_at) FROM ticket_history th2 WHERE th2.ticket_id=t.id AND th2.action='AI_CONVERSATION_RESOLVED'), '-infinity'::timestamp)
+                  THEN 'ESCALATED'
                 WHEN EXISTS (SELECT 1 FROM ticket_history th WHERE th.ticket_id=t.id AND th.action='AI_CONVERSATION_RESOLVED') THEN 'RESOLVED'
                 WHEN EXISTS (SELECT 1 FROM ticket_comments tc WHERE tc.ticket_id=t.id AND tc.is_ai_generated=TRUE AND tc.is_internal=FALSE) THEN 'ACTIVE'
                 ELSE NULL
