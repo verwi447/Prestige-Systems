@@ -74,6 +74,24 @@ async function fetchNewTicketImages(ticketId, sinceTimestamp) {
   return loadInlineFiles(result.rows, ticketUploadDir).filter((file) => file.mimeType.startsWith("image/"));
 }
 
+async function fetchObjectEquipment(objectId) {
+  if (!objectId) return [];
+  const result = await db.query(
+    "SELECT category, brand, model, notes FROM object_equipment WHERE object_id=$1 ORDER BY created_at ASC",
+    [objectId]
+  );
+  return result.rows;
+}
+
+function formatEquipmentList(equipment) {
+  return equipment
+    .map((row) => {
+      const label = [row.brand, row.model].filter(Boolean).join(" ") || "model nieokreslony";
+      return `- [${row.category}] ${label}${row.notes ? ` (${row.notes})` : ""}`;
+    })
+    .join("\n");
+}
+
 async function fetchKnowledgeEntries(category) {
   const result = await db.query(
     `SELECT title, content, solution, category FROM ai_knowledge_base
@@ -112,10 +130,12 @@ async function fetchSimilarResolvedTickets(ticket) {
   return result.rows.filter((row) => row.resolution);
 }
 
-function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSend, hasKnowledgeFiles) {
+function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSend, hasKnowledgeFiles, equipment = []) {
   const typeLabel = ticket.type === "HARDWARE_FAILURE"
     ? "awaria sprzetu (szlaban parkingowy lub kamera ANPR)"
     : "awaria systemu / problem z dzialaniem uslugi";
+
+  const equipmentList = formatEquipmentList(equipment);
 
   const knowledge = knowledgeEntries
     .map((row, index) => `Wpis ${index + 1} - [${row.category}] ${row.title}:\n${row.content}${row.solution ? `\nRozwiazanie:\n${row.solution}` : ""}`)
@@ -137,7 +157,8 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSe
     autoSend
       ? "Ta wiadomosc zostanie wyslana BEZPOSREDNIO do klienta jako pierwsza odpowiedz na czacie pomocy technicznej - napisz ja wprost do klienta (mozesz uzyc 'Pana/Pani urzadzenie' itp.), cieplo i pomocnie, i zakoncz pytaniem czy podana wskazowka pomogla albo informacja ze klient moze odpisac jesli problem sie utrzymuje."
       : "To jest TYLKO sugestia dla admina - nie jest jeszcze widoczna dla klienta, wiec nie pisz 'Szanowny Kliencie' ani formalnych powitan.",
-    knowledge ? `Ponizej znajduje sie WEWNETRZNA BAZA WIEDZY firmy o konkretnych urzadzeniach (np. terminal wjazdowy, terminal wyjazdowy, terminal wyjazdowy z terminalem platniczym, szlaban, kamera) i procedurach napraw, wpisana recznie przez administratorow. Kazdy wpis ma etykiete urzadzenia w nawiasach kwadratowych. Traktuj pasujace wpisy jako NAJBARDZIEJ WIARYGODNE zrodlo - jesli urzadzenie lub objaw ze zgloszenia pasuje do ktoregos wpisu, oprzyj diagnoze na nim zamiast na ogolnych domyslach. Wpisy dla innych urzadzen ignoruj:\n\n${knowledge}` : "",
+    equipmentList ? `WAZNE: rozne obiekty klienta maja zainstalowany sprzet od roznych producentow, wiec NIE zakladaj domyslnego modelu. Na TYM KONKRETNYM obiekcie, ktorego dotyczy zgloszenie, zainstalowany jest nastepujacy sprzet - dopasuj diagnoze do tych faktycznych marek/modeli zamiast do ogolnego typu urzadzenia:\n\n${equipmentList}` : "",
+    knowledge ? `Ponizej znajduje sie WEWNETRZNA BAZA WIEDZY firmy o konkretnych urzadzeniach (np. terminal wjazdowy, terminal wyjazdowy, terminal wyjazdowy z terminalem platniczym, szlaban, kamera) i procedurach napraw, wpisana recznie przez administratorow. Kazdy wpis ma etykiete urzadzenia w nawiasach kwadratowych. Traktuj pasujace wpisy jako NAJBARDZIEJ WIARYGODNE zrodlo - jesli urzadzenie lub objaw ze zgloszenia pasuje do ktoregos wpisu (zwlaszcza jesli marka/model zgadza sie ze sprzetem obiektu powyzej), oprzyj diagnoze na nim zamiast na ogolnych domyslach. Wpisy dla innych urzadzen ignoruj:\n\n${knowledge}` : "",
     examples ? `Oto podobne wczesniej rozwiazane zgloszenia - trzymaj sie podobnego stylu i sposobu rozwiazywania, jesli pasuja do obecnego przypadku:\n\n${examples}` : "",
     `Typ zgloszenia: ${typeLabel}`,
     ticket.category ? `Urzadzenie wskazane przez klienta: ${ticket.category}` : "",
@@ -238,15 +259,16 @@ export async function analyzeTicketWithAi(ticketId) {
     if (!ticket || !analyzableTypes.has(ticket.type)) return;
 
     const autoSend = await isAutoSendEnabled();
-    const [ticketImages, similarTickets, knowledgeEntries, knowledgeFiles] = await Promise.all([
+    const [ticketImages, similarTickets, knowledgeEntries, knowledgeFiles, equipment] = await Promise.all([
       fetchTicketImages(ticketId),
       fetchSimilarResolvedTickets(ticket),
       fetchKnowledgeEntries(ticket.category),
-      fetchKnowledgeFiles(ticket.category)
+      fetchKnowledgeFiles(ticket.category),
+      fetchObjectEquipment(ticket.object_id)
     ]);
 
     const images = [...ticketImages, ...knowledgeFiles];
-    const prompt = buildPrompt(ticket, knowledgeEntries, similarTickets, ticketImages.length > 0, autoSend, knowledgeFiles.length > 0);
+    const prompt = buildPrompt(ticket, knowledgeEntries, similarTickets, ticketImages.length > 0, autoSend, knowledgeFiles.length > 0, equipment);
     const suggestion = await callGemini(prompt, images);
     if (!suggestion) return;
 
@@ -315,10 +337,12 @@ async function escalateToAdmin(ticket, closingMessage) {
   }).catch(() => {});
 }
 
-function buildConversationPrompt(ticket, knowledgeEntries, conversation, hasNewImages, hasKnowledgeFiles) {
+function buildConversationPrompt(ticket, knowledgeEntries, conversation, hasNewImages, hasKnowledgeFiles, equipment = []) {
   const typeLabel = ticket.type === "HARDWARE_FAILURE"
     ? "awaria sprzetu (szlaban parkingowy lub kamera ANPR)"
     : "awaria systemu / problem z dzialaniem uslugi";
+
+  const equipmentList = formatEquipmentList(equipment);
 
   const knowledge = knowledgeEntries
     .map((row, index) => `Wpis ${index + 1} - [${row.category}] ${row.title}:\n${row.content}${row.solution ? `\nRozwiazanie:\n${row.solution}` : ""}`)
@@ -342,6 +366,7 @@ function buildConversationPrompt(ticket, knowledgeEntries, conversation, hasNewI
     "STATUS: RESOLVED\n(tresc wiadomosci - podziekowanie i zamkniecie)",
     "albo",
     "STATUS: ESCALATE\n(tresc wiadomosci - informacja ze sprawa trafia do serwisu)",
+    equipmentList ? `Na tym konkretnym obiekcie klienta zainstalowany jest nastepujacy sprzet - dopasuj odpowiedz do tych faktycznych marek/modeli, nie do ogolnego typu urzadzenia:\n\n${equipmentList}` : "",
     knowledge ? `Wewnetrzna baza wiedzy firmy (traktuj pasujace wpisy jako najbardziej wiarygodne, wpisy dla innych urzadzen ignoruj):\n\n${knowledge}` : "",
     `Typ zgloszenia: ${typeLabel}`,
     ticket.category ? `Urzadzenie: ${ticket.category}` : "",
@@ -384,13 +409,14 @@ export async function continueAiConversation(ticketId) {
       return;
     }
 
-    const [knowledgeEntries, knowledgeFiles, newImages] = await Promise.all([
+    const [knowledgeEntries, knowledgeFiles, newImages, equipment] = await Promise.all([
       fetchKnowledgeEntries(ticket.category),
       fetchKnowledgeFiles(ticket.category),
-      fetchNewTicketImages(ticketId, conversation[lastAiIndex].createdAt)
+      fetchNewTicketImages(ticketId, conversation[lastAiIndex].createdAt),
+      fetchObjectEquipment(ticket.object_id)
     ]);
     const images = [...newImages, ...knowledgeFiles];
-    const prompt = buildConversationPrompt(ticket, knowledgeEntries, conversation, newImages.length > 0, knowledgeFiles.length > 0);
+    const prompt = buildConversationPrompt(ticket, knowledgeEntries, conversation, newImages.length > 0, knowledgeFiles.length > 0, equipment);
     const raw = await callGemini(prompt, images);
     if (!raw) return;
 

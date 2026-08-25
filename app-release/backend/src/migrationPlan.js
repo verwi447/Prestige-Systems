@@ -54,4 +54,11 @@ export const ADD_AI_KNOWLEDGE_FILES_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_AI_KNOWLEDGE_FILES_MIGRATION.id;
+export const ADD_OBJECT_EQUIPMENT_MIGRATION = Object.freeze({
+  id: "2026.08.25.001",
+  checksum: "add-object-equipment-v1",
+  description: "Dodaje ewidencje sprzetu (marka/model) per obiekt do kontekstu asystenta AI",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_OBJECT_EQUIPMENT_MIGRATION.id;

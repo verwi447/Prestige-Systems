@@ -194,4 +194,55 @@ router.delete("/:siteId", requirePermission("MANAGE_SITES"), asyncHandler(async 
   res.status(204).send();
 }));
 
+// object_equipment is Prestige's own installation/service record (brand/model
+// per site) - it also feeds the AI assistant's per-ticket prompt so it can
+// tailor diagnoses to the actual hardware at that site instead of guessing
+// from a generic device category. Admin-managed only.
+router.get("/:siteId/equipment", requireRole("ADMIN"), asyncHandler(async (req, res) => {
+  const existing = await db.query("SELECT id FROM objects WHERE id=$1", [req.params.siteId]);
+  if (!existing.rows[0]) return res.status(404).json({ error: "Obiekt nie znaleziony." });
+
+  const result = await db.query(
+    "SELECT * FROM object_equipment WHERE object_id=$1 ORDER BY created_at ASC",
+    [req.params.siteId]
+  );
+  res.json(result.rows);
+}));
+
+router.post("/:siteId/equipment", requireRole("ADMIN"), asyncHandler(async (req, res) => {
+  const existing = await db.query("SELECT id FROM objects WHERE id=$1", [req.params.siteId]);
+  if (!existing.rows[0]) return res.status(404).json({ error: "Obiekt nie znaleziony." });
+
+  const { category, brand, model, notes } = req.body;
+  if (!String(category || "").trim()) return res.status(400).json({ error: "Kategoria sprzętu jest wymagana." });
+
+  const result = await db.query(
+    `INSERT INTO object_equipment (object_id, category, brand, model, notes)
+     VALUES ($1,$2,$3,$4,$5)
+     RETURNING *`,
+    [req.params.siteId, category.trim(), brand?.trim() || null, model?.trim() || null, notes?.trim() || null]
+  );
+  res.status(201).json(result.rows[0]);
+}));
+
+router.put("/equipment/:equipmentId", requireRole("ADMIN"), asyncHandler(async (req, res) => {
+  const { category, brand, model, notes } = req.body;
+  if (!String(category || "").trim()) return res.status(400).json({ error: "Kategoria sprzętu jest wymagana." });
+
+  const result = await db.query(
+    `UPDATE object_equipment SET category=$1, brand=$2, model=$3, notes=$4, updated_at=CURRENT_TIMESTAMP
+     WHERE id=$5
+     RETURNING *`,
+    [category.trim(), brand?.trim() || null, model?.trim() || null, notes?.trim() || null, req.params.equipmentId]
+  );
+  if (!result.rows[0]) return res.status(404).json({ error: "Sprzęt nie znaleziony." });
+  res.json(result.rows[0]);
+}));
+
+router.delete("/equipment/:equipmentId", requireRole("ADMIN"), asyncHandler(async (req, res) => {
+  const result = await db.query("DELETE FROM object_equipment WHERE id=$1", [req.params.equipmentId]);
+  if (!result.rowCount) return res.status(404).json({ error: "Sprzęt nie znaleziony." });
+  res.status(204).send();
+}));
+
 export default router;
