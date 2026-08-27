@@ -158,6 +158,50 @@ router.post("/knowledge", async (req, res) => {
   }
 });
 
+router.post("/knowledge/import", async (req, res) => {
+  const entries = Array.isArray(req.body.entries) ? req.body.entries : [];
+  if (!entries.length) return res.status(400).json({ error: "Brak wpisow do zaimportowania." });
+  if (entries.length > 500) return res.status(400).json({ error: "Maksymalnie 500 wpisow na raz." });
+
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    let imported = 0;
+    const skipped = [];
+    for (const entry of entries) {
+      const title = String(entry?.title || "").trim();
+      const content = String(entry?.content || "").trim();
+      if (!title || !content) {
+        skipped.push(title || "(bez tytulu)");
+        continue;
+      }
+      const solution = String(entry?.solution || "").trim() || null;
+      const category = normalizeCategory(entry?.category);
+      await client.query(
+        `INSERT INTO ai_knowledge_base (title, content, solution, category, created_by)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [title, content, solution, category, req.user.id]
+      );
+      imported++;
+    }
+    await client.query("COMMIT");
+    await writeAuditLog({
+      category: "SYSTEM",
+      action: "AI_KNOWLEDGE_BASE_IMPORTED",
+      userId: req.user.id,
+      entityType: "ai_knowledge_base",
+      message: `Zaimportowano ${imported} wpis(y) do bazy wiedzy AI`,
+      metadata: { imported, skippedCount: skipped.length }
+    }).catch((error) => console.error("Global audit log failed:", error));
+    res.status(201).json({ imported, skipped });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Nie udalo sie zaimportowac wpisow." });
+  } finally {
+    client.release();
+  }
+});
+
 router.put("/knowledge/:id", async (req, res) => {
   const title = String(req.body.title || "").trim();
   const content = String(req.body.content || "").trim();
