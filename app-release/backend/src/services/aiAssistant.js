@@ -94,12 +94,42 @@ function formatEquipmentList(equipment) {
 
 async function fetchKnowledgeEntries(category) {
   const result = await db.query(
-    `SELECT title, content, solution, category FROM ai_knowledge_base
+    `SELECT id, title, content, solution, category FROM ai_knowledge_base
      ORDER BY (category = $1) DESC, updated_at DESC
      LIMIT $2`,
     [category || "", MAX_KNOWLEDGE_ENTRIES]
   );
   return result.rows;
+}
+
+// The model is asked to end its reply with a machine-readable line naming
+// which knowledge base entry (by id) it actually based the diagnosis on, so
+// the app can show admins "this entry was used for tickets X, Y, Z" - this
+// strips that line out before the text is saved/shown, and returns the id.
+function extractMatchedKnowledgeId(rawText) {
+  const match = String(rawText || "").match(/\n?WPIS_BAZY_WIEDZY:\s*(\d+|NONE)\s*$/i);
+  if (!match) return { text: String(rawText || "").trim(), knowledgeId: null };
+  const knowledgeId = match[1].toUpperCase() === "NONE" ? null : Number(match[1]);
+  return { text: rawText.slice(0, match.index).trim(), knowledgeId };
+}
+
+async function recordKnowledgeMatch(ticketId, knowledgeId, knowledgeEntries) {
+  if (!knowledgeId || !knowledgeEntries.some((entry) => entry.id === knowledgeId)) return;
+  try {
+    await db.query(
+      `INSERT INTO ai_knowledge_matches (knowledge_base_id, ticket_id)
+       VALUES ($1,$2)
+       ON CONFLICT (knowledge_base_id, ticket_id) DO UPDATE SET matched_at=CURRENT_TIMESTAMP`,
+      [knowledgeId, ticketId]
+    );
+  } catch (error) {
+    console.error("Failed to record knowledge base match:", error);
+  }
+}
+
+function matchInstructionLine(knowledgeEntries) {
+  if (!knowledgeEntries.length) return "";
+  return "Na samym koncu odpowiedzi, w NOWEJ linii, napisz dokladnie: WPIS_BAZY_WIEDZY: <numer ID wpisu z nawiasu [ID:...] powyzej, na ktorym oparles diagnoze> - albo WPIS_BAZY_WIEDZY: NONE, jesli zaden wpis nie pasowal. Ta linia jest tylko do wewnetrznego uzytku systemu i zostanie usunieta przed pokazaniem odpowiedzi.";
 }
 
 async function fetchKnowledgeFiles(category) {
@@ -138,7 +168,7 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSe
   const equipmentList = formatEquipmentList(equipment);
 
   const knowledge = knowledgeEntries
-    .map((row, index) => `Wpis ${index + 1} - [${row.category}] ${row.title}:\n${row.content}${row.solution ? `\nRozwiazanie:\n${row.solution}` : ""}`)
+    .map((row, index) => `Wpis ${index + 1} [ID:${row.id}] - [${row.category}] ${row.title}:\n${row.content}${row.solution ? `\nRozwiazanie:\n${row.solution}` : ""}`)
     .join("\n\n");
 
   const examples = similarTickets
@@ -163,7 +193,8 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSe
     `Typ zgloszenia: ${typeLabel}`,
     ticket.category ? `Urzadzenie wskazane przez klienta: ${ticket.category}` : "",
     `Temat: ${ticket.subject}`,
-    `Opis klienta: ${ticket.description || "(brak opisu)"}`
+    `Opis klienta: ${ticket.description || "(brak opisu)"}`,
+    matchInstructionLine(knowledgeEntries)
   ].filter(Boolean).join("\n\n");
 }
 
@@ -269,10 +300,14 @@ export async function analyzeTicketWithAi(ticketId) {
 
     const images = [...ticketImages, ...knowledgeFiles];
     const prompt = buildPrompt(ticket, knowledgeEntries, similarTickets, ticketImages.length > 0, autoSend, knowledgeFiles.length > 0, equipment);
-    const suggestion = await callGemini(prompt, images);
+    const raw = await callGemini(prompt, images);
+    if (!raw) return;
+
+    const { text: suggestion, knowledgeId } = extractMatchedKnowledgeId(raw);
     if (!suggestion) return;
 
     await saveSuggestionComment(ticketId, suggestion);
+    await recordKnowledgeMatch(ticketId, knowledgeId, knowledgeEntries);
   } catch (error) {
     console.error(`Analiza AI zgloszenia #${ticketId} nie powiodla sie:`, error.message, error.cause || "");
   }
@@ -345,7 +380,7 @@ function buildConversationPrompt(ticket, knowledgeEntries, conversation, hasNewI
   const equipmentList = formatEquipmentList(equipment);
 
   const knowledge = knowledgeEntries
-    .map((row, index) => `Wpis ${index + 1} - [${row.category}] ${row.title}:\n${row.content}${row.solution ? `\nRozwiazanie:\n${row.solution}` : ""}`)
+    .map((row, index) => `Wpis ${index + 1} [ID:${row.id}] - [${row.category}] ${row.title}:\n${row.content}${row.solution ? `\nRozwiazanie:\n${row.solution}` : ""}`)
     .join("\n\n");
 
   const history = conversation.map((entry) => `${entry.role}: ${entry.content}`).join("\n");
@@ -372,7 +407,8 @@ function buildConversationPrompt(ticket, knowledgeEntries, conversation, hasNewI
     ticket.category ? `Urzadzenie: ${ticket.category}` : "",
     `Temat zgloszenia: ${ticket.subject}`,
     `Poczatkowy opis klienta: ${ticket.description || "(brak)"}`,
-    `Historia rozmowy:\n${history}`
+    `Historia rozmowy:\n${history}`,
+    matchInstructionLine(knowledgeEntries)
   ].filter(Boolean).join("\n\n");
 }
 
@@ -417,18 +453,21 @@ export async function continueAiConversation(ticketId) {
     ]);
     const images = [...newImages, ...knowledgeFiles];
     const prompt = buildConversationPrompt(ticket, knowledgeEntries, conversation, newImages.length > 0, knowledgeFiles.length > 0, equipment);
-    const raw = await callGemini(prompt, images);
-    if (!raw) return;
+    const rawReply = await callGemini(prompt, images);
+    if (!rawReply) return;
 
+    const { text: raw, knowledgeId } = extractMatchedKnowledgeId(rawReply);
     const parsed = parseConversationReply(raw);
     if (!parsed.message) return;
 
     if (parsed.status === "ESCALATE") {
       await escalateToAdmin(ticket, parsed.message);
+      await recordKnowledgeMatch(ticketId, knowledgeId, knowledgeEntries);
       return;
     }
 
     await postAiCommentAsPublic(ticketId, parsed.message);
+    await recordKnowledgeMatch(ticketId, knowledgeId, knowledgeEntries);
     if (parsed.status === "RESOLVED") {
       await markConversationEnded(ticketId, "AI_CONVERSATION_RESOLVED");
     }

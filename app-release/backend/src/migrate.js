@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_FILES_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_OBJECT_EQUIPMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_FILES_MIGRATION, ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_OBJECT_EQUIPMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -1051,6 +1051,19 @@ async function addObjectEquipmentTable({ query }) {
   await query(`INSERT INTO ai_equipment_types (name) VALUES ('System parkingowy') ON CONFLICT (name) DO NOTHING`);
 }
 
+async function addAiKnowledgeMatchesTable({ query }) {
+  await query(`
+    CREATE TABLE IF NOT EXISTS ai_knowledge_matches (
+      id SERIAL PRIMARY KEY,
+      knowledge_base_id INT NOT NULL REFERENCES ai_knowledge_base(id) ON DELETE CASCADE,
+      ticket_id INT NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+      matched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (knowledge_base_id, ticket_id)
+    )
+  `);
+  await query(`CREATE INDEX IF NOT EXISTS idx_ai_knowledge_matches_kb ON ai_knowledge_matches(knowledge_base_id)`);
+}
+
 export function getMigrationDefinitions() {
   return [
     { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
@@ -1061,7 +1074,8 @@ export function getMigrationDefinitions() {
     { ...ADD_AI_EQUIPMENT_TYPES_MIGRATION, up: addAiEquipmentTypesTable },
     { ...ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, up: addAiKnowledgeSolutionColumn },
     { ...ADD_AI_KNOWLEDGE_FILES_MIGRATION, up: addAiKnowledgeFilesTable },
-    { ...ADD_OBJECT_EQUIPMENT_MIGRATION, up: addObjectEquipmentTable }
+    { ...ADD_OBJECT_EQUIPMENT_MIGRATION, up: addObjectEquipmentTable },
+    { ...ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, up: addAiKnowledgeMatchesTable }
   ];
 }
 

@@ -61,4 +61,11 @@ export const ADD_OBJECT_EQUIPMENT_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_OBJECT_EQUIPMENT_MIGRATION.id;
+export const ADD_AI_KNOWLEDGE_MATCHES_MIGRATION = Object.freeze({
+  id: "2026.08.27.001",
+  checksum: "add-ai-knowledge-matches-v1",
+  description: "Sledzi ktore zgloszenia AI dopasowalo do konkretnego wpisu bazy wiedzy",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_AI_KNOWLEDGE_MATCHES_MIGRATION.id;

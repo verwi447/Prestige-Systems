@@ -98,7 +98,7 @@ function knowledgeFileRow(row) {
 
 router.get("/knowledge", async (_req, res) => {
   try {
-    const [entries, files] = await Promise.all([
+    const [entries, files, matches] = await Promise.all([
       db.query(
         `SELECT kb.id, kb.title, kb.content, kb.solution, kb.category, kb.created_at, kb.updated_at,
                 u.first_name, u.last_name, u.email
@@ -106,13 +106,25 @@ router.get("/knowledge", async (_req, res) => {
          LEFT JOIN users u ON u.id=kb.created_by
          ORDER BY kb.updated_at DESC`
       ),
-      db.query(`SELECT id, knowledge_base_id, original_name, mime_type, file_size, uploaded_at FROM ai_knowledge_base_files ORDER BY uploaded_at ASC`)
+      db.query(`SELECT id, knowledge_base_id, original_name, mime_type, file_size, uploaded_at FROM ai_knowledge_base_files ORDER BY uploaded_at ASC`),
+      db.query(
+        `SELECT akm.knowledge_base_id, t.id, t.ticket_number
+         FROM ai_knowledge_matches akm
+         JOIN tickets t ON t.id=akm.ticket_id
+         ORDER BY akm.matched_at DESC`
+      )
     ]);
     const filesByEntry = new Map();
     for (const row of files.rows) {
       const list = filesByEntry.get(row.knowledge_base_id) || [];
       list.push(knowledgeFileRow(row));
       filesByEntry.set(row.knowledge_base_id, list);
+    }
+    const matchesByEntry = new Map();
+    for (const row of matches.rows) {
+      const list = matchesByEntry.get(row.knowledge_base_id) || [];
+      list.push({ id: row.id, number: row.ticket_number });
+      matchesByEntry.set(row.knowledge_base_id, list);
     }
     res.json(entries.rows.map((row) => ({
       id: row.id,
@@ -123,7 +135,8 @@ router.get("/knowledge", async (_req, res) => {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       authorName: [row.first_name, row.last_name].filter(Boolean).join(" ") || row.email || "-",
-      files: filesByEntry.get(row.id) || []
+      files: filesByEntry.get(row.id) || [],
+      matchedTickets: matchesByEntry.get(row.id) || []
     })));
   } catch (error) {
     res.status(500).json({ error: "Nie udalo sie pobrac bazy wiedzy." });
