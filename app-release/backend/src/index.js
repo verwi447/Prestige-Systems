@@ -171,6 +171,7 @@ app.get("/healthz", async (_req, res) => {
 
 // Sensitive attachments are only available through authenticated file routes.
 app.use("/uploads/tickets", (_req, res) => res.status(404).json({ error: "Plik nie istnieje." }));
+app.use("/uploads/knowledge", (_req, res) => res.status(404).json({ error: "Plik nie istnieje." }));
 app.get("/uploads/:fileName", async (req, res, next) => {
   try {
     const protectedFile = await db.query("SELECT 1 FROM photos WHERE file_name=$1 LIMIT 1", [req.params.fileName]);
