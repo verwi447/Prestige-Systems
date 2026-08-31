@@ -144,6 +144,15 @@ app.use(helmet({
     }
   }
 }));
+// Helmet has no built-in Permissions-Policy middleware - the app uses none of
+// these browser features, so lock them all down.
+app.use((_req, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"
+  );
+  next();
+});
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: "2mb", strict: true }));
