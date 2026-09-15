@@ -153,6 +153,13 @@ install-https.cmd -Domain "hub.twoja-domena.pl" -Email "admin@twoja-domena.pl"
 
 Szczegolowa instrukcja jest w `network\README.md`.
 
+Jesli zamiast Caddy na tym samym serwerze uzywasz istniejacego reverse proxy
+na INNYM urzadzeniu w sieci lokalnej (np. Apache obslugujacy juz inna domene),
+ustaw `HOST=0.0.0.0` (backend musi byc widoczny w sieci), `TRUST_PROXY` na
+adres IP tamtego urzadzenia (np. `192.168.10.50`), i otworz port `5000` na
+zaporze Windows tylko dla ruchu z sieci lokalnej. Skrypt `install-https.cmd`
+nie jest wtedy potrzebny.
+
 ## Aktualizacja do nowej wersji
 
 1. Na komputerze developerskim uruchom `npm run release:prepare`. Powstanie nowy folder `app-release` z aktualnym numerem wersji.

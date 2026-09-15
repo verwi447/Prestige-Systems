@@ -64,7 +64,7 @@ const PORT = Number(process.env.PORT || 5000);
 const NODE_ENV = String(process.env.NODE_ENV || "development").toLowerCase();
 const HOST = process.env.HOST || (NODE_ENV === "production" ? "127.0.0.1" : null);
 const isHttpsPublicUrl = String(process.env.PUBLIC_BASE_URL || "").trim().toLowerCase().startsWith("https://");
-const trustProxy = String(process.env.TRUST_PROXY || (HOST === "127.0.0.1" ? "loopback" : "false")).toLowerCase();
+const trustProxy = String(process.env.TRUST_PROXY || (HOST === "127.0.0.1" ? "loopback" : "false"));
 const allowedOrigins = new Set(
   String(process.env.ALLOWED_ORIGINS || `http://localhost:${PORT},http://127.0.0.1:${PORT},http://localhost:5173,http://127.0.0.1:5173`)
     .split(",").map((origin) => origin.trim()).filter(Boolean)
@@ -125,7 +125,13 @@ io.on("connection", (socket) => {
 setRealtimeServer(io);
 
 app.disable("x-powered-by");
-app.set("trust proxy", trustProxy === "loopback" ? "loopback" : false);
+// TRUST_PROXY passes straight through to Express: "loopback"/"false"/"true",
+// a single IP, or a CIDR range - so a reverse proxy on another LAN host (not
+// just the same machine) can be trusted by address instead of only loopback.
+app.set(
+  "trust proxy",
+  trustProxy.toLowerCase() === "false" ? false : trustProxy.toLowerCase() === "true" ? true : trustProxy
+);
 app.use(geoBlock);
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "same-origin" },
