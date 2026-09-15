@@ -43,6 +43,7 @@ import { migrate } from "./migrate.js";
 import { setRealtimeServer } from "./realtime.js";
 import { db } from "./db.js";
 import { apiLimiter, loginLimiter, notFoundApi, requestGuard, safeErrorHandler } from "./middleware/security.js";
+import { geoBlock } from "./middleware/geoBlock.js";
 
 // Express 4 does not route rejections thrown inside async route handlers to
 // safeErrorHandler; left unhandled, Node terminates the whole process on the
@@ -125,6 +126,7 @@ setRealtimeServer(io);
 
 app.disable("x-powered-by");
 app.set("trust proxy", trustProxy === "loopback" ? "loopback" : false);
+app.use(geoBlock);
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "same-origin" },
   contentSecurityPolicy: {

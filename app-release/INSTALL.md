@@ -80,6 +80,7 @@ Skopiuj caly ten folder do stalej lokalizacji, na przyklad `C:\PrestigeSystemsHu
 | `EMAIL_ENCRYPTION_KEY` | Dlugi, losowy klucz do szyfrowania zapisanej konfiguracji poczty. Wygeneruj tak samo jak `JWT_SECRET`, osobnym wywolaniem. |
 | `ALLOWED_ORIGINS` | Adresy, z ktorych wolno otwierac panel, rozdzielone przecinkami (np. `http://localhost:5000,http://192.168.0.50:5000`). Patrz sekcja [Dostep z innych urzadzen](#dostep-z-innych-urzadzen-w-sieci-lokalnej). |
 | `PORT` | Port aplikacji, domyslnie `5000`. Zmien tylko jesli port jest zajety. |
+| `GEO_ALLOWED_COUNTRIES` | Opcjonalne. Ogranicza dostep do panelu tylko z wybranych krajow (kody ISO 3166-1 alpha-2, po przecinku, np. `PL,IT`). Adresy z sieci lokalnej zawsze maja dostep. Zostaw puste, zeby wylaczyc. |
 
 Wygenerowanie losowego sekretu (uruchom dwa razy - osobno dla `JWT_SECRET` i `EMAIL_ENCRYPTION_KEY`):
 
