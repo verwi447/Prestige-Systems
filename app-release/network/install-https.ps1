@@ -28,7 +28,10 @@ function Resolve-ExistingPath([string]$Path, [string]$Label) {
 
 function Get-DotEnvValue([string]$Path, [string]$Key) {
   $match = Select-String -LiteralPath $Path -Pattern "^$([Regex]::Escape($Key))=(.*)$" | Select-Object -First 1
-  return if ($match) { $match.Matches[0].Groups[1].Value.Trim() } else { "" }
+  if ($match) {
+    return $match.Matches[0].Groups[1].Value.Trim()
+  }
+  return ""
 }
 
 function Set-DotEnvValue([string]$Path, [string]$Key, [string]$Value) {
