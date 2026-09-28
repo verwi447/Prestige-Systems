@@ -29,12 +29,27 @@ weryfikacji lub poprawy:
   administratora i panelu klienta, w obu motywach — jasnym i ciemnym) względem
   progów WCAG AA (4.5:1 dla tekstu zwykłego, 3:1 dla tekstu dużego i elementów
   graficznych). Wykryte niedopasowania kolorów zostały poprawione.
+- Obsługa z klawiatury: każdy element uruchamiający akcję jest osiągalny
+  klawiszem Tab i działa po naciśnięciu Enter lub spacji. Dotyczy to także
+  wierszy tabel (zgłoszenia, zamówienia, oferty, firmy) oraz kart na tablicy
+  kanban, które wcześniej reagowały wyłącznie na kliknięcie myszą.
+- Okna dialogowe (potwierdzenia, formularze) mają semantykę `role="dialog"`
+  z `aria-modal` i powiązanym tytułem, automatycznie przejmują fokus po
+  otwarciu, zatrzymują go w swoim obrębie (Tab nie „ucieka" na stronę pod
+  spodem), zamykają się klawiszem Escape i przywracają fokus na element,
+  który je otworzył.
+- Etykiety dostępne: wszystkie pola formularzy, listy wyboru i przyciski
+  ikonowe (w tym paginacja) mają nazwę czytaną przez czytnik ekranu.
+- Struktura nagłówków: każdy ekran ma dokładnie jeden nagłówek `h1`,
+  a poziomy nagłówków nie są pomijane.
+- Wszystkie ekrany mają punkt orientacyjny `main` dla nawigacji czytnikiem.
 
 **Niezweryfikowane / do poprawy (uczciwie: nie przeprowadzono formalnego audytu):**
-- Pełna nawigacja wyłącznie klawiaturą (bez myszy) nie została systematycznie
-  przetestowana na wszystkich widokach.
-- Zgodność z czytnikami ekranu (np. NVDA, VoiceOver) nie została przetestowana.
-- Struktura nagłówków (`h1`-`h3`) i etykiet ARIA nie została poddana pełnemu audytowi.
+- Zgodność z czytnikami ekranu (NVDA, JAWS, VoiceOver) nie została
+  przetestowana z użyciem rzeczywistego oprogramowania asystującego — powyższe
+  punkty zweryfikowano programowo (drzewo dostępności, fokus, zdarzenia
+  klawiatury), co nie zastępuje testu z użytkownikiem czytnika ekranu.
+- Nie przeprowadzono audytu przez niezależny podmiot zewnętrzny.
 
 ## Data sporządzenia i metoda oceny
 
