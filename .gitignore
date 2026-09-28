@@ -17,9 +17,16 @@ Thumbs.db
 
 .claude/
 
-# Source lives locally only; the GitHub repo tracks the built app-release/ package.
+# Only the built app-release/ package is published; everything else - source,
+# build tooling, editor config and internal docs - stays on this machine.
 /backend/
 /frontend/
 /release-template/
 /scripts/
 /service/
+/docs/
+/.vscode/
+/.editorconfig
+/package.json
+/app-version.json
+/URUCHOMIENIE_NA_NOWYM_URZADZENIU.md
