@@ -68,4 +68,11 @@ export const ADD_AI_KNOWLEDGE_MATCHES_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_AI_KNOWLEDGE_MATCHES_MIGRATION.id;
+export const ADD_CALENDAR_EVENTS_MIGRATION = Object.freeze({
+  id: "2026.09.28.001",
+  checksum: "add-calendar-events-v1",
+  description: "Dodaje kalendarz wizyt serwisowych widoczny takze dla klienta",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_CALENDAR_EVENTS_MIGRATION.id;

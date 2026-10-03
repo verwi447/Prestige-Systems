@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { db } from "../db.js";
 import { emitToUser } from "../realtime.js";
 
-export const NOTIFICATION_CATEGORIES = ["OFFERS", "TICKETS", "BACKUP", "SYSTEM", "COMPANIES"];
+export const NOTIFICATION_CATEGORIES = ["OFFERS", "TICKETS", "BACKUP", "SYSTEM", "COMPANIES", "CALENDAR"];
 export const NOTIFICATION_PRIORITIES = ["INFO", "SUCCESS", "WARNING", "CRITICAL"];
 
 const normalizeCategory = (category) => (NOTIFICATION_CATEGORIES.includes(category) ? category : "SYSTEM");
@@ -42,18 +42,26 @@ export async function createNotification({
   if (!recipientUser) return null;
 
   if (recipientUser.role !== "ADMIN") {
-    if (!["OFFERS", "TICKETS"].includes(normalizedCategory) || !entityId || !recipientUser.company_id) return null;
-    const ownership = normalizedCategory === "OFFERS"
-      ? await db.query(
-          `SELECT 1 FROM offers o JOIN customers c ON c.id=o.customer_id
-           WHERE o.id=$1 AND c.company_id=$2`,
-          [entityId, recipientUser.company_id]
-        )
-      : await db.query(
-          `SELECT 1 FROM tickets t JOIN customers c ON c.id=t.customer_id
-           WHERE t.id=$1 AND c.company_id=$2`,
-          [entityId, recipientUser.company_id]
-        );
+    if (!["OFFERS", "TICKETS", "CALENDAR"].includes(normalizedCategory) || !entityId || !recipientUser.company_id) return null;
+    let ownership;
+    if (normalizedCategory === "OFFERS") {
+      ownership = await db.query(
+        `SELECT 1 FROM offers o JOIN customers c ON c.id=o.customer_id
+         WHERE o.id=$1 AND c.company_id=$2`,
+        [entityId, recipientUser.company_id]
+      );
+    } else if (normalizedCategory === "TICKETS") {
+      ownership = await db.query(
+        `SELECT 1 FROM tickets t JOIN customers c ON c.id=t.customer_id
+         WHERE t.id=$1 AND c.company_id=$2`,
+        [entityId, recipientUser.company_id]
+      );
+    } else {
+      ownership = await db.query(
+        `SELECT 1 FROM calendar_events WHERE id=$1 AND company_id=$2`,
+        [entityId, recipientUser.company_id]
+      );
+    }
     if (!ownership.rows[0]) return null;
   }
 

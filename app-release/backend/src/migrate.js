@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_FILES_MIGRATION, ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_OBJECT_EQUIPMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_FILES_MIGRATION, ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_CALENDAR_EVENTS_MIGRATION, ADD_OBJECT_EQUIPMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -1064,6 +1064,30 @@ async function addAiKnowledgeMatchesTable({ query }) {
   await query(`CREATE INDEX IF NOT EXISTS idx_ai_knowledge_matches_kb ON ai_knowledge_matches(knowledge_base_id)`);
 }
 
+async function addCalendarEventsTable({ query }) {
+  await query(`
+    CREATE TABLE IF NOT EXISTS calendar_events (
+      id SERIAL PRIMARY KEY,
+      company_id INT REFERENCES companies(id) ON DELETE CASCADE,
+      object_id INT REFERENCES objects(id) ON DELETE SET NULL,
+      ticket_id INT REFERENCES tickets(id) ON DELETE SET NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      starts_at TIMESTAMP NOT NULL,
+      ends_at TIMESTAMP,
+      all_day BOOLEAN DEFAULT FALSE,
+      kind TEXT DEFAULT 'VISIT',
+      status TEXT DEFAULT 'PLANNED',
+      assigned_to_id INT REFERENCES users(id) ON DELETE SET NULL,
+      created_by INT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await query(`CREATE INDEX IF NOT EXISTS idx_calendar_events_starts_at ON calendar_events(starts_at)`);
+  await query(`CREATE INDEX IF NOT EXISTS idx_calendar_events_company ON calendar_events(company_id)`);
+}
+
 export function getMigrationDefinitions() {
   return [
     { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
@@ -1075,7 +1099,8 @@ export function getMigrationDefinitions() {
     { ...ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, up: addAiKnowledgeSolutionColumn },
     { ...ADD_AI_KNOWLEDGE_FILES_MIGRATION, up: addAiKnowledgeFilesTable },
     { ...ADD_OBJECT_EQUIPMENT_MIGRATION, up: addObjectEquipmentTable },
-    { ...ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, up: addAiKnowledgeMatchesTable }
+    { ...ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, up: addAiKnowledgeMatchesTable },
+    { ...ADD_CALENDAR_EVENTS_MIGRATION, up: addCalendarEventsTable }
   ];
 }
 
