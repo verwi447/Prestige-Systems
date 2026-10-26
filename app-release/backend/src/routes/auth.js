@@ -37,14 +37,23 @@ router.post("/login", async (req, res) => {
     }
 
     const user = userResult.rows[0];
-    if (user.is_active === false) {
-      return res.status(403).json({ error: "Konto jest nieaktywne." });
+
+    // Porownanie hasla wykonuje sie zawsze - takze dla konta nieaktywnego i
+    // dla rekordu bez hasla. Wczesny return na is_active oddawal odpowiedz bez
+    // kosztu bcrypta, wiec i czas odpowiedzi, i status 403 zdradzaly, ze konto
+    // o takim loginie istnieje. Rekord bez hasla trafial zas do bcrypt.compare
+    // z undefined, co konczylo sie 500 zamiast odmowy logowania.
+    const storedHash = user.password_hash || user.password;
+    const isMatch = await bcrypt.compare(password, storedHash || DUMMY_PASSWORD_HASH);
+    if (!storedHash || !isMatch) {
+      return res.status(401).json({ error: "Nieprawidłowy login lub hasło." });
     }
 
-    const passwordHash = user.password_hash || user.password;
-    const isMatch = await bcrypt.compare(password, passwordHash);
-    if (!isMatch) {
-      return res.status(401).json({ error: "Nieprawidłowy login lub hasło." });
+    // Powod odmowy poznaje dopiero ten, kto udowodnil, ze zna haslo do konta -
+    // dla niego "konto nieaktywne" jest konkretna informacja, a dla kogos
+    // zgadujacego loginy odpowiedz pozostaje nieodroznialna od zlego hasla.
+    if (user.is_active === false) {
+      return res.status(403).json({ error: "Konto jest nieaktywne." });
     }
 
     await db.query("UPDATE users SET last_login_at=CURRENT_TIMESTAMP WHERE id=$1", [user.id]);

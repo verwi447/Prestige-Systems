@@ -38,7 +38,7 @@ const upload = multer({
   fileFilter: (_req, file, cb) => {
     const extension = path.extname(file.originalname || "").toLowerCase();
     if (!ticketAttachmentMimeTypes.has(file.mimetype) || !ticketAttachmentExtensions.has(extension)) {
-      return cb(new Error("Zalacznik musi byc plikiem JPG, PNG, WEBP, PDF, DOC albo DOCX."));
+      return cb(new Error("Załącznik musi być plikiem JPG, PNG, WEBP, PDF, DOC albo DOCX."));
     }
     cb(null, true);
   }
@@ -48,11 +48,11 @@ function handleCommentAttachments(req, res, next) {
   upload.array("attachments", 10)(req, res, (error) => {
     if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
       removeUploadedFiles(req.files || []);
-      return res.status(400).json({ error: "Zalacznik moze miec maksymalnie 20 MB." });
+      return res.status(400).json({ error: "Załącznik może mieć maksymalnie 20 MB." });
     }
     if (error) {
       removeUploadedFiles(req.files || []);
-      return res.status(400).json({ error: error.message || "Nie udalo sie dodac zalacznika." });
+      return res.status(400).json({ error: error.message || "Nie udało się dodać załącznika." });
     }
     next();
   });
@@ -108,7 +108,7 @@ const normalizeTicketType = (type) => {
 };
 
 function requireAdmin(req, res, next) {
-  if (normalizeRole(req.user?.role) !== "ADMIN") return res.status(403).json({ error: "Brak dostepu do tej operacji." });
+  if (normalizeRole(req.user?.role) !== "ADMIN") return res.status(403).json({ error: "Brak dostępu do tej operacji." });
   next();
 }
 
@@ -274,18 +274,18 @@ async function getTicketPayload(ticketId, user) {
   }));
 
   const fallbackHistory = [
-    { id: "created", action: "TICKET_CREATED", label: "Utworzono zgloszenie", createdAt: row.created_at, authorName: authorName({ first_name: row.created_by_first_name, last_name: row.created_by_last_name, email: row.created_by_email }) },
+    { id: "created", action: "TICKET_CREATED", label: "Utworzono zgłoszenie", createdAt: row.created_at, authorName: authorName({ first_name: row.created_by_first_name, last_name: row.created_by_last_name, email: row.created_by_email }) },
     ...normalizedComments.map((comment) => ({
       id: `comment-${comment.id}`,
       action: comment.isInternal ? "TICKET_INTERNAL_NOTE_ADDED" : "TICKET_COMMENT_ADDED",
-      label: comment.isInternal ? "Dodano notatke wewnetrzna" : "Dodano komentarz publiczny",
+      label: comment.isInternal ? "Dodano notatkę wewnętrzną" : "Dodano komentarz publiczny",
       createdAt: comment.createdAt,
       authorName: comment.authorName
     })),
     ...normalizedAttachments.map((file) => ({
       id: `attachment-${file.id}`,
       action: "TICKET_ATTACHMENT_ADDED",
-      label: `Dodano zalacznik ${file.originalName || file.fileName}`,
+      label: `Dodano załącznik ${file.originalName || file.fileName}`,
       createdAt: file.uploadedAt,
       authorName: file.authorName
     }))
@@ -327,7 +327,7 @@ async function getTicketPayload(ticketId, user) {
     status: normalizeTicketStatus(row.status),
     priority: normalizeTicketPriority(row.priority),
     blocksWork: Boolean(row.blocks_work),
-    category: row.category || (normalizeTicketType(row.type) === "HARDWARE_FAILURE" ? "Awaria urzadzenia" : "Zgloszenie serwisowe"),
+    category: row.category || (normalizeTicketType(row.type) === "HARDWARE_FAILURE" ? "Awaria urządzenia" : "Zgłoszenie serwisowe"),
     source: row.source || "Portal klienta",
     slaDueAt: row.sla_due_at,
     closedAt: row.closed_at,
@@ -386,25 +386,25 @@ async function getTicketPayload(ticketId, user) {
 
 function historyLabel(entry) {
   const labels = {
-    TICKET_CREATED: "Utworzono zgloszenie",
+    TICKET_CREATED: "Utworzono zgłoszenie",
     TICKET_STATUS_CHANGED: `Status zmieniono z ${entry.old_value || "-"} na ${entry.new_value || "-"}`,
     TICKET_PRIORITY_CHANGED: `Priorytet zmieniono z ${entry.old_value || "-"} na ${entry.new_value || "-"}`,
     TICKET_ASSIGNED: "Zmieniono przypisanie",
     TICKET_COMMENT_ADDED: "Dodano komentarz publiczny",
-    TICKET_INTERNAL_NOTE_ADDED: "Dodano notatke wewnetrzna",
-    TICKET_ATTACHMENT_ADDED: "Dodano zalacznik",
-    TICKET_ATTACHMENT_DELETED: "Usunieto zalacznik",
-    TICKET_CLOSED: "Zamknieto zgloszenie",
+    TICKET_INTERNAL_NOTE_ADDED: "Dodano notatkę wewnętrzną",
+    TICKET_ATTACHMENT_ADDED: "Dodano załącznik",
+    TICKET_ATTACHMENT_DELETED: "Usunięto załącznik",
+    TICKET_CLOSED: "Zamknięto zgłoszenie",
     TICKET_OFFER_CREATED: "Utworzono szkic oferty",
-    AI_ESCALATED_TO_ADMIN: "Asystent AI przekazal zgloszenie do administratora",
-    AI_CONVERSATION_RESOLVED: "Asystent AI zakonczyl rozmowe - problem rozwiazany"
+    AI_ESCALATED_TO_ADMIN: "Asystent AI przekazał zgłoszenie do administratora",
+    AI_CONVERSATION_RESOLVED: "Asystent AI zakończył rozmowę - problem rozwiązany"
   };
   return labels[entry.action] || entry.action;
 }
 
 router.post("/", auth, upload.array("photos", 10), async (req, res) => {
   const { type, object_id, subject, description } = req.body;
-  if (!type || !object_id || !subject) return res.status(400).json({ error: "Typ, obiekt i temat zgloszenia sa wymagane." });
+  if (!type || !object_id || !subject) return res.status(400).json({ error: "Typ, obiekt i temat zgłoszenia są wymagane." });
 
   const client = await db.connect();
   try {
@@ -412,18 +412,18 @@ router.post("/", auth, upload.array("photos", 10), async (req, res) => {
     const customerRes = await client.query("SELECT id, company_id FROM customers WHERE user_id=$1", [req.user.id]);
     if (!customerRes.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(403).json({ error: "Tylko klienci moga tworzyc zgloszenia." });
+      return res.status(403).json({ error: "Tylko klienci mogą tworzyć zgłoszenia." });
     }
 
     const customerCompanyId = customerRes.rows[0].company_id;
     if (!customerCompanyId) {
       await client.query("ROLLBACK");
-      return res.status(403).json({ error: "Twoje konto nie jest przypisane do zadnej firmy." });
+      return res.status(403).json({ error: "Twoje konto nie jest przypisane do żadnej firmy." });
     }
     const siteRes = await client.query("SELECT id FROM objects WHERE id=$1 AND company_id=$2", [object_id, customerCompanyId]);
     if (!siteRes.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(400).json({ error: "Wybrany obiekt nie istnieje albo nie nalezy do Twojej firmy." });
+      return res.status(400).json({ error: "Wybrany obiekt nie istnieje albo nie należy do Twojej firmy." });
     }
 
     const ticketNumber = await generateTicketNumber(client);
@@ -447,12 +447,12 @@ router.post("/", auth, upload.array("photos", 10), async (req, res) => {
 
     await client.query("COMMIT");
     const isOrder = ticket.rows[0].type === "ORDER";
-    await notifyAdmins({ category: "TICKETS", type: isOrder ? "ORDER_CREATED" : "TICKET_CREATED", priority: "INFO", title: isOrder ? "Nowe zamowienie" : "Nowe zgloszenie", message: `${ticketNumber}: ${subject}`, entityType: "ticket", entityId: ticket.rows[0].id, link: isOrder ? "/orders" : `/tickets/${ticket.rows[0].id}` });
+    await notifyAdmins({ category: "TICKETS", type: isOrder ? "ORDER_CREATED" : "TICKET_CREATED", priority: "INFO", title: isOrder ? "Nowe zamówienie" : "Nowe zgłoszenie", message: `${ticketNumber}: ${subject}`, entityType: "ticket", entityId: ticket.rows[0].id, link: isOrder ? "/orders" : `/tickets/${ticket.rows[0].id}` });
     res.status(201).json(ticket.rows[0]);
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error("Blad przy tworzeniu zgloszenia:", err);
-    res.status(500).json({ error: "Blad serwera przy tworzeniu zgloszenia." });
+    console.error("Błąd przy tworzeniu zgłoszenia:", err);
+    res.status(500).json({ error: "Błąd serwera przy tworzeniu zgłoszenia." });
   } finally {
     client.release();
   }
@@ -505,8 +505,8 @@ router.get("/", auth, requireAdmin, async (req, res) => {
     );
     res.json(result.rows.map((row) => ({ ...row, status: normalizeTicketStatus(row.status), priority: normalizeTicketPriority(row.priority) })));
   } catch (err) {
-    console.error("Blad przy pobieraniu zgloszen:", err);
-    res.status(500).json({ error: "Blad serwera przy pobieraniu zgloszen." });
+    console.error("Błąd przy pobieraniu zgłoszeń:", err);
+    res.status(500).json({ error: "Błąd serwera przy pobieraniu zgłoszeń." });
   }
 });
 
@@ -520,18 +520,18 @@ router.get("/assignees/admins", auth, requireAdmin, async (_req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: "Nie udalo sie pobrac administratorow." });
+    res.status(500).json({ error: "Nie udało się pobrać administratorów." });
   }
 });
 
 router.get("/:id", auth, requireAdmin, async (req, res) => {
   try {
     const ticket = await getTicketPayload(req.params.id, req.user);
-    if (!ticket) return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+    if (!ticket) return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
     res.json(ticket);
   } catch (err) {
-    console.error("Blad przy pobieraniu szczegolow zgloszenia:", err);
-    res.status(500).json({ error: "Blad serwera przy pobieraniu szczegolow zgloszenia." });
+    console.error("Błąd przy pobieraniu szczegółów zgłoszenia:", err);
+    res.status(500).json({ error: "Błąd serwera przy pobieraniu szczegółów zgłoszenia." });
   }
 });
 
@@ -554,7 +554,7 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
     const result = await client.query(`UPDATE tickets SET ${setSql}, updated_at=CURRENT_TIMESTAMP WHERE id=$${values.length} RETURNING id`, values);
     if (!result.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
     }
     await addHistory(client, req.params.id, req.user.id, "TICKET_UPDATED", null, null, { fields: entries.map(([key]) => key) });
     await auditTicket(client, "TICKET_UPDATED", req.user.id, req.params.id);
@@ -562,7 +562,7 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
     res.json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie zaktualizowac zgloszenia." });
+    res.status(500).json({ error: "Nie udało się zaktualizować zgłoszenia." });
   } finally {
     client.release();
   }
@@ -570,7 +570,7 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
 
 router.post("/:id/change-status", auth, requireAdmin, async (req, res) => {
   const status = normalizeTicketStatus(req.body.status);
-  if (!ticketStatuses.has(status)) return res.status(400).json({ error: "Nieprawidlowy status zgloszenia." });
+  if (!ticketStatuses.has(status)) return res.status(400).json({ error: "Nieprawidłowy status zgłoszenia." });
 
   const client = await db.connect();
   try {
@@ -578,7 +578,7 @@ router.post("/:id/change-status", auth, requireAdmin, async (req, res) => {
     const current = await client.query("SELECT status, customer_id, ticket_number, subject FROM tickets WHERE id=$1 FOR UPDATE", [req.params.id]);
     if (!current.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
     }
     await client.query(
       `UPDATE tickets
@@ -595,11 +595,11 @@ router.post("/:id/change-status", auth, requireAdmin, async (req, res) => {
     }
     await auditTicket(client, "TICKET_STATUS_CHANGED", req.user.id, req.params.id, { status });
     await client.query("COMMIT");
-    if (req.body.notifyClient) await notifyTicketCustomer(current.rows[0], "TICKET_STATUS_CHANGED", "Status zgloszenia zostal zmieniony");
+    if (req.body.notifyClient) await notifyTicketCustomer(current.rows[0], "TICKET_STATUS_CHANGED", "Status zgłoszenia został zmieniony");
     res.json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie zmienic statusu zgloszenia." });
+    res.status(500).json({ error: "Nie udało się zmienić statusu zgłoszenia." });
   } finally {
     client.release();
   }
@@ -607,9 +607,9 @@ router.post("/:id/change-status", auth, requireAdmin, async (req, res) => {
 
 router.post("/bulk-change-status", auth, requireAdmin, async (req, res) => {
   const status = normalizeTicketStatus(req.body.status);
-  if (!ticketStatuses.has(status)) return res.status(400).json({ error: "Nieprawidlowy status zgloszenia." });
+  if (!ticketStatuses.has(status)) return res.status(400).json({ error: "Nieprawidłowy status zgłoszenia." });
   const ids = Array.isArray(req.body.ids) ? [...new Set(req.body.ids.map(Number).filter(Number.isInteger))] : [];
-  if (!ids.length) return res.status(400).json({ error: "Brak wybranych zgloszen." });
+  if (!ids.length) return res.status(400).json({ error: "Brak wybranych zgłoszeń." });
 
   const updated = [];
   const failed = [];
@@ -621,7 +621,7 @@ router.post("/bulk-change-status", auth, requireAdmin, async (req, res) => {
       const current = await client.query("SELECT status, customer_id, ticket_number, subject FROM tickets WHERE id=$1 FOR UPDATE", [id]);
       if (!current.rows[0]) {
         await client.query("ROLLBACK");
-        failed.push({ id, error: "Zgloszenie nie istnieje." });
+        failed.push({ id, error: "Zgłoszenie nie istnieje." });
         continue;
       }
       await client.query(
@@ -639,7 +639,7 @@ router.post("/bulk-change-status", auth, requireAdmin, async (req, res) => {
       updated.push(id);
     } catch (err) {
       await client.query("ROLLBACK");
-      failed.push({ id, error: "Nie udalo sie zmienic statusu." });
+      failed.push({ id, error: "Nie udało się zmienić statusu." });
     } finally {
       client.release();
     }
@@ -650,14 +650,14 @@ router.post("/bulk-change-status", auth, requireAdmin, async (req, res) => {
 
 router.post("/:id/change-priority", auth, requireAdmin, async (req, res) => {
   const priority = normalizeTicketPriority(req.body.priority);
-  if (!ticketPriorities.has(priority)) return res.status(400).json({ error: "Nieprawidlowy priorytet zgloszenia." });
+  if (!ticketPriorities.has(priority)) return res.status(400).json({ error: "Nieprawidłowy priorytet zgłoszenia." });
   const client = await db.connect();
   try {
     await client.query("BEGIN");
     const current = await client.query("SELECT priority FROM tickets WHERE id=$1 FOR UPDATE", [req.params.id]);
     if (!current.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
     }
     await client.query("UPDATE tickets SET priority=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [priority, req.params.id]);
     await addHistory(client, req.params.id, req.user.id, "TICKET_PRIORITY_CHANGED", normalizeTicketPriority(current.rows[0].priority), priority);
@@ -666,7 +666,7 @@ router.post("/:id/change-priority", auth, requireAdmin, async (req, res) => {
     res.json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie zmienic priorytetu zgloszenia." });
+    res.status(500).json({ error: "Nie udało się zmienić priorytetu zgłoszenia." });
   } finally {
     client.release();
   }
@@ -674,7 +674,7 @@ router.post("/:id/change-priority", auth, requireAdmin, async (req, res) => {
 
 router.post("/:id/assign", auth, requireAdmin, async (req, res) => {
   const adminId = req.body.adminId === null || req.body.adminId === "" ? null : Number(req.body.adminId);
-  if (adminId !== null && !Number.isInteger(adminId)) return res.status(400).json({ error: "Nieprawidlowy administrator." });
+  if (adminId !== null && !Number.isInteger(adminId)) return res.status(400).json({ error: "Nieprawidłowy administrator." });
   const client = await db.connect();
   try {
     await client.query("BEGIN");
@@ -682,13 +682,13 @@ router.post("/:id/assign", auth, requireAdmin, async (req, res) => {
       const admin = await client.query("SELECT id FROM users WHERE id=$1 AND role='ADMIN' AND is_active IS DISTINCT FROM FALSE", [adminId]);
       if (!admin.rows[0]) {
         await client.query("ROLLBACK");
-        return res.status(400).json({ error: "Zgloszenie mozna przypisac tylko do aktywnego administratora." });
+        return res.status(400).json({ error: "Zgłoszenie można przypisać tylko do aktywnego administratora." });
       }
     }
     const current = await client.query("SELECT assigned_to_id, status, type FROM tickets WHERE id=$1 FOR UPDATE", [req.params.id]);
     if (!current.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
     }
     const currentStatus = normalizeTicketStatus(current.rows[0].status);
     const nextStatus = adminId !== null && serviceTicketTypes.has(current.rows[0].type) && !terminalTicketStatuses.has(currentStatus)
@@ -712,7 +712,7 @@ router.post("/:id/assign", auth, requireAdmin, async (req, res) => {
     res.json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie przypisac zgloszenia." });
+    res.status(500).json({ error: "Nie udało się przypisać zgłoszenia." });
   } finally {
     client.release();
   }
@@ -720,25 +720,25 @@ router.post("/:id/assign", auth, requireAdmin, async (req, res) => {
 
 router.post("/:id/close", auth, requireAdmin, async (req, res) => {
   const summary = String(req.body.summary || "").trim();
-  if (!summary) return res.status(400).json({ error: "Podsumowanie rozwiazania jest wymagane." });
+  if (!summary) return res.status(400).json({ error: "Podsumowanie rozwiązania jest wymagane." });
   const client = await db.connect();
   try {
     await client.query("BEGIN");
     const ticket = await client.query("SELECT id, customer_id, ticket_number, subject FROM tickets WHERE id=$1 FOR UPDATE", [req.params.id]);
     if (!ticket.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
     }
     await client.query("UPDATE tickets SET status='COMPLETED', closed_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=$1", [req.params.id]);
     await client.query("INSERT INTO ticket_comments (ticket_id, author_id, content, is_internal) VALUES ($1,$2,$3,FALSE)", [req.params.id, req.user.id, summary]);
     await addHistory(client, req.params.id, req.user.id, "TICKET_CLOSED", null, "COMPLETED", { summary });
     await auditTicket(client, "TICKET_CLOSED", req.user.id, req.params.id);
     await client.query("COMMIT");
-    if (req.body.notifyClient) await notifyTicketCustomer(ticket.rows[0], "TICKET_CLOSED", "Zgloszenie zostalo zakonczone");
+    if (req.body.notifyClient) await notifyTicketCustomer(ticket.rows[0], "TICKET_CLOSED", "Zgłoszenie zostało zakończone");
     res.json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie zamknac zgloszenia." });
+    res.status(500).json({ error: "Nie udało się zamknąć zgłoszenia." });
   } finally {
     client.release();
   }
@@ -746,7 +746,7 @@ router.post("/:id/close", auth, requireAdmin, async (req, res) => {
 
 router.get("/:id/comments", auth, requireAdmin, async (req, res) => {
   const ticket = await getTicketPayload(req.params.id, req.user);
-  if (!ticket) return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+  if (!ticket) return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   res.json(ticket.comments);
 });
 
@@ -755,13 +755,13 @@ router.post("/:id/comments", auth, requireAdmin, handleCommentAttachments, async
   const files = req.files || [];
   const isInternal = toBoolean(req.body.isInternal ?? req.body.is_internal);
   const isAdmin = normalizeRole(req.user.role) === "ADMIN";
-  if (!content && !files.length) return res.status(400).json({ error: "Dodaj tresc komentarza albo zalacznik." });
-  if (isInternal && !isAdmin) return res.status(403).json({ error: "Tylko administrator moze dodac notatke wewnetrzna." });
+  if (!content && !files.length) return res.status(400).json({ error: "Dodaj treść komentarza albo załącznik." });
+  if (isInternal && !isAdmin) return res.status(403).json({ error: "Tylko administrator może dodać notatkę wewnętrzną." });
 
   const existing = await getTicketPayload(req.params.id, req.user);
   if (!existing) {
     removeUploadedFiles(files);
-    return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+    return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   }
 
   const client = await db.connect();
@@ -770,7 +770,7 @@ router.post("/:id/comments", auth, requireAdmin, handleCommentAttachments, async
     const current = await client.query("SELECT type, status FROM tickets WHERE id=$1 FOR UPDATE", [req.params.id]);
     if (!current.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
     }
     const currentStatus = normalizeTicketStatus(current.rows[0].status);
     const nextStatus = !isInternal && serviceTicketTypes.has(current.rows[0].type) && !terminalTicketStatuses.has(currentStatus)
@@ -781,7 +781,7 @@ router.post("/:id/comments", auth, requireAdmin, handleCommentAttachments, async
       `INSERT INTO ticket_comments (ticket_id, author_id, content, is_internal)
        VALUES ($1,$2,$3,$4)
        RETURNING id`,
-      [req.params.id, req.user.id, content || "Dodano zalacznik.", isInternal]
+      [req.params.id, req.user.id, content || "Dodano załącznik.", isInternal]
     );
     const visibility = isInternal ? "INTERNAL" : "PUBLIC";
     for (const file of files) {
@@ -799,12 +799,12 @@ router.post("/:id/comments", auth, requireAdmin, handleCommentAttachments, async
     }
     await auditTicket(client, isInternal ? "TICKET_INTERNAL_NOTE_ADDED" : "TICKET_COMMENT_ADDED", req.user.id, req.params.id);
     await client.query("COMMIT");
-    if (!isInternal && isAdmin) await notifyTicketCustomer(existing, "TICKET_COMMENT_ADDED", "Dodano komentarz do zgloszenia");
+    if (!isInternal && isAdmin) await notifyTicketCustomer(existing, "TICKET_COMMENT_ADDED", "Dodano komentarz do zgłoszenia");
     res.status(201).json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
     removeUploadedFiles(files);
-    res.status(500).json({ error: "Nie udalo sie dodac komentarza." });
+    res.status(500).json({ error: "Nie udało się dodać komentarza." });
   } finally {
     client.release();
   }
@@ -839,7 +839,7 @@ export async function postAiCommentAsPublic(ticketId, content) {
       await addHistory(client, ticketId, null, "TICKET_STATUS_CHANGED", currentStatus, normalizeTicketStatus(nextStatus), { automatic: true, trigger: "AI_COMMENT" });
     }
     await client.query("COMMIT");
-    await notifyTicketCustomer(existing, "TICKET_COMMENT_ADDED", "Dodano komentarz do zgloszenia");
+    await notifyTicketCustomer(existing, "TICKET_COMMENT_ADDED", "Dodano komentarz do zgłoszenia");
     return true;
   } catch (err) {
     await client.query("ROLLBACK");
@@ -851,7 +851,7 @@ export async function postAiCommentAsPublic(ticketId, content) {
 
 router.get("/:id/attachments", auth, requireAdmin, async (req, res) => {
   const ticket = await getTicketPayload(req.params.id, req.user);
-  if (!ticket) return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+  if (!ticket) return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   res.json(ticket.attachments);
 });
 
@@ -860,7 +860,7 @@ router.post("/:id/attachments", auth, requireAdmin, upload.array("attachments", 
   const ticket = await getTicketPayload(req.params.id, req.user);
   if (!ticket) {
     (req.files || []).forEach((file) => fs.existsSync(file.path) && fs.unlinkSync(file.path));
-    return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+    return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   }
   const visibility = isAdmin && req.body.visibility === "INTERNAL" ? "INTERNAL" : "PUBLIC";
   const client = await db.connect();
@@ -880,7 +880,7 @@ router.post("/:id/attachments", auth, requireAdmin, upload.array("attachments", 
     res.status(201).json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie dodac zalacznika." });
+    res.status(500).json({ error: "Nie udało się dodać załącznika." });
   } finally {
     client.release();
   }
@@ -893,7 +893,7 @@ router.delete("/:id/attachments/:attachmentId", auth, requireAdmin, async (req, 
     const file = await client.query("DELETE FROM ticket_photos WHERE id=$1 AND ticket_id=$2 RETURNING *", [req.params.attachmentId, req.params.id]);
     if (!file.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zalacznik nie istnieje." });
+      return res.status(404).json({ error: "Załącznik nie istnieje." });
     }
     const physicalPath = file.rows[0].file_path || path.join(uploadDir, file.rows[0].file_name);
     if (physicalPath && fs.existsSync(physicalPath)) fs.unlinkSync(physicalPath);
@@ -903,7 +903,7 @@ router.delete("/:id/attachments/:attachmentId", auth, requireAdmin, async (req, 
     res.json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie usunac zalacznika." });
+    res.status(500).json({ error: "Nie udało się usunąć załącznika." });
   } finally {
     client.release();
   }
@@ -911,13 +911,13 @@ router.delete("/:id/attachments/:attachmentId", auth, requireAdmin, async (req, 
 
 router.get("/:id/history", auth, requireAdmin, async (req, res) => {
   const ticket = await getTicketPayload(req.params.id, req.user);
-  if (!ticket) return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+  if (!ticket) return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   res.json(ticket.history);
 });
 
 router.get("/:id/offers", auth, requireAdmin, async (req, res) => {
   const ticket = await getTicketPayload(req.params.id, req.user);
-  if (!ticket) return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+  if (!ticket) return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   res.json(ticket.offers);
 });
 
@@ -929,7 +929,7 @@ router.get("/:id/available-offers", auth, requireAdmin, async (req, res) => {
      WHERE t.id=$1`,
     [req.params.id]
   );
-  if (!ticket.rows[0]) return res.status(404).json({ error: "Zgloszenie nie istnieje." });
+  if (!ticket.rows[0]) return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
 
   const offers = await db.query(
     `SELECT o.id, o.offer_number, o.title, o.status, o.total_price, o.created_at
@@ -955,7 +955,7 @@ router.post("/:id/offers/:offerId", auth, requireAdmin, async (req, res) => {
     );
     if (!ticket.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
     }
 
     const offer = await client.query(
@@ -971,11 +971,11 @@ router.post("/:id/offers/:offerId", auth, requireAdmin, async (req, res) => {
     }
     if (Number(offer.rows[0].company_id) !== Number(ticket.rows[0].company_id)) {
       await client.query("ROLLBACK");
-      return res.status(400).json({ error: "Oferta nalezy do innej firmy." });
+      return res.status(400).json({ error: "Oferta należy do innej firmy." });
     }
     if (offer.rows[0].ticket_id) {
       await client.query("ROLLBACK");
-      return res.status(409).json({ error: "Oferta jest juz powiazana ze zgloszeniem." });
+      return res.status(409).json({ error: "Oferta jest już powiazana ze zgłoszeniem." });
     }
 
     await client.query("UPDATE offers SET ticket_id=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [req.params.id, req.params.offerId]);
@@ -985,7 +985,7 @@ router.post("/:id/offers/:offerId", auth, requireAdmin, async (req, res) => {
     res.json(await getTicketPayload(req.params.id, req.user));
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie powiazac oferty." });
+    res.status(500).json({ error: "Nie udało się powiązać oferty." });
   } finally {
     client.release();
   }
@@ -993,7 +993,7 @@ router.post("/:id/offers/:offerId", auth, requireAdmin, async (req, res) => {
 
 router.post("/:id/create-offer-draft", auth, requireAdmin, async (req, res) => {
   const ticket = await getTicketPayload(req.params.id, req.user);
-  if (!ticket) return res.status(404).json({ error: "Zgloszenie nie istnieje." });
+  if (!ticket) return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
   res.json({ redirectTo: `/offers/new?ticketId=${req.params.id}`, ticket });
 });
 
@@ -1021,7 +1021,7 @@ async function notifyTicketCustomer(ticket, type, title) {
       });
     }
   } catch (err) {
-    console.warn("Nie udalo sie wyslac powiadomienia klientowi:", err.message);
+    console.warn("Nie udało się wysłać powiadomienia klientowi:", err.message);
   }
 }
 

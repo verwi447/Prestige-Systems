@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
+import { denyAccountant } from "../middleware/access.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -130,7 +131,7 @@ function formatProduct(product, adminView) {
   return formatted;
 }
 
-router.get("/categories", auth, async (_req, res) => {
+router.get("/categories", auth, denyAccountant, async (_req, res) => {
   try {
     const result = await db.query(
       `SELECT id, name, slug, description, sort_order, active
@@ -146,7 +147,7 @@ router.get("/categories", auth, async (_req, res) => {
 });
 
 router.post("/categories", auth, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: "Brak uprawnien." });
+  if (!isAdmin(req)) return res.status(403).json({ error: "Brak uprawnień." });
 
   const name = req.body.name?.trim();
   const description = req.body.description?.trim() || null;
@@ -173,7 +174,7 @@ router.post("/categories", auth, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     if (err.code === "23505") {
-      return res.status(409).json({ error: "Kategoria o takiej nazwie juz istnieje." });
+      return res.status(409).json({ error: "Kategoria o takiej nazwie już istnieje." });
     }
     console.error(err);
     res.status(500).json({ error: "Błąd serwera przy tworzeniu kategorii." });
@@ -181,7 +182,7 @@ router.post("/categories", auth, async (req, res) => {
 });
 
 router.delete("/categories/:id", auth, async (req, res) => {
-  if (!isAdmin(req)) return res.status(403).json({ error: "Brak uprawnien." });
+  if (!isAdmin(req)) return res.status(403).json({ error: "Brak uprawnień." });
 
   const categoryId = Number(req.params.id);
   if (!Number.isInteger(categoryId)) return res.status(400).json({ error: "Nieprawidłowa kategoria." });
@@ -232,7 +233,7 @@ router.post("/upload-image", auth, (req, res) => {
   });
 });
 
-router.get("/", auth, async (req, res) => {
+router.get("/", auth, denyAccountant, async (req, res) => {
   try {
     const adminView = isAdmin(req);
     const where = [];

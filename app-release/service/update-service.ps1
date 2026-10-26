@@ -11,23 +11,28 @@ $payloadPaths = @(
   "VERSION.txt",
   "RELEASE_MANIFEST.json",
   "INSTALL.md",
-  "backend\\package.json",
-  "backend\\package-lock.json",
-  "backend\\.env.example",
-  "backend\\src",
-  "backend\\scripts",
-  "backend\\service",
-  "backend\\assets",
-  "frontend\\dist",
+  "backend\package.json",
+  "backend\package-lock.json",
+  "backend\.env.example",
+  "backend\src",
+  "backend\scripts",
+  "backend\service",
+  "backend\assets",
+  "frontend\dist",
   "service"
 )
+
+# Katalogi, ktore powstaja na docelowej maszynie i NIE moga zniknac przy
+# lustrzanym kopiowaniu: daemon to wrapper uslugi Windows tworzony przy
+# instalacji i lezy wewnatrz backend\src, ktory jest czescia paczki.
+$mirrorExcludedDirs = @("daemon", "node_modules", "uploads", "system-backups", "logs")
 
 function Resolve-ExistingPath([string]$Path, [string]$Label) {
   $resolved = [System.IO.Path]::GetFullPath($Path)
   if (-not (Test-Path -LiteralPath $resolved)) {
     throw "$Label nie istnieje: $resolved"
   }
-  return $resolved.TrimEnd("\\", "/")
+  return $resolved.TrimEnd([char]'\', [char]'/')
 }
 
 function Test-Administrator {
@@ -55,9 +60,19 @@ function Copy-Path([string]$SourceRoot, [string]$TargetRoot, [string]$RelativePa
   $item = Get-Item -LiteralPath $source
   if ($item.PSIsContainer) {
     New-Item -ItemType Directory -Path $target -Force | Out-Null
-    Get-ChildItem -LiteralPath $source -Force | ForEach-Object {
-      Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $target $_.Name) -Recurse -Force
+    # robocopy /MIR zamiast kopiowania "po wierzchu": poprzednia wersja
+    # zostawiala w instalacji moduly usuniete w nowym wydaniu, a w
+    # frontend\dist\assets wszystkie hashowane chunki ze WSZYSTKICH
+    # poprzednich wersji, wiec katalog rosl bez konca.
+    $robocopyArgs = @($source, $target, "/MIR", "/NFL", "/NDL", "/NJH", "/NJS", "/NP", "/XD") + $mirrorExcludedDirs
+    $null = robocopy @robocopyArgs
+    # Robocopy: kody 0-7 oznaczaja sukces, 8 i wyzej to blad.
+    if ($LASTEXITCODE -ge 8) {
+      $code = $LASTEXITCODE
+      $global:LASTEXITCODE = 0
+      throw "Kopiowanie $RelativePath nie powiodlo sie (robocopy: $code)."
     }
+    $global:LASTEXITCODE = 0
   } else {
     Copy-Item -LiteralPath $source -Destination $target -Force
   }
@@ -82,11 +97,27 @@ function Wait-ServiceState([string]$Name, [string]$ExpectedStatus, [int]$Timeout
   throw "Usluga $Name nie osiagnela stanu $ExpectedStatus w ciagu $TimeoutSeconds sekund."
 }
 
-function Test-ApplicationVersion([string]$ExpectedVersion, [string]$ExpectedSchemaVersion) {
+# Port pochodzi z backend\.env zainstalowanej aplikacji - zaszyte 5000
+# powodowalo, ze walidacja wdrozenia na innym porcie zawsze konczyla sie
+# timeoutem, mimo poprawnie dzialajacej uslugi.
+function Get-ApplicationPort([string]$EnvFilePath) {
+  $defaultPort = 5000
+  if (-not (Test-Path -LiteralPath $EnvFilePath)) { return $defaultPort }
+  $line = Get-Content -LiteralPath $EnvFilePath |
+    Where-Object { $_ -match '^\s*PORT\s*=' } |
+    Select-Object -Last 1
+  if (-not $line) { return $defaultPort }
+  $value = ($line -replace '^\s*PORT\s*=', '').Trim().Trim('"').Trim("'")
+  $parsed = 0
+  if ([int]::TryParse($value, [ref]$parsed) -and $parsed -gt 0) { return $parsed }
+  return $defaultPort
+}
+
+function Test-ApplicationVersion([string]$ExpectedVersion, [string]$ExpectedSchemaVersion, [int]$Port) {
   $deadline = (Get-Date).AddSeconds(45)
   do {
     try {
-      $response = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:5000/app-version.json" -TimeoutSec 5
+      $response = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:$Port/app-version.json" -TimeoutSec 5
       $appInfo = $response.Content | ConvertFrom-Json
       $version = [string]$appInfo.version
       $schemaVersion = [string]$appInfo.schemaVersion
@@ -132,12 +163,13 @@ if (([string]($releaseManifest.version)) -ne $releaseVersion -or ([string]($rele
   throw "Manifest wydania nie jest zgodny z numerem wersji aplikacji lub schematu."
 }
 
-$envPath = Join-Path $installRoot "backend\\.env"
+$envPath = Join-Path $installRoot "backend\.env"
 if (-not (Test-Path -LiteralPath $envPath)) {
-  throw "Brak pliku backend\\.env w zainstalowanej aplikacji."
+  throw "Brak pliku backend\.env w zainstalowanej aplikacji."
 }
+$applicationPort = Get-ApplicationPort $envPath
 
-$releaseForbidden = @("backend\\.env", "backend\\uploads", "backend\\system-backups", "backend\\node_modules") |
+$releaseForbidden = @("backend\.env", "backend\uploads", "backend\system-backups", "backend\node_modules") |
   Where-Object { Test-Path -LiteralPath (Join-Path $releaseRoot $_) }
 if ($releaseForbidden.Count -gt 0) {
   throw "Paczka wydania zawiera niedozwolone dane runtime: $($releaseForbidden -join ', ')."
@@ -154,7 +186,7 @@ if (-not $Force -and $installedVersion -eq $releaseVersion) {
 }
 
 $timestamp = Get-Date -Format "yyyy-MM-dd-HH-mm-ss"
-$rollbackRoot = Join-Path $installRoot ".update-rollback\\$timestamp"
+$rollbackRoot = Join-Path $installRoot ".update-rollback\$timestamp"
 $rollbackReady = $false
 $migrationStarted = $false
 $serviceStopped = $false
@@ -163,7 +195,7 @@ try {
   Write-Host "Tworzenie i test backupu przed aktualizacja..."
   Push-Location (Join-Path $installRoot "backend")
   try {
-    Invoke-Checked "node" @(".\\scripts\\createPreUpdateBackup.js") "Backup przed aktualizacja"
+    Invoke-Checked "node" @(".\scripts\createPreUpdateBackup.js") "Backup przed aktualizacja"
   } finally {
     Pop-Location
   }
@@ -196,7 +228,7 @@ try {
   Write-Host "Uruchamianie uslugi..."
   Start-Service -DisplayName $serviceDisplayName
   Wait-ServiceState $serviceDisplayName "Running"
-  Test-ApplicationVersion $releaseVersion $releaseSchemaVersion
+  Test-ApplicationVersion $releaseVersion $releaseSchemaVersion $applicationPort
 
   Write-Host "Aktualizacja zakonczona poprawnie. Wersja: $releaseVersion, schemat: $releaseSchemaVersion"
   Write-Host "Kopia do cofniecia: $rollbackRoot"
@@ -217,7 +249,24 @@ try {
       Write-Error "Nie udalo sie automatycznie przywrocic poprzednich plikow: $($_.Exception.Message)"
     }
   } elseif ($migrationStarted) {
-    Write-Warning "Migracja bazy danych zostala rozpoczeta. Nie wykonano automatycznego cofniecia kodu. Uzyj backupu przed aktualizacja, jesli potrzebne jest pelne wycofanie."
+    Write-Warning "Migracja bazy danych zostala rozpoczeta - kod NIE zostal cofniety automatycznie."
+    # Usluga zostawala w stanie Stopped, czyli pelna niedostepnosc do reki.
+    # Proba startu na nowym kodzie daje szanse, ze migracja przeszla w calosci,
+    # a jesli nie - administrator dostaje gotowa liste krokow przywrocenia.
+    try {
+      Write-Warning "Proba uruchomienia uslugi na nowym kodzie..."
+      Start-Service -DisplayName $serviceDisplayName
+      Wait-ServiceState $serviceDisplayName "Running"
+      Test-ApplicationVersion $releaseVersion $releaseSchemaVersion $applicationPort
+      Write-Warning "Usluga dziala na wersji $releaseVersion, ale migracja zglosila blad. Sprawdz stan schematu: npm run db:status"
+    } catch {
+      Write-Error @"
+Usluga NIE dziala. Wymagane dzialanie reczne:
+  1. Przywroc baze z backupu przed aktualizacja (katalog backend\system-backups, najnowszy wpis).
+  2. Przywroc pliki: Copy-Item -Path '$rollbackRoot\*' -Destination '$installRoot' -Recurse -Force
+  3. Start-Service -DisplayName '$serviceDisplayName'
+"@
+    }
   }
 
   exit 1

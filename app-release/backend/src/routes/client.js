@@ -13,6 +13,7 @@ import { markOfferLifecycle, synchronizeLinkedOrderStatus } from "../services/or
 import { analyzeTicketWithAi, continueAiConversation } from "../services/aiAssistant.js";
 import { writeAuditLog } from "../utils/auditLog.js";
 import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
+import { CLOSED_TICKET_STATUSES, HIDDEN_CLIENT_OFFER_STATUSES, OFFER_DECISION_STATUSES, isOfferAwaitingDecision } from "../domain/statuses.js";
 
 const router = express.Router();
 autoAsyncRoutes(router);
@@ -66,7 +67,7 @@ const ticketAttachmentUpload = multer({
   fileFilter: (_req, file, cb) => {
     const extension = path.extname(file.originalname || "").toLowerCase();
     if (!ticketAttachmentMimeTypes.has(file.mimetype) || !ticketAttachmentExtensions.has(extension)) {
-      return cb(new Error("Zalacznik musi byc plikiem JPG, PNG, WEBP, PDF, DOC albo DOCX."));
+      return cb(new Error("Załącznik musi być plikiem JPG, PNG, WEBP, PDF, DOC albo DOCX."));
     }
     cb(null, true);
   }
@@ -84,13 +85,9 @@ const employeePermissions = new Set([
   "VIEW_CATALOG",
   "MANAGE_SITES"
 ]);
-const offerAcceptanceStatuses = ["WYSŁANA", "WYSĹANA", "DO AKCEPTACJI"];
-const closedTicketStatuses = ["ZAKOŃCZONE", "ZAKOĹCZONE", "ZAKONCZONE", "ZAMKNIĘTE", "ZAMKNIÄTE", "ZAMKNIETE", "ANULOWANE"];
-
-const hiddenClientOfferStatuses = ["SZKIC", "DRAFT"];
-const clientOfferStatusesForDecision = ["WYSĹANA", "WYSÄąÂANA", "WYSŁANA", "DO AKCEPTACJI", "TO_ACCEPTANCE", "SENT"];
-
-closedTicketStatuses.push("REJECTED", "COMPLETED", "CANCELLED");
+const offerAcceptanceStatuses = OFFER_DECISION_STATUSES;
+const closedTicketStatuses = CLOSED_TICKET_STATUSES;
+const hiddenClientOfferStatuses = HIDDEN_CLIENT_OFFER_STATUSES;
 
 const ticketTypes = new Set(["SYSTEM_FAILURE", "HARDWARE_FAILURE", "ORDER"]);
 const ticketStatuses = new Set(["NEW", "ACCEPTED", "IN_PROGRESS", "WAITING_FOR_CLIENT", "WAITING_FOR_PARTS", "REJECTED", "COMPLETED", "CANCELLED"]);
@@ -179,9 +176,9 @@ function handleSiteUpload(req, res, next) {
 function handleTicketAttachments(req, res, next) {
   ticketAttachmentUpload.array("attachments", 10)(req, res, (error) => {
     if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({ error: "Zalacznik moze miec maksymalnie 20 MB." });
+      return res.status(400).json({ error: "Załącznik może mieć maksymalnie 20 MB." });
     }
-    if (error) return res.status(400).json({ error: error.message || "Nie udalo sie wyslac zalacznika." });
+    if (error) return res.status(400).json({ error: error.message || "Nie udało się wysłać załącznika." });
     next();
   });
 }
@@ -321,8 +318,8 @@ async function getEmployeeDashboard(req, companyId, permissions) {
       id: item.id,
       number: item.number,
       title: item.type === "offer"
-        ? `Oferta ${item.number || item.id} czeka na Twoja akceptacje.`
-        : `Zgloszenie ${item.number || item.id} ma status ${item.status || "nowe"}.`,
+        ? `Oferta ${item.number || item.id} czeka na Twoją akceptację.`
+        : `Zgłoszenie ${item.number || item.id} ma status ${item.status || "nowe"}.`,
       timestamp: item.updated_at || item.created_at
     }));
 
@@ -900,10 +897,10 @@ router.post("/company/employees", requireClientOwner, async (req, res) => {
   const companyId = companyIdFromUser(req);
   const { firstName, lastName, email, phone, password, isActive = true, permissions = [] } = req.body;
   if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password?.trim()) {
-    return res.status(400).json({ error: "Imie, nazwisko, e-mail i haslo sa wymagane." });
+    return res.status(400).json({ error: "Imię, nazwisko, e-mail i hasło są wymagane." });
   }
   if (password.trim().length < 8) {
-    return res.status(400).json({ error: "Haslo musi miec minimum 8 znakow." });
+    return res.status(400).json({ error: "Hasło musi mieć minimum 8 znaków." });
   }
 
   const sql = await db.connect();
@@ -927,7 +924,7 @@ router.post("/company/employees", requireClientOwner, async (req, res) => {
     res.status(201).json(normalizeEmployee(result.rows[0]));
   } catch (err) {
     await sql.query("ROLLBACK");
-    if (err.code === "23505") return res.status(400).json({ error: "Uzytkownik z takim e-mailem juz istnieje." });
+    if (err.code === "23505") return res.status(400).json({ error: "Użytkownik z takim e-mailem już istnieje." });
     res.status(500).json({ error: "Wewnętrzny błąd serwera." });
   } finally {
     sql.release();
@@ -938,7 +935,7 @@ router.put("/company/employees/:id", requireClientOwner, async (req, res) => {
   const companyId = companyIdFromUser(req);
   const { firstName, lastName, email, phone, isActive = true, permissions = [] } = req.body;
   if (!firstName?.trim() || !lastName?.trim() || !email?.trim()) {
-    return res.status(400).json({ error: "Imie, nazwisko i e-mail sa wymagane." });
+    return res.status(400).json({ error: "Imię, nazwisko i e-mail są wymagane." });
   }
 
   const sql = await db.connect();
@@ -976,7 +973,7 @@ router.put("/company/employees/:id", requireClientOwner, async (req, res) => {
     }));
   } catch (err) {
     await sql.query("ROLLBACK");
-    if (err.code === "23505") return res.status(400).json({ error: "Uzytkownik z takim e-mailem juz istnieje." });
+    if (err.code === "23505") return res.status(400).json({ error: "Użytkownik z takim e-mailem już istnieje." });
     res.status(500).json({ error: "Wewnętrzny błąd serwera." });
   } finally {
     sql.release();
@@ -986,7 +983,7 @@ router.put("/company/employees/:id", requireClientOwner, async (req, res) => {
 router.patch("/company/employees/:id/status", requireClientOwner, async (req, res) => {
   const companyId = companyIdFromUser(req);
   if (Number(req.params.id) === Number(req.currentUser.id)) {
-    return res.status(400).json({ error: "Nie mozesz dezaktywowac wlasnego konta." });
+    return res.status(400).json({ error: "Nie możesz dezaktywować własnego konta." });
   }
   const result = await db.query(
     `UPDATE users SET is_active=$1, updated_at=CURRENT_TIMESTAMP
@@ -1021,7 +1018,7 @@ router.get("/company/employees/:id/sites", requireClientOwner, async (req, res) 
     "SELECT id FROM users WHERE id=$1 AND company_id=$2 AND role = ANY($3::text[])",
     [req.params.id, companyId, clientRoles]
   );
-  if (!employee.rows[0]) return res.status(404).json({ error: "Pracownik nie istnieje albo nie masz do niego dostepu." });
+  if (!employee.rows[0]) return res.status(404).json({ error: "Pracownik nie istnieje albo nie masz do niego dostępu." });
 
   const result = await db.query(
     `SELECT o.id, o.name, o.address, o.postal_code, o.city, o.country, o.status, o.is_active,
@@ -1043,7 +1040,7 @@ router.put("/company/employees/:id/sites", requireClientOwner, async (req, res) 
     "SELECT id FROM users WHERE id=$1 AND company_id=$2 AND role = ANY($3::text[])",
     [req.params.id, companyId, clientRoles]
   );
-  if (!employee.rows[0]) return res.status(404).json({ error: "Pracownik nie istnieje albo nie masz do niego dostepu." });
+  if (!employee.rows[0]) return res.status(404).json({ error: "Pracownik nie istnieje albo nie masz do niego dostępu." });
 
   const siteIds = Array.isArray(req.body.siteIds) ? [...new Set(req.body.siteIds.map(Number).filter(Boolean))] : [];
   if (siteIds.length) {
@@ -1052,7 +1049,7 @@ router.put("/company/employees/:id/sites", requireClientOwner, async (req, res) 
       [companyId, siteIds]
     );
     if (sites.rows.length !== siteIds.length) {
-      return res.status(400).json({ error: "Co najmniej jeden obiekt nie nalezy do tej firmy." });
+      return res.status(400).json({ error: "Co najmniej jeden obiekt nie należy do tej firmy." });
     }
   }
 
@@ -1385,7 +1382,7 @@ router.get("/offers/:id", requirePermission("VIEW_OFFERS"), async (req, res) => 
   }
 
   if (!await canAccessClientSite(req, offer.rows[0].object_id)) {
-    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostepu." });
+    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostępu." });
   }
 
   const [items, attachments, comments] = await Promise.all([
@@ -1428,7 +1425,7 @@ router.get("/offers/:id", requirePermission("VIEW_OFFERS"), async (req, res) => 
     data.status && { id: "status", label: `Aktualny status: ${data.status}`, createdAt: data.updated_at || data.created_at, authorName: creatorName || "-" },
     ...normalizedAttachments.map((file) => ({
       id: `attachment-${file.id}`,
-      label: `Dodano zalacznik ${file.file_name}`,
+      label: `Dodano załącznik ${file.file_name}`,
       createdAt: file.uploaded_at,
       authorName: file.authorName
     })),
@@ -1488,10 +1485,10 @@ router.post("/offers/:id/accept", requirePermission("ACCEPT_OFFERS"), async (req
 
     if (!await canAccessClientSite(req, offer.rows[0].object_id)) {
       await sql.query("ROLLBACK");
-      return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostepu." });
+      return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostępu." });
     }
 
-    if (!clientOfferStatusesForDecision.includes(offer.rows[0].status)) {
+    if (!isOfferAwaitingDecision(offer.rows[0].status)) {
       await sql.query("ROLLBACK");
       return res.status(400).json({ error: "Tej oferty nie można zaakceptować." });
     }
@@ -1527,7 +1524,7 @@ router.post("/offers/:id/accept", requirePermission("ACCEPT_OFFERS"), async (req
       companyId,
       entityType: "offer",
       entityId: offer.rows[0].id,
-      message: `Klient zaakceptowal oferte ${offer.rows[0].offer_number || `#${offer.rows[0].id}`}`,
+      message: `Klient zaakceptował ofertę ${offer.rows[0].offer_number || `#${offer.rows[0].id}`}`,
       metadata: { linkedOrderStatus: orderTransition?.targetStatus || null }
     }).catch((error) => console.error("Global audit log failed:", error));
 
@@ -1564,10 +1561,10 @@ router.post("/offers/:id/reject", requirePermission("ACCEPT_OFFERS"), async (req
 
     if (!await canAccessClientSite(req, offer.rows[0].object_id)) {
       await sql.query("ROLLBACK");
-      return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostepu." });
+      return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostępu." });
     }
 
-    if (!clientOfferStatusesForDecision.includes(offer.rows[0].status)) {
+    if (!isOfferAwaitingDecision(offer.rows[0].status)) {
       await sql.query("ROLLBACK");
       return res.status(400).json({ error: "Tej oferty nie można odrzucić." });
     }
@@ -1608,7 +1605,7 @@ router.post("/offers/:id/reject", requirePermission("ACCEPT_OFFERS"), async (req
       companyId,
       entityType: "offer",
       entityId: offer.rows[0].id,
-      message: `Klient odrzucil oferte ${offer.rows[0].offer_number || `#${offer.rows[0].id}`}`,
+      message: `Klient odrzucił ofertę ${offer.rows[0].offer_number || `#${offer.rows[0].id}`}`,
       metadata: { linkedOrderStatus: orderTransition?.targetStatus || null, reasonProvided: Boolean(reason) }
     }).catch((error) => console.error("Global audit log failed:", error));
 
@@ -1634,11 +1631,11 @@ router.get("/offers/:id/pdf", requirePermission("VIEW_OFFERS"), async (req, res)
   );
 
   if (!offer.rows[0]) {
-    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostepu." });
+    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostępu." });
   }
 
   if (!await canAccessClientSite(req, offer.rows[0].object_id)) {
-    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostepu." });
+    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostępu." });
   }
 
   res.redirect(`/pdf/${offer.rows[0].id}`);
@@ -1647,7 +1644,7 @@ router.get("/offers/:id/pdf", requirePermission("VIEW_OFFERS"), async (req, res)
 router.post("/offers/:id/comments", requirePermission("VIEW_OFFERS"), async (req, res) => {
   const companyId = companyIdFromUser(req);
   const content = String(req.body.content || "").trim();
-  if (!content) return res.status(400).json({ error: "Tresc komentarza jest wymagana." });
+  if (!content) return res.status(400).json({ error: "Treść komentarza jest wymagana." });
 
   const offer = await db.query(
      `SELECT o.id, o.object_id
@@ -1659,11 +1656,11 @@ router.post("/offers/:id/comments", requirePermission("VIEW_OFFERS"), async (req
   );
 
   if (!offer.rows[0]) {
-    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostepu." });
+    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostępu." });
   }
 
   if (!await canAccessClientSite(req, offer.rows[0].object_id)) {
-    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostepu." });
+    return res.status(404).json({ error: "Oferta nie istnieje albo nie masz do niej dostępu." });
   }
 
   const result = await db.query(
@@ -1680,7 +1677,7 @@ router.post("/offers/:id/comments", requirePermission("VIEW_OFFERS"), async (req
     companyId,
     entityType: "offer",
     entityId: offer.rows[0].id,
-    message: "Klient dodal komentarz do oferty."
+    message: "Klient dodał komentarz do oferty."
   }).catch((error) => console.error("Global audit log failed:", error));
 
   res.status(201).json({
@@ -1767,10 +1764,10 @@ router.get("/tickets/:id", requirePermission("VIEW_TICKETS"), async (req, res) =
     [req.params.id, companyId]
   );
 
-  if (!ticket.rows[0]) return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+  if (!ticket.rows[0]) return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
 
   if (!await canAccessClientSite(req, ticket.rows[0].object_id)) {
-    return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+    return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   }
 
   const [items, attachments, comments, offers] = await Promise.all([
@@ -1828,14 +1825,14 @@ router.get("/tickets/:id", requirePermission("VIEW_TICKETS"), async (req, res) =
     {
       id: "created",
       type: "created",
-      label: "Zgloszenie utworzone",
+      label: "Zgłoszenie utworzone",
       createdAt: ticket.rows[0].created_at,
       authorName: [ticket.rows[0].created_by_first_name, ticket.rows[0].created_by_last_name].filter(Boolean).join(" ") || ticket.rows[0].created_by_email || "-"
     },
     ...normalizedAttachments.map((file) => ({
       id: `attachment-${file.id}`,
       type: "attachment",
-      label: `Dodano zalacznik ${file.file_name}`,
+      label: `Dodano załącznik ${file.file_name}`,
       createdAt: file.uploaded_at,
       authorName: file.authorName
     })),
@@ -1890,20 +1887,20 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
   const contactPhone = String(req.body.contactPhone ?? req.body.contact_phone ?? "").trim() || null;
 
   if (!type || !siteId || !title || (type !== "ORDER" && !description)) {
-    return res.status(400).json({ error: "Typ, obiekt, tytul i opis zgloszenia sa wymagane." });
+    return res.status(400).json({ error: "Typ, obiekt, tytuł i opis zgłoszenia są wymagane." });
   }
 
   const site = await db.query("SELECT id FROM objects WHERE id=$1 AND company_id=$2", [siteId, companyId]);
   if (!site.rows[0]) {
-    return res.status(400).json({ error: "Wybrany obiekt nie istnieje albo nie nalezy do Twojej firmy." });
+    return res.status(400).json({ error: "Wybrany obiekt nie istnieje albo nie należy do Twojej firmy." });
   }
   if (!await canAccessClientSite(req, siteId)) {
-    return res.status(403).json({ error: "Brak dostepu do wybranego obiektu." });
+    return res.status(403).json({ error: "Brak dostępu do wybranego obiektu." });
   }
 
   const rawItems = Array.isArray(req.body.items) ? req.body.items : [];
   if (type === "ORDER" && rawItems.length === 0) {
-    return res.status(400).json({ error: "Zamowienie musi zawierac minimum jeden artykul." });
+    return res.status(400).json({ error: "Zamówienie musi zawierać minimum jeden artykuł." });
   }
 
   const client = await db.connect();
@@ -1912,7 +1909,7 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
     const customerId = await getClientCustomerId(client, req, companyId);
     if (!customerId) {
       await client.query("ROLLBACK");
-      return res.status(403).json({ error: "Firma nie ma profilu klienta wymaganego do utworzenia zgloszenia." });
+      return res.status(403).json({ error: "Firma nie ma profilu klienta wymaganego do utworzenia zgłoszenia." });
     }
 
     const ticketNumber = await generateClientTicketNumber(client);
@@ -1934,7 +1931,7 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
 
       if (productIds.length !== sanitizedItems.length) {
         await client.query("ROLLBACK");
-        return res.status(400).json({ error: "Nieprawidlowe pozycje zamowienia." });
+        return res.status(400).json({ error: "Nieprawidłowe pozycje zamówienia." });
       }
 
       const products = await client.query(
@@ -1948,7 +1945,7 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
 
       if (products.rows.length !== productIds.length) {
         await client.query("ROLLBACK");
-        return res.status(400).json({ error: "Niektore artykuly sa niedostepne." });
+        return res.status(400).json({ error: "Niektóre artykuły są niedostępne." });
       }
 
       const productMap = new Map(products.rows.map((product) => [Number(product.id), product]));
@@ -1975,7 +1972,7 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
       category: "TICKETS",
       type: type === "ORDER" ? "ORDER_CREATED" : "TICKET_CREATED",
       priority: priority === "CRITICAL" ? "CRITICAL" : "INFO",
-      title: type === "ORDER" ? "Nowe zamowienie" : "Nowe zgloszenie",
+      title: type === "ORDER" ? "Nowe zamówienie" : "Nowe zgłoszenie",
       message: `${ticketNumber}: ${title}`,
       entityType: "ticket",
       entityId: ticket.rows[0].id,
@@ -1985,7 +1982,7 @@ router.post("/tickets", requirePermission("CREATE_TICKET"), async (req, res) => 
   } catch (err) {
     await client.query("ROLLBACK");
     console.error(err);
-    res.status(500).json({ error: "Blad serwera przy tworzeniu zgloszenia." });
+    res.status(500).json({ error: "Błąd serwera przy tworzeniu zgłoszenia." });
   } finally {
     client.release();
   }
@@ -2004,11 +2001,11 @@ router.post("/tickets/:id/attachments", requireAnyPermission("CREATE_TICKET", "C
 
   if (!ticket.rows[0]) {
     (req.files || []).forEach(removeUploadedFile);
-    return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+    return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   }
   if (!await canAccessClientSite(req, ticket.rows[0].object_id)) {
     (req.files || []).forEach(removeUploadedFile);
-    return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+    return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   }
 
   const saved = [];
@@ -2036,7 +2033,7 @@ router.post("/tickets/:id/ai-analysis", requirePermission("CREATE_TICKET"), asyn
   );
 
   if (!ticket.rows[0]) {
-    return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+    return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
   }
 
   analyzeTicketWithAi(ticket.rows[0].id);
@@ -2046,7 +2043,7 @@ router.post("/tickets/:id/ai-analysis", requirePermission("CREATE_TICKET"), asyn
 router.post("/tickets/:id/comments", requirePermission("COMMENT_TICKET"), async (req, res) => {
   const companyId = companyIdFromUser(req);
   const content = String(req.body.content || "").trim();
-  if (!content) return res.status(400).json({ error: "Tresc komentarza jest wymagana." });
+  if (!content) return res.status(400).json({ error: "Treść komentarza jest wymagana." });
 
   const client = await db.connect();
   try {
@@ -2061,11 +2058,11 @@ router.post("/tickets/:id/comments", requirePermission("COMMENT_TICKET"), async 
 
     if (!ticket.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
     }
     if (!await canAccessClientSite(req, ticket.rows[0].object_id)) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Zgloszenie nie istnieje albo nie masz do niego dostepu." });
+      return res.status(404).json({ error: "Zgłoszenie nie istnieje albo nie masz do niego dostępu." });
     }
 
     const currentStatus = normalizeLegacyStatus(ticket.rows[0].status);
@@ -2102,7 +2099,7 @@ router.post("/tickets/:id/comments", requirePermission("COMMENT_TICKET"), async 
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Failed to add client ticket comment:", error);
-    res.status(500).json({ error: "Nie udalo sie dodac komentarza." });
+    res.status(500).json({ error: "Nie udało się dodać komentarza." });
   } finally {
     client.release();
   }

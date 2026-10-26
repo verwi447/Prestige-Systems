@@ -44,6 +44,14 @@ export function notFoundApi(req, res, next) {
 export function safeErrorHandler(err, _req, res, _next) {
   console.error("Unhandled request error:", err);
   if (res.headersSent) return;
-  if (Number(err?.status) === 403) return res.status(403).json({ error: "Niedozwolone zrodlo zadania." });
+
+  const status = Number(err?.status);
+  // err.expose oznacza komunikat napisany dla użytkownika. Bez tego znacznika
+  // treść wyjątku nigdy nie opuszcza serwera, żeby nie wyciekły szczegóły
+  // zapytań ani ścieżki plików.
+  if (err?.expose && status >= 400 && status < 500) {
+    return res.status(status).json({ error: err.message });
+  }
+  if (status === 403) return res.status(403).json({ error: "Niedozwolone źródło żądania." });
   res.status(500).json({ error: "Wewnętrzny błąd serwera." });
 }

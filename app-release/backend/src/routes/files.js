@@ -20,7 +20,29 @@ function safeName(value) {
   return path.basename(String(value || "")).replace(/[\r\n"]/g, "_");
 }
 
-function sendStoredFile(res, directory, storedName, originalName, mimeType) {
+// Typ odpowiedzi wyznacza rozszerzenie zapisanego pliku, a nie mime_type z
+// bazy. Wartosc z bazy pochodzi z naglowka uploadu, wiec zalacznik podany jako
+// text/html byl serwowany inline z naszego originu; CSP blokuje skrypty inline,
+// ale script-src 'self' wpuszcza <script src="/uploads/...">, co domykalo
+// sciezke do XSS-a. Cokolwiek spoza tej listy idzie jako pobranie.
+const INLINE_SAFE_TYPES = new Map([
+  [".jpg", "image/jpeg"],
+  [".jpeg", "image/jpeg"],
+  [".png", "image/png"],
+  [".webp", "image/webp"],
+  [".gif", "image/gif"],
+  [".pdf", "application/pdf"]
+]);
+
+export function resolveContentDisposition(storedName) {
+  const extension = path.extname(String(storedName || "")).toLowerCase();
+  const contentType = INLINE_SAFE_TYPES.get(extension);
+  return contentType
+    ? { disposition: "inline", contentType }
+    : { disposition: "attachment", contentType: "application/octet-stream" };
+}
+
+function sendStoredFile(res, directory, storedName, originalName) {
   const fileName = safeName(storedName);
   if (!fileName || fileName !== storedName) return res.status(404).json({ error: "Plik nie istnieje." });
 
@@ -30,9 +52,11 @@ function sendStoredFile(res, directory, storedName, originalName, mimeType) {
     return res.status(404).json({ error: "Plik nie istnieje." });
   }
 
-  if (mimeType) res.type(mimeType);
+  const { disposition, contentType } = resolveContentDisposition(fileName);
+  res.type(contentType);
   res.setHeader("Cache-Control", "private, no-store");
-  res.setHeader("Content-Disposition", `inline; filename="${safeName(originalName || fileName)}"`);
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Content-Disposition", `${disposition}; filename="${safeName(originalName || fileName)}"`);
   return res.sendFile(fullPath);
 }
 
@@ -60,10 +84,10 @@ router.get("/ticket-attachments/:attachmentId", async (req, res) => {
       return res.status(404).json({ error: "Plik nie istnieje." });
     }
 
-    return sendStoredFile(res, "tickets", file.file_name, file.original_name, file.mime_type);
+    return sendStoredFile(res, "tickets", file.file_name, file.original_name);
   } catch (error) {
     console.error("Failed to serve ticket attachment:", error);
-    return res.status(500).json({ error: "Wewnetrzny blad serwera." });
+    return res.status(500).json({ error: "Wewnętrzny błąd serwera." });
   }
 });
 
@@ -88,10 +112,10 @@ router.get("/offer-attachments/:attachmentId", async (req, res) => {
       return res.status(404).json({ error: "Plik nie istnieje." });
     }
 
-    return sendStoredFile(res, "", file.file_name, file.file_name, null);
+    return sendStoredFile(res, "", file.file_name, file.file_name);
   } catch (error) {
     console.error("Failed to serve offer attachment:", error);
-    return res.status(500).json({ error: "Wewnetrzny blad serwera." });
+    return res.status(500).json({ error: "Wewnętrzny błąd serwera." });
   }
 });
 

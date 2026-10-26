@@ -29,6 +29,6 @@ export function geoBlock(req, res, next) {
   const geo = geoip.lookup(normalized);
   if (geo && allowedCountries.includes(geo.country)) return next();
 
-  console.warn(`Geo-block: odrzucono polaczenie z ${normalized} (kraj: ${geo?.country || "nieznany"})`);
-  return res.status(403).json({ error: "Dostep z Twojej lokalizacji jest niedostepny." });
+  console.warn(`Geo-block: odrzucono połączenie z ${normalized} (kraj: ${geo?.country || "nieznany"})`);
+  return res.status(403).json({ error: "Dostęp z Twojej lokalizacji jest niedostępny." });
 }

@@ -1,5 +1,6 @@
 import express from "express";
 import { db } from "../db.js";
+import { CLOSED_TICKET_STATUSES } from "../domain/statuses.js";
 import { auth } from "../middleware/auth.js";
 import { normalizeRole } from "../middleware/access.js";
 import { getAdminActionItems } from "../services/dashboardActions.js";
@@ -45,8 +46,8 @@ router.get("/admin-summary", auth, async (req, res) => {
                 SELECT COUNT(*)::int AS count
                 FROM tickets
                 WHERE type <> 'ORDER'
-                  AND COALESCE(status, '') NOT IN ('ZAKOŃCZONE', 'ZAKONCZONE', 'ZAMKNIĘTE', 'ZAMKNIETE', 'ODRZUCONE', 'REJECTED', 'COMPLETED', 'CANCELLED')
-            `),
+                  AND COALESCE(status, '') <> ALL($1::text[])
+            `, [CLOSED_TICKET_STATUSES]),
             db.query("SELECT COUNT(*)::int AS count FROM products"),
             db.query("SELECT COUNT(*)::int AS count FROM offers WHERE status IN ('SZKIC', 'DO AKCEPTACJI')"),
             db.query(`

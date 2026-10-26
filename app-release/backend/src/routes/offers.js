@@ -1,7 +1,8 @@
 import express from "express";
 import { db } from "../db.js";
+import { OFFER_STATUSES, PUBLISHING_OFFER_STATUSES } from "../domain/statuses.js";
 import { auth } from "../middleware/auth.js";
-import { loadCurrentUser, normalizeRole, requireAnyPermission } from "../middleware/access.js";
+import { isInternalRole, loadCurrentUser, normalizeRole, requireAnyPermission } from "../middleware/access.js";
 import { notifyAdmins } from "../utils/notifications.js";
 import { renderEmailTemplate, sendEmail } from "../services/emailService.js";
 import {
@@ -19,7 +20,7 @@ const router = express.Router();
 autoAsyncRoutes(router);
 
 const terminalOfferStatuses = new Set(["ZAAKCEPTOWANA", "ODRZUCONA", "ZAKOŃCZONA"]);
-const publishTriggeringOfferStatuses = new Set(["WYSŁANA", "DO AKCEPTACJI"]);
+const publishTriggeringOfferStatuses = new Set(PUBLISHING_OFFER_STATUSES);
 
 // A closed-out offer (accepted/rejected/completed) moving back into a status
 // that triggers a fresh client notification + email would silently re-send
@@ -270,11 +271,10 @@ async function publishOfferToClient(offer, req) {
 
 router.get("/", auth, loadCurrentUser, requireAnyPermission("VIEW_OFFERS"), async (req, res) => {
   try {
-    const role = normalizeRole(req.user.role);
     const params = [];
     let whereSql = "";
 
-    if (role !== "ADMIN") {
+    if (!isInternalRole(req.user.role)) {
       const customerRes = await db.query("SELECT id, company_id FROM customers WHERE user_id=$1", [req.user.id]);
       if (customerRes.rows.length === 0) return res.json([]);
 
@@ -306,10 +306,9 @@ router.get("/", auth, loadCurrentUser, requireAnyPermission("VIEW_OFFERS"), asyn
 
 router.get("/:id", auth, loadCurrentUser, requireAnyPermission("VIEW_OFFERS"), async (req, res) => {
   try {
-    const role = normalizeRole(req.user.role);
     const params = [req.params.id];
     let accessSql = "WHERE o.id=$1";
-    if (role !== "ADMIN") {
+    if (!isInternalRole(req.user.role)) {
       params.push(req.user.companyId || req.user.company_id);
       accessSql += " AND c.company_id=$2 AND UPPER(COALESCE(o.status, '')) NOT IN ('SZKIC','DRAFT')";
     }
@@ -438,7 +437,7 @@ router.post("/", auth, requireAdmin, async (req, res) => {
       userId: req.user.id,
       entityType: "offer",
       entityId: savedOffer.id,
-      message: `Utworzono oferte ${savedOffer.offer_number || `#${savedOffer.id}`}`,
+      message: `Utworzono ofertę ${savedOffer.offer_number || `#${savedOffer.id}`}`,
       metadata: { status: savedOffer.status, ticketId: savedOffer.ticket_id || null }
     }).catch((error) => console.error("Global audit log failed:", error));
     res.status(201).json({ ...savedOffer, delivery });
@@ -534,7 +533,7 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
       userId: req.user.id,
       entityType: "offer",
       entityId: savedOffer.id,
-      message: `Zaktualizowano oferte ${savedOffer.offer_number || `#${savedOffer.id}`}`,
+      message: `Zaktualizowano ofertę ${savedOffer.offer_number || `#${savedOffer.id}`}`,
       metadata: { previousStatus: current.rows[0].status, status: savedOffer.status }
     }).catch((error) => console.error("Global audit log failed:", error));
     res.json({ ...savedOffer, delivery });
@@ -624,7 +623,7 @@ router.patch("/:id/status", auth, requireAdmin, async (req, res) => {
   const client = await db.connect();
   try {
     const status = String(req.body.status || "").toUpperCase();
-    const validStatuses = ["SZKIC", "WYSŁANA", "W REALIZACJI", "DO AKCEPTACJI", "ZAAKCEPTOWANA", "ODRZUCONA", "ZAKOŃCZONA"];
+    const validStatuses = OFFER_STATUSES;
 
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: "Niepoprawny status" });
@@ -689,7 +688,7 @@ router.patch("/:id/status", auth, requireAdmin, async (req, res) => {
 
 router.patch("/bulk-status", auth, requireAdmin, async (req, res) => {
   const status = String(req.body.status || "").toUpperCase();
-  const validStatuses = ["SZKIC", "WYSŁANA", "W REALIZACJI", "DO AKCEPTACJI", "ZAAKCEPTOWANA", "ODRZUCONA", "ZAKOŃCZONA"];
+  const validStatuses = OFFER_STATUSES;
   const ids = Array.isArray(req.body.ids) ? [...new Set(req.body.ids.map(Number).filter(Number.isInteger))] : [];
 
   if (!validStatuses.includes(status)) return res.status(400).json({ error: "Niepoprawny status" });
@@ -874,7 +873,7 @@ router.post("/:id/send-email", auth, requireAdmin, async (req, res) => {
       userId: req.user.id,
       entityType: "offer",
       entityId: offer.id,
-      message: `Wyslano oferte ${offer.offer_number || `#${offer.id}`} e-mailem.`,
+      message: `Wysłano ofertę ${offer.offer_number || `#${offer.id}`} e-mailem.`,
       metadata: { hasPdfAttachment: Boolean(attachPdf), emailError }
     }).catch((error) => console.error("Global audit log failed:", error));
 
@@ -906,7 +905,7 @@ router.delete("/:id", auth, requireAdmin, async (req, res) => {
       userId: req.user.id,
       entityType: "offer",
       entityId: offer.rows[0].id,
-      message: `Usunieto oferte ${offer.rows[0].offer_number || `#${offer.rows[0].id}`}`
+      message: `Usunięto ofertę ${offer.rows[0].offer_number || `#${offer.rows[0].id}`}`
     }).catch((error) => console.error("Global audit log failed:", error));
     res.json({ ok: true });
   } catch (err) {

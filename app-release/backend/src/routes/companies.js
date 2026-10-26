@@ -2,14 +2,15 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
-import { loadCurrentUser, requireCompanyAccess, requirePermission, requireRole, normalizeRole } from "../middleware/access.js";
+import { denyAccountant, loadCurrentUser, requireCompanyAccess, requirePermission, requireRole, normalizeRole } from "../middleware/access.js";
 import { notifyAdmins } from "../utils/notifications.js";
 import { writeAuditLog } from "../utils/auditLog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = express.Router();
 
-router.use(auth, loadCurrentUser);
+// Client company records are outside the accounting role's scope entirely.
+router.use(auth, loadCurrentUser, denyAccountant);
 
 const companySelect = `
   SELECT id, name, nip, regon, address, postal_code, city, country, email, phone,
@@ -171,7 +172,7 @@ router.post("/", requireRole("ADMIN"), asyncHandler(async (req, res) => {
     companyId: createdCompany.id,
     entityType: "company",
     entityId: createdCompany.id,
-    message: `Dodano firme ${createdCompany.name}`
+    message: `Dodano firmę ${createdCompany.name}`
   }).catch((error) => console.error("Global audit log failed:", error));
   res.status(201).json(createdCompany);
 }));
@@ -205,7 +206,7 @@ router.put("/:id", asyncHandler(async (req, res) => {
     companyId: result.rows[0].id,
     entityType: "company",
     entityId: result.rows[0].id,
-    message: `Zaktualizowano firme ${result.rows[0].name}`
+    message: `Zaktualizowano firmę ${result.rows[0].name}`
   }).catch((error) => console.error("Global audit log failed:", error));
   res.json(result.rows[0]);
 }));

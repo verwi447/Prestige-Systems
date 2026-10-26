@@ -1,7 +1,7 @@
 import express from "express";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
-import { getEffectivePermissions, loadCurrentUser, normalizeRole } from "../middleware/access.js";
+import { getEffectivePermissions, isInternalRole, loadCurrentUser, normalizeRole } from "../middleware/access.js";
 
 import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
 
@@ -12,7 +12,7 @@ router.use(auth, loadCurrentUser);
 
 const RESULT_LIMIT = 6;
 const MIN_QUERY_LENGTH = 2;
-const HIDDEN_CLIENT_OFFER_STATUSES = ["SZKIC", "DRAFT"];
+import { HIDDEN_CLIENT_OFFER_STATUSES } from "../domain/statuses.js";
 
 function employeeSiteAccessSql(req, objectColumn, params) {
   if (normalizeRole(req.currentUser.role) !== "CLIENT_EMPLOYEE") return "";
@@ -33,17 +33,21 @@ router.get("/", async (req, res) => {
   const role = normalizeRole(req.currentUser.role);
 
   try {
-    if (role === "ADMIN") {
-      const companiesRes = await db.query(
-        `SELECT id, name, nip, city, email
-         FROM companies
-         WHERE COALESCE(is_own_company, FALSE) = FALSE
-           AND (name ILIKE $1 OR nip ILIKE $1 OR city ILIKE $1 OR email ILIKE $1)
-         ORDER BY name
-         LIMIT $2`,
-        [like, RESULT_LIMIT]
-      );
-      results.companies = companiesRes.rows;
+    if (isInternalRole(role)) {
+      // The accounting role sees the commercial documents only - no client
+      // company records and no service tickets.
+      if (role === "ADMIN") {
+        const companiesRes = await db.query(
+          `SELECT id, name, nip, city, email
+           FROM companies
+           WHERE COALESCE(is_own_company, FALSE) = FALSE
+             AND (name ILIKE $1 OR nip ILIKE $1 OR city ILIKE $1 OR email ILIKE $1)
+           ORDER BY name
+           LIMIT $2`,
+          [like, RESULT_LIMIT]
+        );
+        results.companies = companiesRes.rows;
+      }
 
       const offersRes = await db.query(
         `SELECT o.id, o.offer_number, o.title, o.status, c.name AS customer_name
@@ -56,16 +60,18 @@ router.get("/", async (req, res) => {
       );
       results.offers = offersRes.rows;
 
-      const ticketsRes = await db.query(
-        `SELECT t.id, t.ticket_number, t.subject, t.status, c.name AS customer_name
-         FROM tickets t
-         LEFT JOIN customers c ON c.id = t.customer_id
-         WHERE t.type <> 'ORDER' AND (t.ticket_number ILIKE $1 OR t.subject ILIKE $1 OR c.name ILIKE $1)
-         ORDER BY t.created_at DESC
-         LIMIT $2`,
-        [like, RESULT_LIMIT]
-      );
-      results.tickets = ticketsRes.rows;
+      if (role === "ADMIN") {
+        const ticketsRes = await db.query(
+          `SELECT t.id, t.ticket_number, t.subject, t.status, c.name AS customer_name
+           FROM tickets t
+           LEFT JOIN customers c ON c.id = t.customer_id
+           WHERE t.type <> 'ORDER' AND (t.ticket_number ILIKE $1 OR t.subject ILIKE $1 OR c.name ILIKE $1)
+           ORDER BY t.created_at DESC
+           LIMIT $2`,
+          [like, RESULT_LIMIT]
+        );
+        results.tickets = ticketsRes.rows;
+      }
 
       const ordersRes = await db.query(
         `SELECT t.id, t.ticket_number AS order_number, t.subject, t.status, c.name AS customer_name

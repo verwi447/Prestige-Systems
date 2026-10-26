@@ -33,7 +33,7 @@ const knowledgeFileUpload = multer({
   fileFilter: (_req, file, cb) => {
     const extension = path.extname(file.originalname || "").toLowerCase();
     if (!knowledgeFileMimeTypes.has(file.mimetype) || !knowledgeFileExtensions.has(extension)) {
-      return cb(new Error("Plik musi byc w formacie JPG, PNG, WEBP albo PDF - to jedyne formaty, ktore asystent AI potrafi odczytac."));
+      return cb(new Error("Plik musi być w formacie JPG, PNG, WEBP albo PDF - to jedyne formaty, które asystent AI potrafi odczytać."));
     }
     cb(null, true);
   }
@@ -50,7 +50,7 @@ router.get("/settings", async (_req, res) => {
     const result = await db.query("SELECT * FROM ai_assistant_settings WHERE id='default'");
     res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie pobrac ustawien asystenta AI." });
+    res.status(500).json({ error: "Nie udało się pobrać ustawień asystenta AI." });
   }
 });
 
@@ -70,13 +70,13 @@ router.put("/settings", async (req, res) => {
       entityType: "ai_assistant_settings",
       entityId: "default",
       message: autoSendEnabled
-        ? "Wlaczono automatyczna wysylke sugestii AI do klientow"
-        : "Wylaczono automatyczna wysylke sugestii AI do klientow",
+        ? "Włączono automatyczna wysyłkę sugestii AI do klientów"
+        : "Wyłączono automatyczna wysyłkę sugestii AI do klientów",
       metadata: { autoSendEnabled }
     }).catch((error) => console.error("Global audit log failed:", error));
     res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie zapisac ustawien asystenta AI." });
+    res.status(500).json({ error: "Nie udało się zapisać ustawień asystenta AI." });
   }
 });
 
@@ -139,7 +139,7 @@ router.get("/knowledge", async (_req, res) => {
       matchedTickets: matchesByEntry.get(row.id) || []
     })));
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie pobrac bazy wiedzy." });
+    res.status(500).json({ error: "Nie udało się pobrać bazy wiedzy." });
   }
 });
 
@@ -149,7 +149,7 @@ router.post("/knowledge", async (req, res) => {
   const solution = String(req.body.solution || "").trim() || null;
   const category = normalizeCategory(req.body.category);
 
-  if (!title || !content) return res.status(400).json({ error: "Tytul i tresc sa wymagane." });
+  if (!title || !content) return res.status(400).json({ error: "Tytuł i treść są wymagane." });
 
   try {
     const result = await db.query(
@@ -167,14 +167,14 @@ router.post("/knowledge", async (req, res) => {
     }).catch((error) => console.error("Global audit log failed:", error));
     res.status(201).json({ id: result.rows[0].id });
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie dodac wpisu do bazy wiedzy." });
+    res.status(500).json({ error: "Nie udało się dodać wpisu do bazy wiedzy." });
   }
 });
 
 router.post("/knowledge/import", async (req, res) => {
   const entries = Array.isArray(req.body.entries) ? req.body.entries : [];
-  if (!entries.length) return res.status(400).json({ error: "Brak wpisow do zaimportowania." });
-  if (entries.length > 500) return res.status(400).json({ error: "Maksymalnie 500 wpisow na raz." });
+  if (!entries.length) return res.status(400).json({ error: "Brak wpisów do zaimportowania." });
+  if (entries.length > 500) return res.status(400).json({ error: "Maksymalnie 500 wpisów na raz." });
 
   const client = await db.connect();
   try {
@@ -185,7 +185,7 @@ router.post("/knowledge/import", async (req, res) => {
       const title = String(entry?.title || "").trim();
       const content = String(entry?.content || "").trim();
       if (!title || !content) {
-        skipped.push(title || "(bez tytulu)");
+        skipped.push(title || "(bez tytułu)");
         continue;
       }
       const solution = String(entry?.solution || "").trim() || null;
@@ -209,7 +209,7 @@ router.post("/knowledge/import", async (req, res) => {
     res.status(201).json({ imported, skipped });
   } catch (error) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Nie udalo sie zaimportowac wpisow." });
+    res.status(500).json({ error: "Nie udało się zaimportować wpisów." });
   } finally {
     client.release();
   }
@@ -221,7 +221,7 @@ router.put("/knowledge/:id", async (req, res) => {
   const solution = String(req.body.solution || "").trim() || null;
   const category = normalizeCategory(req.body.category);
 
-  if (!title || !content) return res.status(400).json({ error: "Tytul i tresc sa wymagane." });
+  if (!title || !content) return res.status(400).json({ error: "Tytuł i treść są wymagane." });
 
   try {
     const result = await db.query(
@@ -240,7 +240,7 @@ router.put("/knowledge/:id", async (req, res) => {
     }).catch((error) => console.error("Global audit log failed:", error));
     res.json({ id: result.rows[0].id });
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie zapisac wpisu bazy wiedzy." });
+    res.status(500).json({ error: "Nie udało się zapisać wpisu bazy wiedzy." });
   }
 });
 
@@ -256,11 +256,11 @@ router.delete("/knowledge/:id", async (req, res) => {
       userId: req.user.id,
       entityType: "ai_knowledge_base",
       entityId: req.params.id,
-      message: `Usunieto wpis z bazy wiedzy AI: ${result.rows[0].title}`
+      message: `Usunięto wpis z bazy wiedzy AI: ${result.rows[0].title}`
     }).catch((error) => console.error("Global audit log failed:", error));
     res.status(204).end();
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie usunac wpisu bazy wiedzy." });
+    res.status(500).json({ error: "Nie udało się usunąć wpisu bazy wiedzy." });
   }
 });
 
@@ -292,7 +292,7 @@ router.post("/knowledge/:id/files", knowledgeFileUpload.array("files", 5), async
     res.status(201).json(saved);
   } catch (error) {
     removeUploadedFiles(req.files);
-    res.status(500).json({ error: "Nie udalo sie dodac plikow." });
+    res.status(500).json({ error: "Nie udało się dodać plików." });
   }
 });
 
@@ -310,11 +310,11 @@ router.delete("/knowledge/:id/files/:fileId", async (req, res) => {
       userId: req.user.id,
       entityType: "ai_knowledge_base",
       entityId: req.params.id,
-      message: "Usunieto plik ze wpisu bazy wiedzy AI"
+      message: "Usunięto plik ze wpisu bazy wiedzy AI"
     }).catch((error) => console.error("Global audit log failed:", error));
     res.status(204).end();
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie usunac pliku." });
+    res.status(500).json({ error: "Nie udało się usunąć pliku." });
   }
 });
 
@@ -335,7 +335,7 @@ router.get("/knowledge/:id/files/:fileId", async (req, res) => {
     res.setHeader("Content-Disposition", `inline; filename="${path.basename(file.original_name || file.file_name).replace(/[\r\n"]/g, "_")}"`);
     res.sendFile(fullPath);
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie pobrac pliku." });
+    res.status(500).json({ error: "Nie udało się pobrać pliku." });
   }
 });
 
@@ -348,13 +348,13 @@ router.get("/equipment", async (_req, res) => {
     const result = await db.query("SELECT id, name, is_active, created_at, updated_at FROM ai_equipment_types ORDER BY name");
     res.json(result.rows.map(equipmentRow));
   } catch (error) {
-    res.status(500).json({ error: "Nie udalo sie pobrac listy urzadzen." });
+    res.status(500).json({ error: "Nie udało się pobrać listy urządzeń." });
   }
 });
 
 router.post("/equipment", async (req, res) => {
   const name = String(req.body.name || "").trim().slice(0, 80);
-  if (!name) return res.status(400).json({ error: "Podaj nazwe urzadzenia." });
+  if (!name) return res.status(400).json({ error: "Podaj nazwę urządzenia." });
 
   try {
     const result = await db.query(
@@ -367,12 +367,12 @@ router.post("/equipment", async (req, res) => {
       userId: req.user.id,
       entityType: "ai_equipment_types",
       entityId: result.rows[0].id,
-      message: `Dodano urzadzenie: ${name}`
+      message: `Dodano urządzenie: ${name}`
     }).catch((error) => console.error("Global audit log failed:", error));
     res.status(201).json(equipmentRow(result.rows[0]));
   } catch (error) {
-    if (error.code === "23505") return res.status(409).json({ error: "Urzadzenie o tej nazwie juz istnieje." });
-    res.status(500).json({ error: "Nie udalo sie dodac urzadzenia." });
+    if (error.code === "23505") return res.status(409).json({ error: "Urządzenie o tej nazwie już istnieje." });
+    res.status(500).json({ error: "Nie udało się dodać urządzenia." });
   }
 });
 
@@ -382,7 +382,7 @@ router.put("/equipment/:id", async (req, res) => {
   const hasActive = req.body.isActive !== undefined;
   const isActive = hasActive ? Boolean(req.body.isActive) : null;
 
-  if (hasName && !name) return res.status(400).json({ error: "Podaj nazwe urzadzenia." });
+  if (hasName && !name) return res.status(400).json({ error: "Podaj nazwę urządzenia." });
 
   const client = await db.connect();
   try {
@@ -390,7 +390,7 @@ router.put("/equipment/:id", async (req, res) => {
     const current = await client.query("SELECT name FROM ai_equipment_types WHERE id=$1 FOR UPDATE", [req.params.id]);
     if (!current.rows[0]) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Urzadzenie nie istnieje." });
+      return res.status(404).json({ error: "Urządzenie nie istnieje." });
     }
 
     const nextName = hasName ? name : current.rows[0].name;
@@ -412,15 +412,15 @@ router.put("/equipment/:id", async (req, res) => {
       userId: req.user.id,
       entityType: "ai_equipment_types",
       entityId: req.params.id,
-      message: `Zaktualizowano urzadzenie: ${nextName}`,
+      message: `Zaktualizowano urządzenie: ${nextName}`,
       metadata: { previousName: current.rows[0].name, name: nextName, isActive }
     }).catch((error) => console.error("Global audit log failed:", error));
 
     res.json(equipmentRow(result.rows[0]));
   } catch (error) {
     await client.query("ROLLBACK");
-    if (error.code === "23505") return res.status(409).json({ error: "Urzadzenie o tej nazwie juz istnieje." });
-    res.status(500).json({ error: "Nie udalo sie zapisac urzadzenia." });
+    if (error.code === "23505") return res.status(409).json({ error: "Urządzenie o tej nazwie już istnieje." });
+    res.status(500).json({ error: "Nie udało się zapisać urządzenia." });
   } finally {
     client.release();
   }

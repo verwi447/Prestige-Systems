@@ -43,7 +43,7 @@ router.patch("/", asyncHandler(async (req, res) => {
   const phone = String(req.body.phone ?? "").trim() || null;
 
   if (!firstName || !lastName) {
-    return res.status(400).json({ error: "Imie i nazwisko sa wymagane." });
+    return res.status(400).json({ error: "Imię i nazwisko są wymagane." });
   }
 
   const result = await db.query(
@@ -71,17 +71,17 @@ router.post("/change-password", asyncHandler(async (req, res) => {
   const confirmPassword = String(req.body.confirmPassword || "");
 
   if (!currentPassword || !newPassword || !confirmPassword) {
-    return res.status(400).json({ error: "Wszystkie pola hasla sa wymagane." });
+    return res.status(400).json({ error: "Wszystkie pola hasła są wymagane." });
   }
   if (newPassword !== confirmPassword) {
-    return res.status(400).json({ error: "Nowe hasla nie sa zgodne." });
+    return res.status(400).json({ error: "Nowe hasła nie są zgodne." });
   }
   if (newPassword === currentPassword) {
-    return res.status(400).json({ error: "Nowe haslo musi byc inne niz obecne." });
+    return res.status(400).json({ error: "Nowe hasło musi być inne niż obecne." });
   }
   const rules = passwordRules(newPassword);
   if (!Object.values(rules).every(Boolean)) {
-    return res.status(400).json({ error: "Nowe haslo nie spelnia wymagan bezpieczenstwa." });
+    return res.status(400).json({ error: "Nowe hasło nie spełnia wymagań bezpieczeństwa." });
   }
 
   const user = await db.query("SELECT id, password, password_hash FROM users WHERE id=$1", [req.currentUser.id]);
@@ -90,12 +90,12 @@ router.post("/change-password", asyncHandler(async (req, res) => {
   const hash = user.rows[0].password_hash || user.rows[0].password;
   const matches = await bcrypt.compare(currentPassword, hash || "");
   if (!matches) {
-    return res.status(401).json({ error: "Obecne haslo jest nieprawidlowe." });
+    return res.status(401).json({ error: "Obecne hasło jest nieprawidłowe." });
   }
 
   const newHash = await bcrypt.hash(newPassword, 10);
   await db.query("UPDATE users SET password=$1, password_hash=$1, password_changed_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [newHash, req.currentUser.id]);
-  res.json({ message: "Haslo zostalo zmienione." });
+  res.json({ message: "Hasło zostało zmienione." });
 }));
 
 router.get("/notification-preferences", asyncHandler(async (req, res) => {
@@ -151,7 +151,7 @@ router.get("/sessions", (_req, res) => {
 });
 
 router.delete("/sessions/:id", (_req, res) => {
-  res.status(404).json({ error: "Zarzadzanie sesjami nie jest jeszcze dostepne." });
+  res.status(404).json({ error: "Zarządzanie sesjami nie jest jeszcze dostępne." });
 });
 
 router.get("/activity", asyncHandler(async (req, res) => {
@@ -164,7 +164,7 @@ router.get("/activity", asyncHandler(async (req, res) => {
   const activity = [
     { id: "login", type: "LOGIN", label: "Zalogowano do systemu", createdAt: req.currentUser.last_login_at || req.currentUser.created_at },
     ...comments.rows.map((row) => ({ id: `comment-${row.id}`, type: "COMMENT", label: "Dodano komentarz do oferty", createdAt: row.created_at })),
-    ...ticketComments.rows.map((row) => ({ id: `ticket-comment-${row.id}`, type: "COMMENT", label: "Dodano komentarz do zgloszenia", createdAt: row.created_at })),
+    ...ticketComments.rows.map((row) => ({ id: `ticket-comment-${row.id}`, type: "COMMENT", label: "Dodano komentarz do zgłoszenia", createdAt: row.created_at })),
     ...offers.rows.map((row) => ({ id: `offer-${row.id}`, type: "OFFER", label: `Zmieniono status oferty ${row.offer_number || row.id}: ${row.status}`, createdAt: row.updated_at }))
   ].filter((item) => item.createdAt).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 10);
   res.json(activity);

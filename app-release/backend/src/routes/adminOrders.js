@@ -1,7 +1,7 @@
 import express from "express";
 import { db } from "../db.js";
 import { auth } from "../middleware/auth.js";
-import { loadCurrentUser, requireRole } from "../middleware/access.js";
+import { blockAccountantWrites, loadCurrentUser, requireRole } from "../middleware/access.js";
 import { createNotification } from "../utils/notifications.js";
 
 import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
@@ -10,7 +10,9 @@ const router = express.Router();
 autoAsyncRoutes(router);
 const ORDER_STATUSES = new Set(["NEW", "ACCEPTED", "IN_PROGRESS", "WAITING_FOR_CLIENT", "WAITING_FOR_PARTS", "REJECTED", "COMPLETED", "CANCELLED"]);
 
-router.use(auth, loadCurrentUser, requireRole("ADMIN"));
+// The accounting role reads orders for their values; blockAccountantWrites keeps
+// every status change, assignment and comment here admin-only.
+router.use(auth, loadCurrentUser, requireRole("ADMIN", "ACCOUNTANT"), blockAccountantWrites);
 
 router.get("/assignees", async (_req, res) => {
   try {

@@ -15,8 +15,8 @@ export function buildAdminActionItems({ tickets = [], offers = [], orders = [] }
     return {
       id: `ticket-${ticket.id}`,
       kind: "ticket",
-      title: "Zgloszenie bez opiekuna",
-      description: [ticket.ticket_number, ticket.subject].filter(Boolean).join(" - ") || "Zgloszenie wymaga przypisania.",
+      title: "Zgłoszenie bez opiekuna",
+      description: [ticket.ticket_number, ticket.subject].filter(Boolean).join(" - ") || "Zgłoszenie wymaga przypisania.",
       companyName: companyName(ticket),
       link: `/tickets/${ticket.id}`,
       createdAt: actionDate(ticket),
@@ -30,8 +30,8 @@ export function buildAdminActionItems({ tickets = [], offers = [], orders = [] }
     return {
       id: `order-${order.id}`,
       kind: "order",
-      title: "Zamowienie bez opiekuna",
-      description: [order.ticket_number, order.subject].filter(Boolean).join(" - ") || "Zamowienie wymaga przypisania.",
+      title: "Zamówienie bez opiekuna",
+      description: [order.ticket_number, order.subject].filter(Boolean).join(" - ") || "Zamówienie wymaga przypisania.",
       companyName: companyName(order),
       link: `/orders/${order.id}`,
       createdAt: actionDate(order),
@@ -43,8 +43,8 @@ export function buildAdminActionItems({ tickets = [], offers = [], orders = [] }
   const offerActions = offers.map((offer) => ({
     id: `offer-${offer.id}`,
     kind: "offer",
-    title: "Oferta do wyslania",
-    description: [offer.offer_number, offer.title].filter(Boolean).join(" - ") || "Szkic oferty wymaga wyslania.",
+    title: "Oferta do wysłania",
+    description: [offer.offer_number, offer.title].filter(Boolean).join(" - ") || "Szkic oferty wymaga wysłania.",
     companyName: companyName(offer),
     link: `/offers/${offer.id}`,
     createdAt: actionDate(offer),

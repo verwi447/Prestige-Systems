@@ -45,6 +45,22 @@ const upload = multer({
   }
 });
 
+// Usuwa wylacznie plik lezacy w katalogu logo i tylko wtedy, gdy nie jest to
+// plik wlasnie wgrany - sciezka pochodzi z bazy, wiec nie moze wyprowadzic
+// kasowania poza uploads/company.
+export function removeSupersededLogo(previousLogoUrl, currentFileName) {
+  const previousName = path.basename(String(previousLogoUrl || ""));
+  if (!previousName || previousName === currentFileName) return;
+  if (!String(previousLogoUrl).startsWith("/uploads/company/")) return;
+
+  const previousPath = path.join(companyUploadDir, previousName);
+  if (path.dirname(previousPath) !== companyUploadDir) return;
+
+  fs.rm(previousPath, { force: true }, (error) => {
+    if (error) console.error("Failed to remove superseded company logo:", error);
+  });
+}
+
 router.use(auth, loadCurrentUser, requireRole("ADMIN"));
 
 router.post("/company-logo", (req, res) => {
@@ -57,11 +73,18 @@ router.post("/company-logo", (req, res) => {
 
     try {
       const logoUrl = `/uploads/company/${req.file.filename}`;
-      let existing = await db.query("SELECT id FROM own_company ORDER BY id ASC LIMIT 1");
+      let existing = await db.query("SELECT id, logo_url FROM own_company ORDER BY id ASC LIMIT 1");
       if (!existing.rows[0]) {
-        existing = await db.query("INSERT INTO own_company (name) VALUES ($1) RETURNING id", ["Prestige Systems"]);
+        existing = await db.query("INSERT INTO own_company (name) VALUES ($1) RETURNING id, logo_url", ["Prestige Systems"]);
       }
+      const previousLogoUrl = existing.rows[0].logo_url;
       await db.query("UPDATE own_company SET logo_url=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2", [logoUrl, existing.rows[0].id]);
+
+      // Podmiana logo tylko przestawiala wskaznik w bazie, wiec katalog
+      // uploads/company rosl o kazdy wgrany wczesniej plik bez konca.
+      // Sprzatanie po udanym UPDATE: osierocony plik jest mniejszym problemem
+      // niz logo usuniete przy nieudanym zapisie.
+      removeSupersededLogo(previousLogoUrl, req.file.filename);
 
       res.json({ logoUrl });
     } catch (dbError) {

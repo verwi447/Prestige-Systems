@@ -20,7 +20,7 @@ router.get("/network", async (_req, res) => {
     return res.json(await getNetworkSettings());
   } catch (error) {
     console.error("Failed to load network settings:", error);
-    return res.status(500).json({ error: "Nie udalo sie pobrac konfiguracji sieci." });
+    return res.status(500).json({ error: "Nie udało się pobrać konfiguracji sieci." });
   }
 });
 
@@ -34,7 +34,7 @@ router.put("/network", async (req, res) => {
       entityType: "network_settings",
       entityId: "server",
       ipAddress: req.ip,
-      message: "Zmieniono konfiguracje sieci aplikacji.",
+      message: "Zmieniono konfigurację sieci aplikacji.",
       metadata: {
         accessMode: settings.configured.accessMode,
         host: settings.configured.host,
@@ -43,9 +43,9 @@ router.put("/network", async (req, res) => {
         allowedOrigins: settings.configured.allowedOrigins
       }
     }).catch((error) => console.error("Global audit log failed:", error));
-    return res.json({ ...settings, restartRequired: true, message: "Konfiguracja sieci zostala zapisana. Uruchom ponownie usluge, aby zastosowac zmiany." });
+    return res.json({ ...settings, restartRequired: true, message: "Konfiguracja sieci została zapisana. Uruchom ponownie usługę, aby zastosować zmiany." });
   } catch (error) {
-    const message = error?.message || "Nie udalo sie zapisac konfiguracji sieci.";
+    const message = error?.message || "Nie udało się zapisać konfiguracji sieci.";
     return res.status(/wymagany|poprawnym|niedozwolone|maksymalnie|liczba|Wybierz/.test(message) ? 400 : 500).json({ error: message });
   }
 });

@@ -129,7 +129,7 @@ async function recordKnowledgeMatch(ticketId, knowledgeId, knowledgeEntries) {
 
 function matchInstructionLine(knowledgeEntries) {
   if (!knowledgeEntries.length) return "";
-  return "Na samym koncu odpowiedzi, w NOWEJ linii, napisz dokladnie: WPIS_BAZY_WIEDZY: <numer ID wpisu z nawiasu [ID:...] powyzej, na ktorym oparles diagnoze> - albo WPIS_BAZY_WIEDZY: NONE, jesli zaden wpis nie pasowal. Ta linia jest tylko do wewnetrznego uzytku systemu i zostanie usunieta przed pokazaniem odpowiedzi.";
+  return "Na samym końcu odpowiedzi, w NOWEJ linii, napisz dokładnie: WPIS_BAZY_WIEDZY: <numer ID wpisu z nawiasu [ID:...] powyżej, na którym oparłeś diagnozę> - albo WPIS_BAZY_WIEDZY: NONE, jeśli żaden wpis nie pasował. Ta linia jest tylko do wewnętrznego użytku systemu i zostanie usunięta przed pokazaniem odpowiedzi.";
 }
 
 async function fetchKnowledgeFiles(category) {
@@ -162,8 +162,8 @@ async function fetchSimilarResolvedTickets(ticket) {
 
 function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSend, hasKnowledgeFiles, equipment = []) {
   const typeLabel = ticket.type === "HARDWARE_FAILURE"
-    ? "awaria sprzetu (szlaban parkingowy lub kamera ANPR)"
-    : "awaria systemu / problem z dzialaniem uslugi";
+    ? "awaria sprzętu (szlaban parkingowy lub kamera ANPR)"
+    : "awaria systemu / problem z działaniem usługi";
 
   const equipmentList = formatEquipmentList(equipment);
 
@@ -175,23 +175,23 @@ function buildPrompt(ticket, knowledgeEntries, similarTickets, hasImages, autoSe
     .map((row, index) => `Przyklad ${index + 1}:\nZgloszenie: "${row.subject}. ${row.description || ""}"\nRozwiazanie admina: "${row.resolution}"`)
     .join("\n\n");
 
-  const attachmentsNote = [hasImages && "zdjecia zgloszenia", hasKnowledgeFiles && "pliki z bazy wiedzy (instrukcje, schematy)"].filter(Boolean).join(" oraz ");
+  const attachmentsNote = [hasImages && "zdjęcia zgłoszenia", hasKnowledgeFiles && "pliki z bazy wiedzy (instrukcje, schematy)"].filter(Boolean).join(" oraz ");
 
   return [
-    "Jestes asystentem technicznym firmy instalujacej i serwisujacej szlabany parkingowe oraz kamery ANPR.",
-    "Dostales nowe zgloszenie serwisowe od klienta. Przeanalizuj opis" + (attachmentsNote ? ` i dolaczone ${attachmentsNote}` : "") + " i napisz krotka, konkretna wstepna diagnoze PO POLSKU.",
-    hasImages ? "Jesli na zdjeciu zgloszenia widac uszkodzenie, wskaz KONKRETNIE ktore elementy wygladaja na uszkodzone (np. ramie szlabanu, fotokomorka, obudowa, kamera, uszczelka)." : "",
-    hasKnowledgeFiles ? "Dolaczone zostaly rowniez pliki z wewnetrznej bazy wiedzy (np. instrukcja serwisowa, schemat, zdjecie referencyjne) dla pasujacego urzadzenia - wykorzystaj je jako dodatkowe, wiarygodne zrodlo przy stawianiu diagnozy." : "",
-    "Jesli opis sugeruje typowy przypadek (np. pojazd nie wjechal na petle indukcyjna, brak zasilania, awaria czujnika, zablokowany wjazd), zaproponuj najbardziej prawdopodobna przyczyne i, jesli to bezpieczne, prosty krok do samodzielnego sprawdzenia.",
-    "Odpowiadaj rzeczowo, 2-5 zdan, bez wstepow typu 'Oczywiscie' czy 'Na podstawie zdjecia widze'.",
+    "Jesteś asystentem technicznym firmy instalującej i serwisującej szlabany parkingowe oraz kamery ANPR.",
+    "Dostałeś nowe zgłoszenie serwisowe od klienta. Przeanalizuj opis" + (attachmentsNote ? ` i dołączone ${attachmentsNote}` : "") + " i napisz krótką, konkretną wstępną diagnozę PO POLSKU.",
+    hasImages ? "Jeśli na zdjęciu zgłoszenia widać uszkodzenie, wskaż KONKRETNIE, które elementy wyglądają na uszkodzone (np. ramie szlabanu, fotokomórka, obudowa, kamera, uszczelka)." : "",
+    hasKnowledgeFiles ? "Dołączone zostały również pliki z wewnętrznej bazy wiedzy (np. instrukcja serwisowa, schemat, zdjęcie referencyjne) dla pasującego urządzenia - wykorzystaj je jako dodatkowe, wiarygodne źródło przy stawianiu diagnozy." : "",
+    "Jeśli opis sugeruje typowy przypadek (np. pojazd nie wjechał na pętlę indukcyjną, brak zasilania, awaria czujnika, zablokowany wjazd), zaproponuj najbardziej prawdopodobną przyczynę i, jeśli to bezpieczne, prosty krok do samodzielnego sprawdzenia.",
+    "Odpowiadaj rzeczowo, 2-5 zdań, bez wstępów typu 'Oczywiście' czy 'Na podstawie zdjęcia widzę'.",
     autoSend
-      ? "Ta wiadomosc zostanie wyslana BEZPOSREDNIO do klienta jako pierwsza odpowiedz na czacie pomocy technicznej - napisz ja wprost do klienta (mozesz uzyc 'Pana/Pani urzadzenie' itp.), cieplo i pomocnie, i zakoncz pytaniem czy podana wskazowka pomogla albo informacja ze klient moze odpisac jesli problem sie utrzymuje."
-      : "To jest TYLKO sugestia dla admina - nie jest jeszcze widoczna dla klienta, wiec nie pisz 'Szanowny Kliencie' ani formalnych powitan.",
-    equipmentList ? `WAZNE: rozne obiekty klienta maja zainstalowany sprzet od roznych producentow, wiec NIE zakladaj domyslnego modelu. Na TYM KONKRETNYM obiekcie, ktorego dotyczy zgloszenie, zainstalowany jest nastepujacy sprzet - dopasuj diagnoze do tych faktycznych marek/modeli zamiast do ogolnego typu urzadzenia:\n\n${equipmentList}` : "",
-    knowledge ? `Ponizej znajduje sie WEWNETRZNA BAZA WIEDZY firmy o konkretnych urzadzeniach (np. terminal wjazdowy, terminal wyjazdowy, terminal wyjazdowy z terminalem platniczym, szlaban, kamera) i procedurach napraw, wpisana recznie przez administratorow. Kazdy wpis ma etykiete urzadzenia w nawiasach kwadratowych. Traktuj pasujace wpisy jako NAJBARDZIEJ WIARYGODNE zrodlo - jesli urzadzenie lub objaw ze zgloszenia pasuje do ktoregos wpisu (zwlaszcza jesli marka/model zgadza sie ze sprzetem obiektu powyzej), oprzyj diagnoze na nim zamiast na ogolnych domyslach. Wpisy dla innych urzadzen ignoruj:\n\n${knowledge}` : "",
-    examples ? `Oto podobne wczesniej rozwiazane zgloszenia - trzymaj sie podobnego stylu i sposobu rozwiazywania, jesli pasuja do obecnego przypadku:\n\n${examples}` : "",
-    `Typ zgloszenia: ${typeLabel}`,
-    ticket.category ? `Urzadzenie wskazane przez klienta: ${ticket.category}` : "",
+      ? "Ta wiadomość zostanie wysłana BEZPOŚREDNIO do klienta jako pierwsza odpowiedź na czacie pomocy technicznej - napisz ją wprost do klienta (możesz użyć 'Pana/Pani urządzenie' itp.), ciepło i pomocnie, i zakończ pytaniem czy podana wskazówka pomogła albo informacją, że klient może odpisać jeśli problem się utrzymuje."
+      : "To jest TYLKO sugestia dla admina - nie jest jeszcze widoczna dla klienta, więc nie pisz 'Szanowny Kliencie' ani formalnych powitań.",
+    equipmentList ? `WAŻNE: różne obiekty klienta mają zainstalowany sprzęt od różnych producentów, więc NIE zakładaj domyślnego modelu. Na TYM KONKRETNYM obiekcie, którego dotyczy zgłoszenie, zainstalowany jest następujący sprzęt - dopasuj diagnozę do tych faktycznych marek/modeli zamiast do ogólnego typu urządzenia:\n\n${equipmentList}` : "",
+    knowledge ? `Poniżej znajduje się WEWNĘTRZNA BAZA WIEDZY firmy o konkretnych urządzeniach (np. terminal wjazdowy, terminal wyjazdowy, terminal wyjazdowy z terminalem płatniczym, szlaban, kamera) i procedurach napraw, wpisana ręcznie przez administratorów. Każdy wpis ma etykietę urządzenia w nawiasach kwadratowych. Traktuj pasujące wpisy jako NAJBARDZIEJ WIARYGODNE źródło - jeśli urządzenie lub objaw ze zgłoszenia pasuje do któregoś wpisu (zwłaszcza jeśli marka/model zgadza się ze sprzętem obiektu powyżej), oprzyj diagnozę na nim zamiast na ogólnych domysłach. Wpisy dla innych urządzeń ignoruj:\n\n${knowledge}` : "",
+    examples ? `Oto podobne wcześniej rozwiązane zgłoszenia - trzymaj się podobnego stylu i sposobu rozwiązywania, jeśli pasują do obecnego przypadku:\n\n${examples}` : "",
+    `Typ zgłoszenia: ${typeLabel}`,
+    ticket.category ? `Urządzenie wskazane przez klienta: ${ticket.category}` : "",
     `Temat: ${ticket.subject}`,
     `Opis klienta: ${ticket.description || "(brak opisu)"}`,
     matchInstructionLine(knowledgeEntries)
@@ -233,7 +233,7 @@ async function requestGeminiOnce(promptText, images) {
   const data = await response.json();
   const finishReason = data?.candidates?.[0]?.finishReason;
   if (finishReason === "MAX_TOKENS") {
-    console.error("Gemini zwrocil obcieta odpowiedz (MAX_TOKENS) - zwieksz MAX_OUTPUT_TOKENS.");
+    console.error("Gemini zwrócił obciętą odpowiedź (MAX_TOKENS) - zwiększ MAX_OUTPUT_TOKENS.");
   }
 
   const text = (data?.candidates?.[0]?.content?.parts || [])
@@ -309,7 +309,7 @@ export async function analyzeTicketWithAi(ticketId) {
     await saveSuggestionComment(ticketId, suggestion);
     await recordKnowledgeMatch(ticketId, knowledgeId, knowledgeEntries);
   } catch (error) {
-    console.error(`Analiza AI zgloszenia #${ticketId} nie powiodla sie:`, error.message, error.cause || "");
+    console.error(`Analiza AI zgłoszenia #${ticketId} nie powiodła się:`, error.message, error.cause || "");
   }
 }
 
@@ -355,7 +355,7 @@ async function markConversationEnded(ticketId, action) {
   );
 }
 
-const DEFAULT_ESCALATION_MESSAGE = "Dziekuje za informacje. Przekazuje zgloszenie do naszego zespolu serwisowego - ktos sie z Panstwem skontaktuje.";
+const DEFAULT_ESCALATION_MESSAGE = "Dziękuję za informacje. Przekazuję zgłoszenie do naszego zespołu serwisowego - ktoś się z Państwem skontaktuje.";
 
 async function escalateToAdmin(ticket, closingMessage) {
   await postAiCommentAsPublic(ticket.id, closingMessage || DEFAULT_ESCALATION_MESSAGE);
@@ -365,7 +365,7 @@ async function escalateToAdmin(ticket, closingMessage) {
     type: "AI_ESCALATION",
     priority: "WARNING",
     title: "Asystent AI potrzebuje pomocy administratora",
-    message: `Zgloszenie #${ticket.id}: rozmowa z klientem nie rozwiazala problemu.`,
+    message: `Zgłoszenie #${ticket.id}: rozmowa z klientem nie rozwiązała problemu.`,
     entityType: "ticket",
     entityId: ticket.id,
     link: `/tickets/${ticket.id}`
@@ -374,8 +374,8 @@ async function escalateToAdmin(ticket, closingMessage) {
 
 function buildConversationPrompt(ticket, knowledgeEntries, conversation, hasNewImages, hasKnowledgeFiles, equipment = []) {
   const typeLabel = ticket.type === "HARDWARE_FAILURE"
-    ? "awaria sprzetu (szlaban parkingowy lub kamera ANPR)"
-    : "awaria systemu / problem z dzialaniem uslugi";
+    ? "awaria sprzętu (szlaban parkingowy lub kamera ANPR)"
+    : "awaria systemu / problem z działaniem usługi";
 
   const equipmentList = formatEquipmentList(equipment);
 
@@ -386,26 +386,26 @@ function buildConversationPrompt(ticket, knowledgeEntries, conversation, hasNewI
   const history = conversation.map((entry) => `${entry.role}: ${entry.content}`).join("\n");
 
   return [
-    "Jestes asystentem AI prowadzacym czat pomocy technicznej dla klienta firmy instalujacej i serwisujacej szlabany parkingowe oraz kamery ANPR.",
-    "Ponizej masz pelna historie rozmowy w tym zgloszeniu (od najstarszej do najnowszej wiadomosci). Odpowiedz na OSTATNIA wiadomosc klienta.",
-    hasNewImages ? "Klient dolaczyl do swojej ostatniej wiadomosci nowe zdjecie (dolaczone do tego zapytania) - przeanalizuj je i uwzglednij w odpowiedzi." : "",
-    hasKnowledgeFiles ? "Dolaczone zostaly rowniez pliki z wewnetrznej bazy wiedzy (np. instrukcja, schemat) dla pasujacego urzadzenia - wykorzystaj je jako dodatkowe, wiarygodne zrodlo." : "",
+    "Jesteś asystentem AI prowadzącym czat pomocy technicznej dla klienta firmy instalującej i serwisującej szlabany parkingowe oraz kamery ANPR.",
+    "Poniżej masz pełną historię rozmowy w tym zgłoszeniu (od najstarszej do najnowszej wiadomości). Odpowiedz na OSTATNIĄ wiadomość klienta.",
+    hasNewImages ? "Klient dołączył do swojej ostatniej wiadomości nowe zdjęcie (dołączone do tego zapytania) - przeanalizuj je i uwzględnij w odpowiedzi." : "",
+    hasKnowledgeFiles ? "Dołączone zostały również pliki z wewnętrznej bazy wiedzy (np. instrukcja, schemat) dla pasującego urządzenia - wykorzystaj je jako dodatkowe, wiarygodne źródło." : "",
     "Zasady:",
-    "- Jesli klient napisal, ze problem zostal rozwiazany albo juz dziala - podziekuj i cieplo zakoncz rozmowe.",
-    "- Jesli masz kolejny sensowny, bezpieczny krok do zaproponowania (pasujacy do opisu, niewymagajacy otwierania obudowy ani ingerencji mechanicznej) - zaproponuj go.",
-    "- Jesli wyczerpales rozsadne pomysly, sprawa jest powazna/niebezpieczna (uszkodzenie mechaniczne, iskrzenie, dym) albo klient pisze ze nadal nie dziala mimo wczesniejszych prob - PRZEKAZ sprawe do zespolu serwisowego zamiast dalej zgadywac.",
-    "Odpowiadaj PO POLSKU, krotko (maks. 3-4 zdania), przyjaznie i bezposrednio do klienta.",
-    "WAZNE - odpowiedz w DOKLADNIE takim formacie: pierwsza linia to status, potem pusta linia, potem sama tresc wiadomosci do klienta (bez powtarzania statusu w tresci):",
-    "STATUS: CONTINUE\n(tresc wiadomosci z kolejna propozycja)",
+    "- Jeśli klient napisał, że problem został rozwiązany albo już działa - podziękuj i ciepło zakończ rozmowę.",
+    "- Jeśli masz kolejny sensowny, bezpieczny krok do zaproponowania (pasujący do opisu, niewymagający otwierania obudowy ani ingerencji mechanicznej) - zaproponuj go.",
+    "- Jeśli wyczerpałeś rozsądne pomysły, sprawa jest poważna/niebezpieczna (uszkodzenie mechaniczne, iskrzenie, dym) albo klient pisze, że nadal nie działa mimo wcześniejszych prób - PRZEKAŻ sprawę do zespołu serwisowego zamiast dalej zgadywać.",
+    "Odpowiadaj PO POLSKU, krótko (maks. 3-4 zdania), przyjaźnie i bezpośrednio do klienta.",
+    "WAŻNE - odpowiedz w DOKŁADNIE takim formacie: pierwsza linia to status, potem pusta linia, potem sama treść wiadomości do klienta (bez powtarzania statusu w treści):",
+    "STATUS: CONTINUE\n(treść wiadomości z kolejna propozycja)",
     "albo",
-    "STATUS: RESOLVED\n(tresc wiadomosci - podziekowanie i zamkniecie)",
+    "STATUS: RESOLVED\n(treść wiadomości - podziękowanie i zamknięcie)",
     "albo",
-    "STATUS: ESCALATE\n(tresc wiadomosci - informacja ze sprawa trafia do serwisu)",
-    equipmentList ? `Na tym konkretnym obiekcie klienta zainstalowany jest nastepujacy sprzet - dopasuj odpowiedz do tych faktycznych marek/modeli, nie do ogolnego typu urzadzenia:\n\n${equipmentList}` : "",
-    knowledge ? `Wewnetrzna baza wiedzy firmy (traktuj pasujace wpisy jako najbardziej wiarygodne, wpisy dla innych urzadzen ignoruj):\n\n${knowledge}` : "",
-    `Typ zgloszenia: ${typeLabel}`,
-    ticket.category ? `Urzadzenie: ${ticket.category}` : "",
-    `Temat zgloszenia: ${ticket.subject}`,
+    "STATUS: ESCALATE\n(treść wiadomości - informacja, że sprawa trafia do serwisu)",
+    equipmentList ? `Na tym konkretnym obiekcie klienta zainstalowany jest następujący sprzęt - dopasuj odpowiedź do tych faktycznych marek/modeli, nie do ogólnego typu urządzenia:\n\n${equipmentList}` : "",
+    knowledge ? `Wewnętrzna baza wiedzy firmy (traktuj pasujące wpisy jako najbardziej wiarygodne, wpisy dla innych urządzeń ignoruj):\n\n${knowledge}` : "",
+    `Typ zgłoszenia: ${typeLabel}`,
+    ticket.category ? `Urządzenie: ${ticket.category}` : "",
+    `Temat zgłoszenia: ${ticket.subject}`,
     `Poczatkowy opis klienta: ${ticket.description || "(brak)"}`,
     `Historia rozmowy:\n${history}`,
     matchInstructionLine(knowledgeEntries)
@@ -472,6 +472,6 @@ export async function continueAiConversation(ticketId) {
       await markConversationEnded(ticketId, "AI_CONVERSATION_RESOLVED");
     }
   } catch (error) {
-    console.error(`Kontynuacja rozmowy AI dla zgloszenia #${ticketId} nie powiodla sie:`, error.message, error.cause || "");
+    console.error(`Kontynuacja rozmowy AI dla zgłoszenia #${ticketId} nie powiodła się:`, error.message, error.cause || "");
   }
 }

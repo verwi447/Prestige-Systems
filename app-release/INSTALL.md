@@ -1,6 +1,6 @@
 # Prestige Systems HUB - wydanie serwerowe
 
-Wersja: 1.0.1
+Wersja: 1.1.0
 
 Ten folder zawiera czysta wersje aplikacji gotowa do wdrozenia. Nie zawiera bazy danych, pliku `.env`, uploadow, backupow, logow ani `node_modules`.
 

@@ -288,8 +288,8 @@ async function testJsonDatabaseDump(databasePath) {
     let rowCount = 0;
     for (const [index, [table, rows]] of tableEntries.entries()) {
       const validColumns = columnsByTable.get(table);
-      if (!validColumns) throw new Error(`Tabela z backupu nie istnieje w biezacej bazie: ${table}`);
-      if (!Array.isArray(rows)) throw new Error(`Nieprawidlowe dane tabeli w backupie: ${table}`);
+      if (!validColumns) throw new Error(`Tabela z backupu nie istnieje w bieżącej bazie: ${table}`);
+      if (!Array.isArray(rows)) throw new Error(`Nieprawidłowe dane tabeli w backupie: ${table}`);
 
       const tempTable = `restore_test_${index}`;
       await client.query(
@@ -299,7 +299,7 @@ async function testJsonDatabaseDump(databasePath) {
       for (const row of rows) {
         const columns = Object.keys(row);
         if (columns.some((column) => !validColumns.has(column))) {
-          throw new Error(`Backup zawiera nieznana kolumne w tabeli ${table}`);
+          throw new Error(`Backup zawiera nieznana kolumnę w tabeli ${table}`);
         }
         if (!columns.length) continue;
         const values = columns.map((column) => row[column]);
@@ -317,7 +317,7 @@ async function testJsonDatabaseDump(databasePath) {
     for (const temporaryTable of temporaryTables) {
       const count = await client.query(`SELECT COUNT(*)::int AS count FROM ${quoteIdentifier(temporaryTable.name)}`);
       if (count.rows[0].count !== temporaryTable.expectedRows) {
-        throw new Error(`Nieprawidlowa liczba rekordow po tescie odtworzenia: ${temporaryTable.name}`);
+        throw new Error(`Nieprawidłowa liczba rekordów po teście odtworzenia: ${temporaryTable.name}`);
       }
     }
 
@@ -631,7 +631,7 @@ export async function runTestRestore(job, user, ipAddress) {
       : await testPostgresDump(databasePath);
 
     await db.query("UPDATE backup_jobs SET test_restore_status='VERIFIED', error_message=NULL WHERE id=$1", [job.id]);
-    await auditBackup({ action: "TEST_RESTORE", backupJobId: job.id, userId: user?.id, ipAddress, status: "SUCCESS", message: `Test Restore zakonczony poprawnie. Tryb: ${testResult.mode}.` });
+    await auditBackup({ action: "TEST_RESTORE", backupJobId: job.id, userId: user?.id, ipAddress, status: "SUCCESS", message: `Test Restore zakończony poprawnie. Tryb: ${testResult.mode}.` });
     return { status: "VERIFIED", ...testResult };
   } catch (error) {
     await db.query("UPDATE backup_jobs SET test_restore_status='FAILED', error_message=$1 WHERE id=$2", [error.message, job.id]);

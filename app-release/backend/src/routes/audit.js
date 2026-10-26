@@ -70,7 +70,7 @@ router.get("/", async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to load audit log:", error);
-    res.status(500).json({ error: "Nie udalo sie pobrac dziennika audytu." });
+    res.status(500).json({ error: "Nie udało się pobrać dziennika audytu." });
   }
 });
 
@@ -85,7 +85,7 @@ router.get("/users", async (_req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error("Failed to load audit users:", error);
-    res.status(500).json({ error: "Nie udalo sie pobrac uzytkownikow dziennika." });
+    res.status(500).json({ error: "Nie udało się pobrać użytkowników dziennika." });
   }
 });
 

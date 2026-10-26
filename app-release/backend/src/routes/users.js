@@ -59,7 +59,7 @@ router.put("/:userId/permissions", auth, loadCurrentUser, requireRole("ADMIN", "
         return res.status(403).json({ error: "Brak dostępu do tego użytkownika." });
     }
     if (target.rows[0].role !== "CLIENT_EMPLOYEE") {
-        return res.status(400).json({ error: "Uprawnienia mozna zmieniac wylacznie pracownikom klienta." });
+        return res.status(400).json({ error: "Uprawnienia można zmieniać wyłącznie pracownikom klienta." });
     }
 
     const normalized = Array.isArray(permissions)

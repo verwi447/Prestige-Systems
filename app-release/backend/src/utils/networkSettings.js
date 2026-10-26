@@ -56,7 +56,7 @@ const lanInterfaces = () => Object.entries(os.networkInterfaces())
 const normalizePort = (value) => {
   const port = Number(value);
   if (!Number.isInteger(port) || port < 1024 || port > 65535) {
-    throw new Error("Port musi byc liczba od 1024 do 65535.");
+    throw new Error("Port musi być liczbą od 1024 do 65535.");
   }
   return port;
 };
@@ -73,19 +73,19 @@ const normalizeUrl = (value, label, required = false) => {
   try {
     parsed = new URL(source);
   } catch {
-    throw new Error(`${label} musi byc poprawnym adresem HTTP lub HTTPS.`);
+    throw new Error(`${label} musi być poprawnym adresem HTTP lub HTTPS.`);
   }
   if (!/^https?:$/.test(parsed.protocol) || parsed.username || parsed.password || (parsed.pathname !== "/" && parsed.pathname !== "")) {
-    throw new Error(`${label} musi byc adresem HTTP lub HTTPS bez dodatkowej sciezki.`);
+    throw new Error(`${label} musi być adresem HTTP lub HTTPS bez dodatkowej ścieżki.`);
   }
   return parsed.origin;
 };
 
 const normalizeOrigins = (value) => {
   const rawOrigins = Array.isArray(value) ? value : String(value || "").split(/[\n,]/);
-  if (rawOrigins.length > 20) throw new Error("Mozesz dodac maksymalnie 20 dozwolonych zrodel.");
+  if (rawOrigins.length > 20) throw new Error("Możesz dodać maksymalnie 20 dozwolonych źródeł.");
   return [...new Set(rawOrigins.map((origin) => String(origin).trim()).filter(Boolean)
-    .map((origin) => normalizeUrl(origin, "Dozwolone zrodlo")))];
+    .map((origin) => normalizeUrl(origin, "Dozwolone źródło")))];
 };
 
 const defaultHost = (nodeEnv) => String(nodeEnv || "development").toLowerCase() === "production" ? LOCAL_HOST : "";
@@ -139,7 +139,7 @@ export async function getNetworkSettings() {
 
 export async function updateNetworkSettings(input = {}) {
   const accessMode = input.accessMode === "LAN" ? "LAN" : input.accessMode === "LOCAL" ? "LOCAL" : null;
-  if (!accessMode) throw new Error("Wybierz tryb dostepu lokalny lub LAN.");
+  if (!accessMode) throw new Error("Wybierz tryb dostępu lokalny lub LAN.");
 
   const port = normalizePort(input.port);
   const publicBaseUrl = normalizeUrl(input.publicBaseUrl, "Adres aplikacji", accessMode === "LAN");

@@ -11,12 +11,32 @@ export const PERMISSIONS = [
   "MANAGE_SITES"
 ];
 
+// Roles that belong to our own company instead of a client company. They see
+// the whole book of business, so every company-scoped query has to treat them
+// like ADMIN rather than falling through to the "find my own company" path.
+export const INTERNAL_ROLES = ["ADMIN", "ACCOUNTANT"];
+
+// The accounting role is read-only by design: it needs the commercial numbers
+// (offers, orders, their items) and nothing else. Permissions are fixed in code
+// rather than stored per user - there is no UI to grant extra ones, on purpose.
+export const ACCOUNTANT_PERMISSIONS = ["VIEW_OFFERS"];
+
 export function normalizeRole(role) {
   if (role === "USER") return "CLIENT_EMPLOYEE";
   return role;
 }
 
+export function isInternalRole(role) {
+  return INTERNAL_ROLES.includes(normalizeRole(role));
+}
+
 export async function loadCurrentUser(req, res, next) {
+  // auth() czyta juz pelny rekord uzytkownika i wypelnia req.currentUser, wiec
+  // w normalnym lancuchu (auth -> loadCurrentUser) nie ma tu drugiego
+  // zapytania. Fallback zostaje dla tras, ktore uzywaja tego middleware
+  // samodzielnie, oraz dla testow wstrzykujacych samo req.user.
+  if (req.currentUser) return next();
+
   try {
     const result = await db.query(
       `SELECT id, username, role, company_id, first_name, last_name, email, phone, is_active
@@ -32,7 +52,7 @@ export async function loadCurrentUser(req, res, next) {
     next();
   } catch (err) {
     console.error("Failed to load current user:", err);
-    res.status(500).json({ error: "Wewnetrzny blad serwera." });
+    res.status(500).json({ error: "Wewnętrzny błąd serwera." });
   }
 }
 
@@ -106,6 +126,7 @@ export function requirePermission(permissionKey) {
 export async function getEffectivePermissions(user) {
   const role = normalizeRole(user?.role);
   if (role === "ADMIN" || role === "CLIENT_OWNER") return new Set(PERMISSIONS);
+  if (role === "ACCOUNTANT") return new Set(ACCOUNTANT_PERMISSIONS);
   if (role !== "CLIENT_EMPLOYEE" || !user?.id) return new Set();
 
   const result = await db.query(
@@ -115,56 +136,55 @@ export async function getEffectivePermissions(user) {
   return new Set(result.rows.map((row) => row.permission_key));
 }
 
-export function requireAllPermissions(...permissionKeys) {
+// Both guards resolve permissions through getEffectivePermissions so that every
+// role which carries a fixed set in code (ADMIN, CLIENT_OWNER, ACCOUNTANT) is
+// handled in exactly one place instead of being special-cased per guard.
+function permissionGuard(permissionKeys, isSatisfied) {
   const requiredPermissions = [...new Set(permissionKeys.filter(Boolean))];
 
   return async (req, res, next) => {
-    const role = normalizeRole(req.currentUser?.role || req.user?.role);
-    if (role === "ADMIN" || role === "CLIENT_OWNER") return next();
-
     if (!requiredPermissions.length) return next();
 
     try {
-      const result = await db.query(
-        `SELECT permission_key
-         FROM user_permissions
-         WHERE user_id=$1 AND enabled=TRUE AND permission_key = ANY($2::text[])`,
-        [req.currentUser.id, requiredPermissions]
-      );
-      const grantedPermissions = new Set(result.rows.map((row) => row.permission_key));
-      if (requiredPermissions.every((permission) => grantedPermissions.has(permission))) return next();
+      const grantedPermissions = await getEffectivePermissions(req.currentUser || req.user);
+      if (isSatisfied(requiredPermissions, grantedPermissions)) return next();
       return res.status(403).json({ error: "Brak wymaganego uprawnienia." });
     } catch (err) {
       console.error("Failed to check user permission:", err);
-      res.status(500).json({ error: "Wewnetrzny blad serwera." });
+      res.status(500).json({ error: "Wewnętrzny błąd serwera." });
     }
   };
 }
 
+export function requireAllPermissions(...permissionKeys) {
+  return permissionGuard(permissionKeys, (required, granted) => required.every((permission) => granted.has(permission)));
+}
+
 export function requireAnyPermission(...permissionKeys) {
-  const requiredPermissions = [...new Set(permissionKeys.filter(Boolean))];
+  return permissionGuard(permissionKeys, (required, granted) => required.some((permission) => granted.has(permission)));
+}
 
-  return async (req, res, next) => {
-    const role = normalizeRole(req.currentUser?.role || req.user?.role);
-    if (role === "ADMIN" || role === "CLIENT_OWNER") return next();
+// Mounted on routers that an accountant may read but never change. Keying off
+// the HTTP method instead of a per-route list means a route added later is
+// read-only for the accounting role by default, not accidentally writable.
+// Mounted on routers the accounting role has no business calling at all. Without
+// it those handlers fall into their "scope to my own company" branch and answer
+// with an empty client-shaped result, which reads like a feature rather than a
+// denial. The role has no company, so an explicit 403 is the honest answer.
+export function denyAccountant(req, res, next) {
+  const role = normalizeRole(req.currentUser?.role || req.user?.role);
+  if (role === "ACCOUNTANT") {
+    return res.status(403).json({ error: "Brak uprawnień." });
+  }
+  next();
+}
 
-    if (!requiredPermissions.length) return next();
-
-    try {
-      const result = await db.query(
-        `SELECT 1
-         FROM user_permissions
-         WHERE user_id=$1 AND enabled=TRUE AND permission_key = ANY($2::text[])
-         LIMIT 1`,
-        [req.currentUser.id, requiredPermissions]
-      );
-      if (result.rows[0]) return next();
-      return res.status(403).json({ error: "Brak wymaganego uprawnienia." });
-    } catch (err) {
-      console.error("Failed to check user permission:", err);
-      res.status(500).json({ error: "Wewnetrzny blad serwera." });
-    }
-  };
+export function blockAccountantWrites(req, res, next) {
+  const role = normalizeRole(req.currentUser?.role || req.user?.role);
+  if (role === "ACCOUNTANT" && req.method !== "GET" && req.method !== "HEAD") {
+    return res.status(403).json({ error: "Konto księgowe ma dostęp wyłącznie do podglądu." });
+  }
+  next();
 }
 
 export async function canAccessSite(user, siteId) {

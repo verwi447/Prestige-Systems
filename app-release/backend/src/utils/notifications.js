@@ -23,6 +23,13 @@ const canAggregateBackupSuccess = (category, type, priority) => (
   category === "BACKUP" && type === "BACKUP_COMPLETED" && priority === "SUCCESS"
 );
 
+// `executor` pozwala wpiac zapis powiadomienia w otwarta transakcje wolajacego.
+// Bez tego kontrola wlasnosci ponizej czytalaby dane z innego polaczenia puli
+// i nie widziala jeszcze niezatwierdzonego wiersza, wiec powiadomienie o
+// swiezo utworzonym zdarzeniu bylo cicho odrzucane.
+// `emit` wylacza natychmiastowe wyslanie przez socket: w transakcji zdarzenie
+// musi polecieć dopiero po COMMIT, zeby rollback nie zostawil klienta z
+// powiadomieniem o czyms, czego nie ma w bazie.
 export async function createNotification({
   userId,
   category = "SYSTEM",
@@ -33,11 +40,11 @@ export async function createNotification({
   entityType = null,
   entityId = null,
   link = null
-}) {
+}, { executor = db, emit = true } = {}) {
   if (!userId || !title || !message) return null;
 
   const normalizedCategory = normalizeCategory(category);
-  const recipient = await db.query("SELECT role, company_id FROM users WHERE id=$1 AND COALESCE(is_active, TRUE)=TRUE", [userId]);
+  const recipient = await executor.query("SELECT role, company_id FROM users WHERE id=$1 AND COALESCE(is_active, TRUE)=TRUE", [userId]);
   const recipientUser = recipient.rows[0];
   if (!recipientUser) return null;
 
@@ -45,19 +52,19 @@ export async function createNotification({
     if (!["OFFERS", "TICKETS", "CALENDAR"].includes(normalizedCategory) || !entityId || !recipientUser.company_id) return null;
     let ownership;
     if (normalizedCategory === "OFFERS") {
-      ownership = await db.query(
+      ownership = await executor.query(
         `SELECT 1 FROM offers o JOIN customers c ON c.id=o.customer_id
          WHERE o.id=$1 AND c.company_id=$2`,
         [entityId, recipientUser.company_id]
       );
     } else if (normalizedCategory === "TICKETS") {
-      ownership = await db.query(
+      ownership = await executor.query(
         `SELECT 1 FROM tickets t JOIN customers c ON c.id=t.customer_id
          WHERE t.id=$1 AND c.company_id=$2`,
         [entityId, recipientUser.company_id]
       );
     } else {
-      ownership = await db.query(
+      ownership = await executor.query(
         `SELECT 1 FROM calendar_events WHERE id=$1 AND company_id=$2`,
         [entityId, recipientUser.company_id]
       );
@@ -65,7 +72,7 @@ export async function createNotification({
     if (!ownership.rows[0]) return null;
   }
 
-  const preference = await db.query(
+  const preference = await executor.query(
     "SELECT in_app_enabled FROM notification_preferences WHERE user_id=$1 AND category=$2",
     [userId, normalizedCategory]
   );
@@ -74,7 +81,7 @@ export async function createNotification({
 
   const normalizedPriority = normalizePriority(priority);
   if (canAggregateBackupSuccess(normalizedCategory, type, normalizedPriority)) {
-    const existing = await db.query(
+    const existing = await executor.query(
       `SELECT id, title
        FROM notifications
        WHERE user_id=$1
@@ -89,7 +96,7 @@ export async function createNotification({
 
     if (existing.rows[0]) {
       const summary = buildBackupSuccessSummary(existing.rows[0].title, message);
-      const updated = await db.query(
+      const updated = await executor.query(
         `UPDATE notifications
          SET title=$1, message=$2, created_at=CURRENT_TIMESTAMP
          WHERE id=$3
@@ -97,12 +104,12 @@ export async function createNotification({
         [summary.title, summary.message, existing.rows[0].id]
       );
       const notification = updated.rows[0];
-      emitToUser(userId, "notification:updated", notification);
+      if (emit) emitToUser(userId, "notification:updated", notification);
       return notification;
     }
   }
 
-  const result = await db.query(
+  const result = await executor.query(
     `INSERT INTO notifications (
       id, user_id, category, type, priority, title, message, entity_type, entity_id, link
      )
@@ -123,7 +130,7 @@ export async function createNotification({
   );
 
   const notification = result.rows[0];
-  emitToUser(userId, "notification:new", notification);
+  if (emit) emitToUser(userId, "notification:new", notification);
   return notification;
 }
 

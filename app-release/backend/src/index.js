@@ -26,7 +26,7 @@ import commentRoutes from "./routes/comments.js";
 import rejectionRoutes from "./routes/rejections.js";
 import photoRoutes from "./routes/photos.js";
 import adminRoutes from "./routes/admin.js";
-import adminsRoutes from "./routes/admins.js";
+import adminsRoutes, { createStaffRouter } from "./routes/admins.js";
 import ownCompanyRoutes from "./routes/ownCompany.js";
 import uploadRoutes from "./routes/uploads.js";
 import pdfRoutes from "./routes/pdf.js";
@@ -45,6 +45,8 @@ import { setRealtimeServer } from "./realtime.js";
 import { db } from "./db.js";
 import { apiLimiter, loginLimiter, notFoundApi, requestGuard, safeErrorHandler } from "./middleware/security.js";
 import { geoBlock } from "./middleware/geoBlock.js";
+import { ConfigError, getConfig } from "./config/env.js";
+import { normalizeRole } from "./middleware/access.js";
 
 // Express 4 does not route rejections thrown inside async route handlers to
 // safeErrorHandler; left unhandled, Node terminates the whole process on the
@@ -59,17 +61,28 @@ const appVersionPath = path.resolve(__dirname, "../../app-version.json");
 
 dotenv.config();
 
+// Brak albo bledna wartosc wymaganej zmiennej przerywa start kodem 78
+// (EX_CONFIG), zeby skrypt wdrozeniowy wylapal to jako blad aktualizacji
+// zamiast uznac za sukces instalacje, w ktorej nikt nie moze sie zalogowac.
+let config;
+try {
+  config = getConfig();
+} catch (error) {
+  if (error instanceof ConfigError) {
+    console.error(`Nieprawidłowa konfiguracja: ${error.message}`);
+    console.error("Uzupełnij backend/.env według backend/.env.example i uruchom usługę ponownie.");
+    process.exit(78);
+  }
+  throw error;
+}
+
 const app = express();
 const server = http.createServer(app);
-const PORT = Number(process.env.PORT || 5000);
-const NODE_ENV = String(process.env.NODE_ENV || "development").toLowerCase();
-const HOST = process.env.HOST || (NODE_ENV === "production" ? "127.0.0.1" : null);
-const isHttpsPublicUrl = String(process.env.PUBLIC_BASE_URL || "").trim().toLowerCase().startsWith("https://");
-const trustProxy = String(process.env.TRUST_PROXY || (HOST === "127.0.0.1" ? "loopback" : "false"));
-const allowedOrigins = new Set(
-  String(process.env.ALLOWED_ORIGINS || `http://localhost:${PORT},http://127.0.0.1:${PORT},http://localhost:5173,http://127.0.0.1:5173`)
-    .split(",").map((origin) => origin.trim()).filter(Boolean)
-);
+const PORT = config.port;
+const HOST = config.host;
+const isHttpsPublicUrl = config.isHttpsPublicUrl;
+const trustProxy = config.trustProxy;
+const allowedOrigins = config.allowedOrigins;
 const corsOptions = {
   credentials: true,
   origin(origin, callback) {
@@ -112,7 +125,7 @@ io.use(async (socket, next) => {
     const result = await db.query("SELECT id, role, company_id, is_active FROM users WHERE id=$1", [decoded.id]);
     const user = result.rows[0];
     if (!user || user.is_active === false) return next(new Error("Błędny token"));
-    socket.user = { ...decoded, role: user.role === "USER" ? "CLIENT_EMPLOYEE" : user.role, companyId: user.company_id };
+    socket.user = { ...decoded, role: normalizeRole(user.role), companyId: user.company_id };
     next();
   } catch {
     next(new Error("Błędny token"));
@@ -265,6 +278,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/offers", offerRoutes);
 app.use("/api/admins", adminsRoutes);
+app.use("/api/accountants", createStaffRouter("ACCOUNTANT"));
 app.use("/api/own-company", ownCompanyRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/companies", companyRoutes);
