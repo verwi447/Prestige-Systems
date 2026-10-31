@@ -92,3 +92,13 @@ const matches = (value, list) => {
 export const isOfferAwaitingDecision = (status) => matches(status, OFFER_DECISION_STATUSES);
 export const isClosedTicketStatus = (status) => matches(status, CLOSED_TICKET_STATUSES);
 export const isHiddenClientOfferStatus = (status) => matches(status, HIDDEN_CLIENT_OFFER_STATUSES);
+
+// An offer is valid through the whole day printed as "ważna do" (server local
+// time); only after that day ends can it no longer be accepted.
+export const isOfferExpired = (validUntil, now = new Date()) => {
+  if (!validUntil) return false;
+  const end = new Date(validUntil);
+  if (Number.isNaN(end.getTime())) return false;
+  end.setHours(23, 59, 59, 999);
+  return now.getTime() > end.getTime();
+};

@@ -33,7 +33,9 @@ router.get("/admin-summary", auth, async (req, res) => {
             recentTickets,
             recentCompanies,
             actionItems,
-            monthlyTrend
+            monthlyTrend,
+            ticketExtras,
+            offerExtras
         ] = await Promise.all([
             db.query("SELECT COUNT(*)::int AS count FROM companies WHERE COALESCE(is_own_company, FALSE)=FALSE"),
             db.query(`
@@ -54,6 +56,8 @@ router.get("/admin-summary", auth, async (req, res) => {
                 SELECT
                     o.id,
                     o.offer_number,
+                    o.title,
+                    o.currency,
                     o.total_price,
                     o.created_at,
                     o.status,
@@ -68,7 +72,10 @@ router.get("/admin-summary", auth, async (req, res) => {
                 SELECT
                     t.id,
                     t.ticket_number,
+                    t.subject,
                     t.status,
+                    t.priority,
+                    t.created_at,
                     COALESCE(co.name, c.name, '-') AS company_name,
                     COALESCE(obj.name, '-') AS object_name
                 FROM tickets t
@@ -109,6 +116,20 @@ router.get("/admin-summary", auth, async (req, res) => {
                     GROUP BY 1
                 ) t ON t.month_start = m.month_start
                 ORDER BY m.month_start
+            `),
+            db.query(`
+                SELECT
+                    COUNT(*) FILTER (WHERE type <> 'ORDER' AND assigned_to_id IS NULL)::int AS unassigned,
+                    COUNT(*) FILTER (WHERE type = 'ORDER')::int AS open_orders
+                FROM tickets
+                WHERE COALESCE(status, '') <> ALL($1::text[])
+            `, [CLOSED_TICKET_STATUSES]),
+            db.query(`
+                SELECT
+                    COUNT(*) FILTER (WHERE status = 'SZKIC')::int AS drafts,
+                    COUNT(*) FILTER (WHERE status IN ('WYSŁANA', 'DO AKCEPTACJI'))::int AS awaiting,
+                    COALESCE(SUM(total_price) FILTER (WHERE status IN ('WYSŁANA', 'DO AKCEPTACJI') AND COALESCE(currency, 'PLN') = 'PLN'), 0)::float AS awaiting_value
+                FROM offers
             `)
         ]);
 
@@ -118,7 +139,12 @@ router.get("/admin-summary", auth, async (req, res) => {
                 offersThisMonth: offersThisMonth.rows[0]?.count || 0,
                 openTickets: openTickets.rows[0]?.count || 0,
                 products: productCount.rows[0]?.count || 0,
-                offersToSend: offersToSend.rows[0]?.count || 0
+                offersToSend: offersToSend.rows[0]?.count || 0,
+                openTicketsUnassigned: ticketExtras.rows[0]?.unassigned || 0,
+                openOrders: ticketExtras.rows[0]?.open_orders || 0,
+                draftOffers: offerExtras.rows[0]?.drafts || 0,
+                awaitingOffers: offerExtras.rows[0]?.awaiting || 0,
+                awaitingOffersValue: offerExtras.rows[0]?.awaiting_value || 0
             },
             recentOffers: recentOffers.rows,
             recentTickets: recentTickets.rows,

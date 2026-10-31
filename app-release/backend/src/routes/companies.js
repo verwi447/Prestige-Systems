@@ -499,9 +499,15 @@ router.get("/:companyId/tickets", requireCompanyAccess("companyId"), asyncHandle
        t.subject,
        t.object_id,
        t.status,
-       t.created_at
+       t.priority,
+       t.created_at,
+       t.updated_at,
+       o.name AS object_name,
+       NULLIF(TRIM(CONCAT_WS(' ', a.first_name, a.last_name)), '') AS assigned_name
      FROM tickets t
      JOIN customers c ON c.id=t.customer_id
+     LEFT JOIN objects o ON o.id=t.object_id
+     LEFT JOIN users a ON a.id=t.assigned_to_id
      WHERE c.company_id=$1
      ORDER BY t.created_at DESC`,
     [req.params.companyId]

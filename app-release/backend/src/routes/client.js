@@ -13,7 +13,7 @@ import { markOfferLifecycle, synchronizeLinkedOrderStatus } from "../services/or
 import { analyzeTicketWithAi, continueAiConversation } from "../services/aiAssistant.js";
 import { writeAuditLog } from "../utils/auditLog.js";
 import { autoAsyncRoutes } from "../utils/autoAsyncRoutes.js";
-import { CLOSED_TICKET_STATUSES, HIDDEN_CLIENT_OFFER_STATUSES, OFFER_DECISION_STATUSES, isOfferAwaitingDecision } from "../domain/statuses.js";
+import { CLOSED_TICKET_STATUSES, HIDDEN_CLIENT_OFFER_STATUSES, OFFER_DECISION_STATUSES, isOfferAwaitingDecision, isOfferExpired } from "../domain/statuses.js";
 
 const router = express.Router();
 autoAsyncRoutes(router);
@@ -202,7 +202,7 @@ async function getEmployeeDashboard(req, companyId, permissions) {
   const [company, sites, offersCount, offersToAcceptCount, openTicketsCount, recentTickets, offersToAccept, offerActivity, ticketActivity] = await Promise.all([
     db.query(
       `SELECT id, name, nip, regon, address, postal_code, city, country, email, phone,
-              is_active, description, contact_person, created_at, updated_at
+              is_active, contact_person, created_at, updated_at
        FROM companies
        WHERE id=$1 AND COALESCE(is_own_company, FALSE)=FALSE`,
       [companyId]
@@ -290,9 +290,10 @@ async function getEmployeeDashboard(req, companyId, permissions) {
          FROM offers o
          JOIN customers c ON c.id=o.customer_id
          WHERE c.company_id=$1 AND ${siteScope("o.object_id")}
+           AND UPPER(COALESCE(o.status, '')) <> ALL($3::text[])
          ORDER BY COALESCE(o.updated_at, o.created_at) DESC
          LIMIT 3`,
-        [companyId, userId]
+        [companyId, userId, hiddenClientOfferStatuses]
       )
       : noRows,
     canViewTickets
@@ -317,9 +318,7 @@ async function getEmployeeDashboard(req, companyId, permissions) {
       type: item.type,
       id: item.id,
       number: item.number,
-      title: item.type === "offer"
-        ? `Oferta ${item.number || item.id} czeka na Twoją akceptację.`
-        : `Zgłoszenie ${item.number || item.id} ma status ${item.status || "nowe"}.`,
+      title: describeActivity(item),
       timestamp: item.updated_at || item.created_at
     }));
 
@@ -352,6 +351,38 @@ const normalizeTicketPriority = (priority, type) => {
   if (ticketPriorities.has(priority)) return priority;
   if (type === "SYSTEM_FAILURE") return "HIGH";
   return "NORMAL";
+};
+
+const ACTIVITY_OFFER_PHRASES = {
+  "WYSŁANA": "czeka na Twoją decyzję",
+  "DO AKCEPTACJI": "czeka na Twoją decyzję",
+  ZAAKCEPTOWANA: "została zaakceptowana",
+  ODRZUCONA: "została odrzucona",
+  "W REALIZACJI": "jest w realizacji",
+  "ZAKOŃCZONA": "została zrealizowana"
+};
+const ACTIVITY_TICKET_LABELS = {
+  NEW: "Nowe",
+  ACCEPTED: "Przyjęte",
+  IN_PROGRESS: "W realizacji",
+  WAITING_FOR_CLIENT: "Oczekuje na Twoją odpowiedź",
+  WAITING_FOR_PARTS: "Oczekuje na części",
+  WAITING_FOR_MANUFACTURER: "Oczekuje na producenta",
+  REJECTED: "Odrzucone",
+  COMPLETED: "Zakończone",
+  CANCELLED: "Anulowane"
+};
+
+// One sentence per activity row that matches the real status - previously every
+// offer "awaited acceptance" and tickets showed raw codes like COMPLETED.
+const describeActivity = (item) => {
+  const number = item.number || item.id;
+  if (item.type === "offer") {
+    const phrase = ACTIVITY_OFFER_PHRASES[String(item.status || "").toUpperCase()] || "została zaktualizowana";
+    return `Oferta ${number} ${phrase}.`;
+  }
+  const label = ACTIVITY_TICKET_LABELS[normalizeLegacyStatus(item.status)] || "Nowe";
+  return `Zgłoszenie ${number}: ${label.charAt(0).toLowerCase()}${label.slice(1)}.`;
 };
 
 const normalizeLegacyStatus = (status) => {
@@ -445,7 +476,7 @@ const normalizeCompany = (company) => ({
   country: company.country,
   isActive: company.is_active !== false,
   status: company.is_active === false ? "Nieaktywna" : "Aktywna",
-  description: company.description,
+  // description is the internal note admins keep about the client - never sent to the client panel.
   contactPersonName: company.contact_person_name || company.contact_person,
   contactPersonEmail: company.contact_person_email || company.email,
   contactPersonPhone: company.contact_person_phone || company.phone,
@@ -550,8 +581,8 @@ router.get("/dashboard", async (req, res) => {
         [companyId, closedTicketStatuses]
       ),
       db.query(
-        `SELECT t.id, t.ticket_number, t.subject, t.status, t.created_at, t.created_at AS updated_at,
-                NULL::text AS priority, o.name AS object_name
+        `SELECT t.id, t.ticket_number, t.subject, t.status, t.created_at, COALESCE(t.updated_at, t.created_at) AS updated_at,
+                t.priority, o.name AS object_name
          FROM tickets t
          JOIN customers c ON c.id=t.customer_id
          LEFT JOIN objects o ON o.id=t.object_id
@@ -593,16 +624,17 @@ router.get("/dashboard", async (req, res) => {
         `SELECT 'offer' AS type, id, offer_number AS number, title, updated_at, created_at, status
          FROM offers
          WHERE customer_id ${customerScopeSql(customerIdsOrEmpty)}
+           AND UPPER(COALESCE(status, '')) <> ALL($2::text[])
          ORDER BY COALESCE(updated_at, created_at) DESC
          LIMIT 3`,
-        [customerIdsOrEmpty]
+        [customerIdsOrEmpty, hiddenClientOfferStatuses]
       ),
       db.query(
-        `SELECT 'ticket' AS type, id, ticket_number AS number, subject AS title, created_at, status
+        `SELECT 'ticket' AS type, id, ticket_number AS number, subject AS title, updated_at, created_at, status
          FROM tickets
          WHERE customer_id ${customerScopeSql(customerIdsOrEmpty)}
            AND type IN ('SYSTEM_FAILURE','HARDWARE_FAILURE')
-         ORDER BY created_at DESC
+         ORDER BY COALESCE(updated_at, created_at) DESC
          LIMIT 3`,
         [customerIdsOrEmpty]
       )
@@ -615,7 +647,7 @@ router.get("/dashboard", async (req, res) => {
         type: item.type,
         id: item.id,
         number: item.number,
-        title: item.type === "offer" ? `Oferta ${item.number || item.id} czeka na Twoją akceptację.` : `Zgłoszenie ${item.number || item.id} ma status ${item.status || "nowe"}.`,
+        title: describeActivity(item),
         timestamp: item.updated_at || item.created_at
       }));
 
@@ -689,7 +721,7 @@ router.get("/company/summary", async (req, res) => {
     ] = await Promise.all([
       db.query(
         `SELECT id, name, nip, regon, address, postal_code, city, country, email, phone,
-                is_active, description, contact_person, created_at, updated_at
+                is_active, contact_person, created_at, updated_at
          FROM companies
          WHERE id=$1 AND COALESCE(is_own_company, FALSE)=FALSE`,
         [companyId]
@@ -1280,9 +1312,10 @@ router.get("/company/activity", async (req, res) => {
       `SELECT 'offer' AS type, id, offer_number AS number, title, updated_at, created_at, status
        FROM offers
        WHERE customer_id ${customerScopeSql(customerIdsOrEmpty)}
+         AND UPPER(COALESCE(status, '')) <> ALL($2::text[])
        ORDER BY COALESCE(updated_at, created_at) DESC
        LIMIT 8`,
-      [customerIdsOrEmpty]
+      [customerIdsOrEmpty, hiddenClientOfferStatuses]
     ),
     db.query(
       `SELECT 'ticket' AS type, id, ticket_number AS number, subject AS title, created_at, status
@@ -1322,7 +1355,7 @@ router.get("/company/activity", async (req, res) => {
         : item.type === "site"
           ? `Dodano obiekt: ${item.title}`
           : item.type === "offer"
-            ? `Oferta ${item.number || item.id} oczekuje na akceptację`
+            ? describeActivity(item)
             : `Utworzono zgłoszenie ${item.number || item.id} - ${item.title}`,
       timestamp: item.updated_at || item.created_at
     }));
@@ -1474,7 +1507,7 @@ router.post("/offers/:id/accept", requirePermission("ACCEPT_OFFERS"), async (req
   try {
     await sql.query("BEGIN");
     const offer = await sql.query(
-      `SELECT o.id, o.object_id, o.status, o.ticket_id, o.offer_number, o.title, o.client_company_name
+      `SELECT o.id, o.object_id, o.status, o.ticket_id, o.offer_number, o.title, o.client_company_name, o.valid_until
        FROM offers o
        JOIN customers c ON c.id=o.customer_id
        WHERE o.id=$1 AND c.company_id=$2
@@ -1496,6 +1529,13 @@ router.post("/offers/:id/accept", requirePermission("ACCEPT_OFFERS"), async (req
     if (!isOfferAwaitingDecision(offer.rows[0].status)) {
       await sql.query("ROLLBACK");
       return res.status(400).json({ error: "Tej oferty nie można zaakceptować." });
+    }
+
+    // Prices in an expired offer may no longer hold; the client can still
+    // reject it or ask for a refreshed one.
+    if (isOfferExpired(offer.rows[0].valid_until)) {
+      await sql.query("ROLLBACK");
+      return res.status(409).json({ error: "Ta oferta wygasła. Poproś opiekuna o aktualną wersję albo odrzuć ją z prośbą o odświeżenie." });
     }
 
     const updated = await sql.query(
