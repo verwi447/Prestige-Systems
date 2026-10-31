@@ -463,24 +463,29 @@ function customerScopeSql(customerIds, nextParamIndex = 1) {
 }
 
 router.get("/me", async (req, res) => {
-  const companyId = companyIdFromUser(req);
-  const company = await db.query(
-    `SELECT id, name
-     FROM companies
-     WHERE id=$1 AND COALESCE(is_own_company, FALSE)=FALSE`,
-    [companyId]
-  );
+  try {
+    const companyId = companyIdFromUser(req);
+    // Only the id and name of the account's own company, used by the header.
+    // No own-company filter here: a client linked to our own company record
+    // (e.g. an internal test account) must still see its real company name.
+    const company = companyId
+      ? await db.query("SELECT id, name FROM companies WHERE id=$1", [companyId])
+      : { rows: [] };
 
-  res.json({
-    company: company.rows[0] || null,
-    user: {
-      id: req.currentUser.id,
-      firstName: req.currentUser.first_name,
-      lastName: req.currentUser.last_name,
-      email: req.currentUser.email,
-      role: req.currentUser.role
-    }
-  });
+    res.json({
+      company: company.rows[0] || null,
+      user: {
+        id: req.currentUser.id,
+        firstName: req.currentUser.first_name,
+        lastName: req.currentUser.last_name,
+        email: req.currentUser.email,
+        role: req.currentUser.role
+      }
+    });
+  } catch (err) {
+    console.error("Błąd przy pobieraniu danych klienta:", err);
+    res.status(500).json({ error: "Błąd serwera." });
+  }
 });
 
 router.get("/dashboard", async (req, res) => {
