@@ -75,4 +75,11 @@ export const ADD_CALENDAR_EVENTS_MIGRATION = Object.freeze({
   transactional: true
 });
 
-export const CURRENT_SCHEMA_VERSION = ADD_CALENDAR_EVENTS_MIGRATION.id;
+export const ADD_TICKET_WAITING_FOR_MANUFACTURER_MIGRATION = Object.freeze({
+  id: "2026.10.31.001",
+  checksum: "add-ticket-waiting-for-manufacturer-v1",
+  description: "Dodaje status zgloszenia: oczekuje na producenta",
+  transactional: true
+});
+
+export const CURRENT_SCHEMA_VERSION = ADD_TICKET_WAITING_FOR_MANUFACTURER_MIGRATION.id;

@@ -18,7 +18,10 @@ const companySelect = `
          (SELECT COUNT(*)::int FROM users u WHERE u.company_id=companies.id AND u.role IN ('CLIENT_OWNER', 'CLIENT_EMPLOYEE')) AS employee_count,
          (SELECT COUNT(*)::int FROM objects o WHERE o.company_id=companies.id) AS site_count,
          (SELECT COUNT(*)::int FROM offers ofr JOIN customers c ON c.id=ofr.customer_id WHERE c.company_id=companies.id) AS offer_count,
-         (SELECT COUNT(*)::int FROM tickets t JOIN customers c ON c.id=t.customer_id WHERE c.company_id=companies.id) AS ticket_count
+         (SELECT COUNT(*)::int FROM tickets t JOIN customers c ON c.id=t.customer_id WHERE c.company_id=companies.id) AS ticket_count,
+         (SELECT COUNT(*)::int FROM tickets t JOIN customers c ON c.id=t.customer_id
+           WHERE c.company_id=companies.id
+             AND UPPER(COALESCE(t.status, '')) NOT IN ('COMPLETED', 'CANCELLED', 'REJECTED', 'ZAKOŃCZONE', 'ANULOWANE', 'ODRZUCONE')) AS open_ticket_count
   FROM companies
   WHERE COALESCE(is_own_company, FALSE) = FALSE
 `;

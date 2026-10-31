@@ -75,7 +75,7 @@ export async function getAdminActionItems(query) {
        LEFT JOIN companies co ON co.id=c.company_id
        WHERE t.type <> 'ORDER'
          AND t.assigned_to_id IS NULL
-         AND t.status IN ('NEW', 'ACCEPTED', 'IN_PROGRESS', 'WAITING_FOR_PARTS')
+         AND t.status IN ('NEW', 'ACCEPTED', 'IN_PROGRESS', 'WAITING_FOR_PARTS', 'WAITING_FOR_MANUFACTURER')
        ORDER BY CASE t.priority WHEN 'CRITICAL' THEN 0 WHEN 'HIGH' THEN 1 ELSE 2 END,
                 COALESCE(t.updated_at, t.created_at) DESC
        LIMIT 4`
@@ -98,7 +98,7 @@ export async function getAdminActionItems(query) {
        LEFT JOIN companies co ON co.id=c.company_id
        WHERE t.type='ORDER'
          AND t.assigned_to_id IS NULL
-         AND t.status IN ('NEW', 'ACCEPTED', 'IN_PROGRESS', 'WAITING_FOR_PARTS')
+         AND t.status IN ('NEW', 'ACCEPTED', 'IN_PROGRESS', 'WAITING_FOR_PARTS', 'WAITING_FOR_MANUFACTURER')
        ORDER BY CASE t.priority WHEN 'CRITICAL' THEN 0 WHEN 'HIGH' THEN 1 ELSE 2 END,
                 COALESCE(t.updated_at, t.created_at) DESC
        LIMIT 4`

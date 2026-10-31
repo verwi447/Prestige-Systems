@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 import { getAppInfo } from "./appInfo.js";
-import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_FILES_MIGRATION, ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_CALENDAR_EVENTS_MIGRATION, ADD_OBJECT_EQUIPMENT_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
+import { ADD_AI_ASSISTANT_SETTINGS_MIGRATION, ADD_AI_EQUIPMENT_TYPES_MIGRATION, ADD_AI_KNOWLEDGE_BASE_MIGRATION, ADD_AI_KNOWLEDGE_FILES_MIGRATION, ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, ADD_AI_KNOWLEDGE_SOLUTION_MIGRATION, ADD_AI_TICKET_COMMENT_MIGRATION, ADD_CALENDAR_EVENTS_MIGRATION, ADD_OBJECT_EQUIPMENT_MIGRATION, ADD_TICKET_WAITING_FOR_MANUFACTURER_MIGRATION, ADD_PASSWORD_CHANGED_AT_MIGRATION, LEGACY_SCHEMA_MIGRATION, CURRENT_SCHEMA_VERSION } from "./migrationPlan.js";
 import { getVersionedMigrationStatus, runVersionedMigrations } from "./migrationRunner.js";
 
 export async function runLegacySchemaMigration() {
@@ -1088,6 +1088,15 @@ async function addCalendarEventsTable({ query }) {
   await query(`CREATE INDEX IF NOT EXISTS idx_calendar_events_company ON calendar_events(company_id)`);
 }
 
+async function addTicketWaitingForManufacturerStatus({ query }) {
+  await query(`ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check`);
+  await query(`
+    ALTER TABLE tickets
+    ADD CONSTRAINT tickets_status_check
+    CHECK (status IN ('NEW','ACCEPTED','IN_PROGRESS','WAITING_FOR_CLIENT','WAITING_FOR_PARTS','WAITING_FOR_MANUFACTURER','REJECTED','COMPLETED','CANCELLED'))
+  `);
+}
+
 export function getMigrationDefinitions() {
   return [
     { ...LEGACY_SCHEMA_MIGRATION, up: runLegacySchemaMigration },
@@ -1100,7 +1109,8 @@ export function getMigrationDefinitions() {
     { ...ADD_AI_KNOWLEDGE_FILES_MIGRATION, up: addAiKnowledgeFilesTable },
     { ...ADD_OBJECT_EQUIPMENT_MIGRATION, up: addObjectEquipmentTable },
     { ...ADD_AI_KNOWLEDGE_MATCHES_MIGRATION, up: addAiKnowledgeMatchesTable },
-    { ...ADD_CALENDAR_EVENTS_MIGRATION, up: addCalendarEventsTable }
+    { ...ADD_CALENDAR_EVENTS_MIGRATION, up: addCalendarEventsTable },
+    { ...ADD_TICKET_WAITING_FOR_MANUFACTURER_MIGRATION, up: addTicketWaitingForManufacturerStatus }
   ];
 }
 

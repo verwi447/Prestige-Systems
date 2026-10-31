@@ -90,7 +90,7 @@ const closedTicketStatuses = CLOSED_TICKET_STATUSES;
 const hiddenClientOfferStatuses = HIDDEN_CLIENT_OFFER_STATUSES;
 
 const ticketTypes = new Set(["SYSTEM_FAILURE", "HARDWARE_FAILURE", "ORDER"]);
-const ticketStatuses = new Set(["NEW", "ACCEPTED", "IN_PROGRESS", "WAITING_FOR_CLIENT", "WAITING_FOR_PARTS", "REJECTED", "COMPLETED", "CANCELLED"]);
+const ticketStatuses = new Set(["NEW", "ACCEPTED", "IN_PROGRESS", "WAITING_FOR_CLIENT", "WAITING_FOR_PARTS", "WAITING_FOR_MANUFACTURER", "REJECTED", "COMPLETED", "CANCELLED"]);
 const ticketPriorities = new Set(["LOW", "NORMAL", "HIGH", "CRITICAL"]);
 const serviceTicketTypes = new Set(["SYSTEM_FAILURE", "HARDWARE_FAILURE"]);
 const terminalTicketStatuses = new Set(["REJECTED", "COMPLETED", "CANCELLED"]);

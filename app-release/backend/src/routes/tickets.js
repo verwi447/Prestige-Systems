@@ -65,11 +65,12 @@ const statusAliases = {
   W_REALIZACJI: "IN_PROGRESS",
   OCZEKUJE_NA_KLIENTA: "WAITING_FOR_CLIENT",
   OCZEKUJE_NA_CZESCI: "WAITING_FOR_PARTS",
+  OCZEKUJE_NA_PRODUCENTA: "WAITING_FOR_MANUFACTURER",
   ODRZUCONE: "REJECTED",
   ZAKONCZONE: "COMPLETED",
   ANULOWANE: "CANCELLED"
 };
-const ticketStatuses = new Set(["NEW", "ACCEPTED", "IN_PROGRESS", "WAITING_FOR_CLIENT", "WAITING_FOR_PARTS", "REJECTED", "COMPLETED", "CANCELLED"]);
+const ticketStatuses = new Set(["NEW", "ACCEPTED", "IN_PROGRESS", "WAITING_FOR_CLIENT", "WAITING_FOR_PARTS", "WAITING_FOR_MANUFACTURER", "REJECTED", "COMPLETED", "CANCELLED"]);
 const priorityAliases = { NISKI: "LOW", NORMALNY: "NORMAL", WYSOKI: "HIGH", KRYTYCZNY: "CRITICAL" };
 const ticketPriorities = new Set(["LOW", "NORMAL", "HIGH", "CRITICAL"]);
 const serviceTicketTypes = new Set(["SYSTEM_FAILURE", "HARDWARE_FAILURE"]);
@@ -81,6 +82,7 @@ const normalizeTicketStatus = (status) => {
   if (statusAliases[raw]) return statusAliases[raw];
   if (raw.includes("REALIZ")) return "IN_PROGRESS";
   if (raw.includes("KLIENT")) return "WAITING_FOR_CLIENT";
+  if (raw.includes("PRODUC") || raw.includes("MANUFACTURER")) return "WAITING_FOR_MANUFACTURER";
   if (raw.includes("CZES") || raw.includes("PART")) return "WAITING_FOR_PARTS";
   if (raw.includes("ODRZ") || raw.includes("REJECT")) return "REJECTED";
   if (raw.includes("ZAKO") || raw.includes("CLOSE") || raw.includes("COMPLETE")) return "COMPLETED";
@@ -691,7 +693,9 @@ router.post("/:id/assign", auth, requireAdmin, async (req, res) => {
       return res.status(404).json({ error: "Zgłoszenie nie istnieje." });
     }
     const currentStatus = normalizeTicketStatus(current.rows[0].status);
-    const nextStatus = adminId !== null && serviceTicketTypes.has(current.rows[0].type) && !terminalTicketStatuses.has(currentStatus)
+    // Taking a ticket starts the work, but only from the intake states: a ticket
+    // waiting for the client or for parts keeps its status when reassigned.
+    const nextStatus = adminId !== null && serviceTicketTypes.has(current.rows[0].type) && ["NEW", "ACCEPTED"].includes(currentStatus)
       ? "IN_PROGRESS"
       : current.rows[0].status;
     const statusChanged = currentStatus !== normalizeTicketStatus(nextStatus);
